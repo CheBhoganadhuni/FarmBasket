@@ -1,0 +1,632 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Details - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4" x-data="productDetail('{{ slug }}')">
+    <div class="container mx-auto max-w-7xl">
+        
+        <!-- Loading Skeleton -->
+        <template x-if="loading">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="skeleton h-96 rounded-xl"></div>
+                <div class="space-y-4">
+                    <div class="skeleton h-12 rounded"></div>
+                    <div class="skeleton h-6 rounded"></div>
+                    <div class="skeleton h-32 rounded"></div>
+                </div>
+            </div>
+        </template>
+        
+		<!-- Login Required Modal -->
+		<div x-show="showLoginModal" 
+			 x-transition
+			 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+			 @click.self="showLoginModal = false">
+			<div class="glass rounded-2xl p-8 max-w-md w-full text-center" @click.stop>
+				<div class="text-6xl mb-4">🔒</div>
+				<h2 class="font-display text-2xl font-bold mb-4">Login Required</h2>
+				<p class="text-gray-600 mb-6">Please login to add items to your wishlist or cart.</p>
+				<div class="flex gap-4">
+					<button 
+						@click="showLoginModal = false"
+						class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition font-semibold">
+						Cancel
+					</button>
+					<a 
+						:href="`/auth/login/?next=/products/${slug}/`"
+						class="flex-1 px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+						Login
+					</a>
+				</div>
+			</div>
+		</div>
+
+		
+        <!-- Product Content -->
+        <template x-if="!loading && product">
+            <div>
+                <!-- Breadcrumb -->
+                <nav class="mb-6 text-sm">
+                    <a href="/" class="text-gray-600 hover:text-neon">Home</a>
+                    <span class="mx-2">/</span>
+                    <a href="/products/" class="text-gray-600 hover:text-neon">Products</a>
+                    <span class="mx-2">/</span>
+                    <span x-text="product.category.name"></span>
+                    <span class="mx-2">/</span>
+                    <span class="text-gray-900 font-semibold" x-text="product.name"></span>
+                </nav>
+                
+                <!-- Main Product Section -->
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    
+                    <!-- Image Gallery -->
+                    <div class="space-y-4">
+                        <!-- Main Image -->
+                        <div class="glass rounded-2xl overflow-hidden h-96 relative group">
+                            <img 
+                                :src="selectedImage"
+                                :alt="product.name"
+                                class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                            >
+                            
+                            <!-- Badges -->
+                            <div class="absolute top-4 left-4 flex flex-col gap-2">
+                                <span x-show="product.discount_percentage > 0" class="px-3 py-1 bg-red-500 text-white rounded-full font-bold text-sm">
+                                    <span x-text="product.discount_percentage + '% OFF'"></span>
+                                </span>
+                                <span x-show="product.is_featured" class="px-3 py-1 bg-yellow-500 text-white rounded-full font-bold text-sm">
+                                    Featured
+                                </span>
+                                <span x-show="product.is_organic_certified" class="px-3 py-1 bg-green-500 text-white rounded-full font-bold text-sm">
+                                    Organic Certified
+                                </span>
+                            </div>
+                            
+                            <!-- Wishlist Button -->
+                            <button 
+                                @click="toggleWishlist()"
+                                class="absolute top-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-red-50 transition shadow-lg text-2xl">
+                                <span x-text="inWishlist ? '❤️' : '🤍'"></span>
+                            </button>
+                        </div>
+                        
+                        <!-- Thumbnail Gallery -->
+                        <div x-show="allImages.length > 1" class="grid grid-cols-4 gap-4">
+                            <template x-for="(img, index) in allImages" :key="index">
+                                <button 
+                                    @click="selectedImage = img"
+                                    class="glass rounded-lg overflow-hidden h-20 border-2 transition"
+                                    :class="selectedImage === img ? 'border-neon' : 'border-transparent hover:border-gray-300'">
+                                    <img :src="img" :alt="`Thumbnail ${index + 1}`" class="w-full h-full object-cover">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Info -->
+                    <div class="glass rounded-2xl p-8">
+                        <!-- Category -->
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl" x-text="product.category.icon"></span>
+                            <span class="text-sm text-gray-600" x-text="product.category.name"></span>
+                        </div>
+                        
+                        <!-- Product Name -->
+                        <h1 class="font-display text-4xl font-bold mb-4" x-text="product.name"></h1>
+                        
+                        <!-- Rating -->
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="flex items-center gap-1">
+                                <span class="text-yellow-500 text-xl" x-text="'⭐'.repeat(Math.round(product.average_rating))"></span>
+                                <span class="text-gray-400 text-xl" x-text="'☆'.repeat(5 - Math.round(product.average_rating))"></span>
+                            </div>
+                            <span class="text-gray-600" x-text="`${product.average_rating} (${product.review_count} reviews)`"></span>
+                        </div>
+                        
+                        <!-- Price -->
+                        <div class="mb-6">
+                            <div class="flex items-baseline gap-3">
+                                <span class="text-4xl font-bold text-neon" x-text="`₹${product.display_price}`"></span>
+                                <span x-show="product.discount_percentage > 0" class="text-xl text-gray-500 line-through" x-text="`₹${product.price}`"></span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1" x-text="`Per ${product.unit_value}${product.unit}`"></div>
+                        </div>
+                        
+                        <!-- Stock Status -->
+                        <div class="mb-6">
+                            <div x-show="product.in_stock" class="flex items-center gap-2 text-green-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-semibold">In Stock</span>
+                                <span x-show="product.is_low_stock" class="text-orange-500">(Only few left!)</span>
+                            </div>
+                            <div x-show="!product.in_stock" class="flex items-center gap-2 text-red-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-semibold">Out of Stock</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Quantity Selector -->
+                        <div class="mb-6" x-show="product.in_stock">
+                            <label class="block text-sm font-semibold mb-2">Quantity</label>
+                            <div class="flex items-center gap-4">
+                                <button @click="quantity = Math.max(1, quantity - 1)" class="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                </button>
+                                <input 
+                                    type="number" 
+                                    x-model="quantity"
+                                    min="1"
+                                    class="w-20 text-center px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                                >
+                                <button @click="quantity++" class="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex gap-4 mb-6">
+                            <button 
+                                x-show="product.in_stock"
+                                @click="addToCart"
+                                class="flex-1 px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg transform hover:scale-105">
+                                🛒 Add to Cart
+                            </button>
+                            <button 
+                                @click="toggleWishlist()"
+                                class="px-6 py-4 border-2 rounded-lg transition font-semibold"
+                                :class="inWishlist ? 'border-red-500 text-red-500 hover:bg-red-50' : 'border-gray-300 hover:bg-gray-50'">
+                                <span x-text="inWishlist ? '❤️ In Wishlist' : '🤍 Add to Wishlist'"></span>
+                            </button>
+                        </div>
+                        
+                        <!-- Quick Info -->
+                        <div class="border-t pt-6 space-y-3 text-sm">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>100% Organic & Fresh</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Same-day delivery available</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Quality guaranteed or money back</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabs Section -->
+                <div class="glass rounded-2xl overflow-hidden" x-data="{ activeTab: 'description' }">
+                    
+                    <!-- Tab Headers -->
+                    <div class="flex border-b border-gray-200">
+                        <button 
+                            @click="activeTab = 'description'"
+                            class="flex-1 px-6 py-4 font-semibold transition"
+                            :class="activeTab === 'description' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                            📝 Description
+                        </button>
+                        <button 
+                            @click="activeTab = 'farm'"
+                            class="flex-1 px-6 py-4 font-semibold transition"
+                            :class="activeTab === 'farm' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                            🌾 Farm Story
+                        </button>
+                        <button 
+                            @click="activeTab = 'reviews'"
+                            class="flex-1 px-6 py-4 font-semibold transition"
+                            :class="activeTab === 'reviews' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                            ⭐ Reviews (<span x-text="product.review_count"></span>)
+                        </button>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="p-8">
+                        
+                        <!-- Description Tab -->
+                        <div x-show="activeTab === 'description'" x-transition>
+                            <div class="prose max-w-none" x-html="product.description"></div>
+                        </div>
+                        
+                        <!-- Farm Story Tab -->
+                        <div x-show="activeTab === 'farm'" x-transition>
+                            <div x-show="product.farm_story" class="prose max-w-none" x-html="product.farm_story"></div>
+                            <div x-show="!product.farm_story" class="text-center py-8 text-gray-500">
+                                <p>🌾 Farm story coming soon...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Reviews Tab -->
+                        <div x-show="activeTab === 'reviews'" x-transition>
+                            
+                            <!-- Write Review Button -->
+                            <div class="mb-6" x-show="canReview">
+                                <button 
+                                    @click="showReviewForm = true"
+                                    class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                                    ✍️ Write a Review
+                                </button>
+                            </div>
+                            
+                            <!-- Review Form -->
+                            <div x-show="showReviewForm" x-transition class="mb-8 p-6 border-2 border-neon rounded-lg">
+                                <h3 class="text-xl font-bold mb-4">Write Your Review</h3>
+                                <form @submit.prevent="submitReview">
+                                    <!-- Rating -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-semibold mb-2">Rating *</label>
+                                        <div class="flex gap-2">
+                                            <template x-for="star in 5">
+                                                <button 
+                                                    type="button"
+                                                    @click="reviewForm.rating = star"
+                                                    class="text-3xl transition"
+                                                    :class="star <= reviewForm.rating ? 'text-yellow-500' : 'text-gray-300'">
+                                                    ★
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Title -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-semibold mb-2">Title (Optional)</label>
+                                        <input 
+                                            type="text" 
+                                            x-model="reviewForm.title"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                                            placeholder="Summarize your experience"
+                                        >
+                                    </div>
+                                    
+                                    <!-- Comment -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-semibold mb-2">Review *</label>
+                                        <textarea 
+                                            x-model="reviewForm.comment"
+                                            rows="4"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                                            placeholder="Tell us about your experience with this product (minimum 10 characters)"
+                                            required
+                                        ></textarea>
+                                    </div>
+                                    
+                                    <!-- Buttons -->
+                                    <div class="flex gap-4">
+                                        <button 
+                                            type="button"
+                                            @click="showReviewForm = false"
+                                            class="px-6 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            type="submit"
+                                            :disabled="submittingReview"
+                                            class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50">
+                                            <span x-show="!submittingReview">Submit Review</span>
+                                            <span x-show="submittingReview">Submitting...</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Reviews List -->
+                            <div class="space-y-6">
+                                <template x-for="review in reviews" :key="review.id">
+                                    <div class="border-b pb-6">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div>
+                                                <div class="font-bold" x-text="review.user_name"></div>
+                                                <div class="text-yellow-500" x-text="'⭐'.repeat(review.rating)"></div>
+                                            </div>
+                                            <div class="text-sm text-gray-500" x-text="new Date(review.created_at).toLocaleDateString()"></div>
+                                        </div>
+                                        <h4 x-show="review.title" class="font-semibold mb-2" x-text="review.title"></h4>
+                                        <p class="text-gray-700" x-text="review.comment"></p>
+                                    </div>
+                                </template>
+                                
+                                <!-- No Reviews -->
+                                <div x-show="reviews.length === 0" class="text-center py-8 text-gray-500">
+                                    <p>No reviews yet. Be the first to review this product!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+<script>
+function productDetail(slug) {
+    return {
+        slug: slug,
+        product: null,
+        loading: true,
+        selectedImage: '',
+        allImages: [],
+        quantity: 1,
+        inWishlist: false,
+        reviews: [],
+        showReviewForm: false,
+        canReview: false,
+        submittingReview: false,
+        showLoginModal: false,
+        reviewForm: {
+            rating: 5,
+            title: '',
+            comment: ''
+        },
+        
+        async init() {
+            await this.fetchProduct();
+            await this.fetchReviews();
+            
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                await this.checkWishlist();
+            }
+            
+            this.checkIfCanReview();
+        },
+        
+        async fetchProduct() {
+            try {
+                const response = await fetch(`/api/catalog/products/${this.slug}`);
+                if (response.ok) {
+                    this.product = await response.json();
+                    
+                    this.allImages = [];
+                    if (this.product.featured_image) {
+                        this.allImages.push(this.product.featured_image);
+                    }
+                    this.product.images.forEach(img => {
+                        this.allImages.push(img.image);
+                    });
+                    this.selectedImage = this.allImages[0] || '';
+                }
+            } catch (err) {
+                console.error('Failed to fetch product', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async fetchReviews() {
+            try {
+                const response = await fetch(`/api/catalog/products/${this.slug}/reviews`);
+                if (response.ok) {
+                    this.reviews = await response.json();
+                }
+            } catch (err) {
+                console.error('Failed to fetch reviews', err);
+            }
+        },
+        
+        async checkWishlist() {
+            const token = localStorage.getItem('access_token');
+            if (!token || !this.product) {
+                this.inWishlist = false;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/catalog/wishlist/check/${this.product.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.inWishlist = data.in_wishlist;
+                }
+            } catch (err) {
+                this.inWishlist = false;
+            }
+        },
+        
+        checkIfCanReview() {
+            const token = localStorage.getItem('access_token');
+            this.canReview = !!token;
+        },
+        
+        async toggleWishlist() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                this.showLoginModal = true;
+                return;
+            }
+            
+            const url = this.inWishlist 
+                ? `/api/catalog/wishlist/remove/${this.product.id}`
+                : `/api/catalog/wishlist/add/${this.product.id}`;
+            
+            const method = this.inWishlist ? 'DELETE' : 'POST';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    this.inWishlist = !this.inWishlist;
+                    
+                    gsap.to('.glass', {
+                        scale: 1.02,
+                        duration: 0.2,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                } else {
+                    const error = await response.json();
+                    window.showNotification({
+                        type: 'error',
+                        title: 'Error',
+                        message: error.message || 'Failed to update wishlist'
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to toggle wishlist', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to update wishlist'
+                });
+            }
+        },
+        
+        async submitReview() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/auth/login/';
+                return;
+            }
+            
+            if (this.reviewForm.comment.length < 10) {
+                window.showNotification({
+                    type: 'warning',
+                    title: 'Review Too Short',
+                    message: 'Review must be at least 10 characters long'
+                });
+                return;
+            }
+            
+            this.submittingReview = true;
+            
+            try {
+                const response = await fetch(`/api/catalog/products/${this.slug}/reviews`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_id: this.product.id,
+                        rating: this.reviewForm.rating,
+                        title: this.reviewForm.title,
+                        comment: this.reviewForm.comment
+                    })
+                });
+                
+                if (response.ok) {
+                    window.showNotification({
+                        type: 'success',
+                        title: 'Review Submitted! ⭐',
+                        message: 'Thank you for your review! It will be visible after approval.'
+                    });
+                    
+                    this.showReviewForm = false;
+                    this.reviewForm = { rating: 5, title: '', comment: '' };
+                    await this.fetchReviews();
+                    await this.fetchProduct();
+                } else {
+                    const error = await response.json();
+                    window.showNotification({
+                        type: 'error',
+                        title: 'Failed to Submit',
+                        message: error.detail || 'Could not submit your review. Please try again.'
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to submit review', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to submit review. Please try again.'
+                });
+            } finally {
+                this.submittingReview = false;
+            }
+        },
+        
+        async addToCart() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                this.showLoginModal = true;
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_id: this.product.id,
+                        quantity: this.quantity
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.dispatchEvent(new CustomEvent('cart-updated', {
+                        detail: { count: data.cart_count }
+                    }));
+                    
+                    gsap.to('.glass', {
+                        scale: 1.05,
+                        duration: 0.2,
+                        yoyo: true,
+                        repeat: 1,
+                        onComplete: () => {
+                            setTimeout(() => {
+                                window.showNotification({
+                                    type: 'cart',
+                                    title: 'Added to Cart! 🎉',
+                                    message: `${data.message}<br><br>Ready to checkout?`,
+                                    confirmText: 'View Cart',
+                                    showCancel: true,
+                                    onConfirm: () => {
+                                        window.location.href = '/cart/';
+                                    }
+                                });
+                            }, 100);
+                        }
+                    });
+                } else {
+                    window.showNotification({
+                        type: 'error',
+                        title: 'Cannot Add to Cart',
+                        message: data.message
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to add to cart', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to add to cart. Please try again.'
+                });
+            }
+        }
+    }
+}
+</script>
+
+{% endblock %}

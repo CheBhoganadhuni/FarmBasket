@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-green-50 to-white">
+    <div class="max-w-2xl w-full">
+        
+        <!-- Card -->
+        <div class="glass rounded-2xl shadow-2xl p-8" x-data="registerForm()">
+            
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🌱</div>
+                <h2 class="font-display text-3xl font-bold mb-2">Join FarmBasket</h2>
+                <p class="text-gray-600">Start your organic journey today</p>
+            </div>
+            
+            <!-- Error Alert -->
+            <div x-show="error" x-transition class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+                <span x-text="error"></span>
+            </div>
+            
+            <!-- Form -->
+            <form @submit.prevent="submitRegister">
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <!-- First Name -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">First Name</label>
+                        <input 
+                            type="text" 
+                            x-model="formData.first_name"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                            placeholder="John"
+                            required
+                        >
+                    </div>
+                    
+                    <!-- Last Name -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Last Name</label>
+                        <input 
+                            type="text" 
+                            x-model="formData.last_name"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                            placeholder="Doe"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <!-- Email -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Email</label>
+                    <input 
+                        type="email" 
+                        x-model="formData.email"
+                        @input="validateEmail"
+                        class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                        :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
+                        placeholder="you@example.com"
+                        required
+                    >
+                    <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+                
+                <!-- Phone -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Phone (Optional)</label>
+                    <input 
+                        type="tel" 
+                        x-model="formData.phone"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                        placeholder="+91 98765 43210"
+                    >
+                </div>
+                
+                <!-- Password -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Password</label>
+                    <div class="relative">
+                        <input 
+                            :type="showPassword ? 'text' : 'password'"
+                            x-model="formData.password"
+                            @input="validatePassword"
+                            class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                            :class="{ 'border-red-500': passwordError, 'border-gray-300': !passwordError }"
+                            placeholder="••••••••"
+                            required
+                        >
+                        <button 
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <span x-show="!showPassword">👁️</span>
+                            <span x-show="showPassword">👁️‍🗨️</span>
+                        </button>
+                    </div>
+                    <p x-show="passwordError" x-text="passwordError" class="text-red-500 text-sm mt-1"></p>
+                    
+                    <!-- Password Strength -->
+                    <div class="mt-2 flex gap-1">
+                        <div class="flex-1 h-2 rounded-full" :class="passwordStrength >= 1 ? 'bg-red-500' : 'bg-gray-200'"></div>
+                        <div class="flex-1 h-2 rounded-full" :class="passwordStrength >= 2 ? 'bg-yellow-500' : 'bg-gray-200'"></div>
+                        <div class="flex-1 h-2 rounded-full" :class="passwordStrength >= 3 ? 'bg-green-500' : 'bg-gray-200'"></div>
+                    </div>
+                </div>
+                
+                <!-- Confirm Password -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Confirm Password</label>
+                    <input 
+                        type="password"
+                        x-model="formData.password_confirm"
+                        @input="validatePasswordMatch"
+                        class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                        :class="{ 'border-red-500': confirmError, 'border-gray-300': !confirmError }"
+                        placeholder="••••••••"
+                        required
+                    >
+                    <p x-show="confirmError" x-text="confirmError" class="text-red-500 text-sm mt-1"></p>
+                </div>
+                
+                <!-- Terms -->
+                <div class="mb-6">
+                    <label class="flex items-start">
+                        <input type="checkbox" x-model="agreedToTerms" class="mt-1 mr-2 rounded" required>
+						<span class="text-sm text-gray-600">
+							I agree to the <a href="{% url 'accounts:terms' %}" class="text-neon hover:underline">Terms of Service</a> and <a href="{% url 'accounts:privacy' %}" class="text-neon hover:underline">Privacy Policy</a>
+						</span>
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <button 
+                    type="submit"
+                    :disabled="loading || !agreedToTerms"
+                    class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!loading">Create Account 🎉</span>
+                    <span x-show="loading">
+                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </form>
+            
+            <!-- Login Link -->
+            <p class="text-center mt-6 text-gray-600">
+                Already have an account? 
+                <a href="{% url 'accounts:login' %}" class="text-neon font-semibold hover:underline">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Check if already logged in
+    window.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            // Already logged in, redirect to profile
+            window.location.href = '/profile/';
+        }
+    });
+    function registerForm() {
+        return {
+            formData: {
+                first_name: '',
+                last_name: '',
+                email: '',
+                phone: '',
+                password: '',
+                password_confirm: ''
+            },
+            error: '',
+            emailError: '',
+            passwordError: '',
+            confirmError: '',
+            showPassword: false,
+            loading: false,
+            agreedToTerms: false,
+            passwordStrength: 0,
+            
+            validateEmail() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(this.formData.email)) {
+                    this.emailError = 'Please enter a valid email';
+                } else {
+                    this.emailError = '';
+                }
+            },
+            
+            validatePassword() {
+                const pass = this.formData.password;
+                this.passwordStrength = 0;
+                
+                if (pass.length < 8) {
+                    this.passwordError = 'Password must be at least 8 characters';
+                    return;
+                }
+                
+                if (!/[A-Z]/.test(pass)) {
+                    this.passwordError = 'Include at least one uppercase letter';
+                    this.passwordStrength = 1;
+                    return;
+                }
+                this.passwordStrength = 1;
+                
+                if (!/[a-z]/.test(pass)) {
+                    this.passwordError = 'Include at least one lowercase letter';
+                    return;
+                }
+                this.passwordStrength = 2;
+                
+                if (!/[0-9]/.test(pass)) {
+                    this.passwordError = 'Include at least one number';
+                    return;
+                }
+                this.passwordStrength = 3;
+                
+                this.passwordError = '';
+            },
+            
+            validatePasswordMatch() {
+                if (this.formData.password !== this.formData.password_confirm) {
+                    this.confirmError = 'Passwords do not match';
+                } else {
+                    this.confirmError = '';
+                }
+            },
+            
+			async submitRegister() {
+				this.error = '';
+				this.loading = true;
+				
+				// Validate all fields
+				this.validateEmail();
+				this.validatePassword();
+				this.validatePasswordMatch();
+				
+				if (this.emailError || this.passwordError || this.confirmError) {
+					this.loading = false;
+					return;
+				}
+				
+				try {
+					const response = await fetch('/api/auth/register', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(this.formData)
+					});
+					
+					const data = await response.json();
+					
+					if (response.ok) {
+						console.log('Registration successful, tokens received');
+						
+						// ✅ SAVE TOKENS FIRST
+						localStorage.setItem('access_token', data.access_token);
+						localStorage.setItem('refresh_token', data.refresh_token);
+						
+						console.log('Tokens saved to localStorage');
+						console.log('Access token:', localStorage.getItem('access_token'));
+						
+						// ✅ THEN animate and redirect
+						gsap.to('.glass', {
+							scale: 1.05,
+							duration: 0.3,
+							yoyo: true,
+							repeat: 1,
+							onComplete: () => {
+								console.log('Redirecting to profile...');
+								window.location.href = '/profile/';
+							}
+						});
+					} else {
+						this.error = data.detail || 'Registration failed. Please try again.';
+						console.error('Registration failed:', data);
+						gsap.fromTo('.glass', 
+							{ x: -10 }, 
+							{ x: 10, duration: 0.1, repeat: 5, yoyo: true }
+						);
+					}
+				} catch (err) {
+					console.error('Registration error:', err);
+					this.error = 'Something went wrong. Please try again.';
+				} finally {
+					this.loading = false;
+				}
+			}
+
+        }
+    }
+</script>
+{% endblock %}

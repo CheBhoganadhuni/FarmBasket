@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Terms of Service - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <div class="glass rounded-2xl p-8">
+            <h1 class="font-display text-4xl font-bold mb-6 text-neon">📜 Terms of Service</h1>
+            <p class="text-gray-600 mb-8">Last updated: November 6, 2025</p>
+            
+            <div class="prose max-w-none">
+                <h2 class="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
+                <p class="mb-6">By accessing and using FarmBasket, you accept and agree to be bound by these Terms of Service.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">2. Use of Service</h2>
+                <p class="mb-6">You agree to use our service only for lawful purposes and in accordance with these Terms.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">3. Product Information</h2>
+                <p class="mb-6">We strive to provide accurate product information, but we do not warrant that descriptions or content are error-free.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">4. Orders & Payment</h2>
+                <p class="mb-6">All orders are subject to acceptance and availability. Payment must be made at the time of order.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">5. Delivery</h2>
+                <p class="mb-6">We aim to deliver fresh produce within the specified timeframe. Delays may occur due to unforeseen circumstances.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">6. Returns & Refunds</h2>
+                <p class="mb-6">If you're not satisfied with your order, please contact us within 24 hours for a refund or replacement.</p>
+                
+                <h2 class="text-2xl font-bold mb-4">7. Contact Us</h2>
+                <p class="mb-6">For questions about these Terms, contact us at support@farmbasket.com</p>
+            </div>
+            
+            <div class="mt-8">
+                <a href="{% url 'accounts:home' %}" class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

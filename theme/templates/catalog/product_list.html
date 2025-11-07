@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Shop Organic Products - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4" x-data="productCatalog()">
+    <div class="container mx-auto max-w-7xl">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="font-display text-4xl font-bold mb-2">Shop Organic Products</h1>
+            <p class="text-gray-600">Fresh from farm to your table</p>
+        </div>
+        
+        <!-- Filters & Search -->
+        <div class="glass rounded-2xl p-6 mb-8">
+            <div class="grid md:grid-cols-4 gap-4">
+                
+                <!-- Search -->
+                <div class="md:col-span-2">
+                    <input 
+                        type="text"
+                        x-model="filters.search"
+                        @input.debounce.500ms="fetchProducts"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                        placeholder="?? Search products..."
+                    >
+                </div>
+                
+                <!-- Category Filter -->
+                <div>
+                    <select 
+                        x-model="filters.category"
+                        @change="fetchProducts"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                        <option value="">All Categories</option>
+                        <template x-for="cat in categories" :key="cat.id">
+                            <option :value="cat.slug" x-text="`${cat.icon} ${cat.name}`"></option>
+                        </template>
+                    </select>
+                </div>
+                
+                <!-- Sort -->
+                <div>
+                    <select 
+                        x-model="filters.sort_by"
+                        @change="fetchProducts"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                        <option value="newest">Newest First</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="rating">Highest Rated</option>
+                        <option value="popular">Most Popular</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Additional Filters -->
+            <div class="flex gap-4 mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" x-model="filters.in_stock" @change="fetchProducts" class="mr-2 rounded">
+                    <span class="text-sm">In Stock Only</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" x-model="filters.is_featured" @change="fetchProducts" class="mr-2 rounded">
+                    <span class="text-sm">Featured Products</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Loading Skeleton -->
+        <template x-if="loading">
+            <div class="grid md:grid-cols-4 gap-6">
+                <div x-for="i in 8" class="skeleton h-80 rounded-xl"></div>
+            </div>
+        </template>
+        
+        <!-- Products Grid -->
+        <template x-if="!loading && products.length > 0">
+            <div class="grid md:grid-cols-4 gap-6">
+                <template x-for="product in products" :key="product.id">
+                    <div class="glass rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-2 group">
+                        
+                        <!-- Product Image -->
+                        <div class="relative h-48 overflow-hidden bg-gray-100">
+                            <img 
+                                :src="product.featured_image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22monospace%22 font-size=%2224px%22 fill=%22%23999%22%3ENo Image%3C/text%3E%3C/svg%3E'"
+
+                                :alt="product.name"
+                                class="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                            >
+                            
+                            <!-- Badges -->
+                            <div class="absolute top-2 left-2 flex flex-col gap-2">
+                                <span x-show="product.discount_percentage > 0" class="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-bold">
+                                    <span x-text="product.discount_percentage + '% OFF'"></span>
+                                </span>
+                                <span x-show="product.is_featured" class="px-2 py-1 bg-yellow-500 text-white text-xs rounded-full font-bold">
+                                    Featured
+                                </span>
+                                <span x-show="product.is_organic_certified" class="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold">
+                                    Organic
+                                </span>
+                            </div>
+                                                        
+                            <!-- Stock Status -->
+                            <div x-show="!product.in_stock" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <span class="text-white font-bold text-lg">Out of Stock</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Info -->
+						<div class="text-sm text-gray-600 mb-1">
+							<span x-text="product.category_icon"></span>
+							<span x-text="' ' + product.category_name"></span>
+						</div>
+
+                            <h3 class="font-bold text-lg mb-2 line-clamp-2" x-text="product.name"></h3>
+                            
+                            <!-- Rating -->
+							<div class="flex items-center gap-2 mb-2">
+								<div class="flex text-yellow-500">
+									<template x-for="i in 5" :key="i">
+										<span x-text="i <= Math.round(product.average_rating) ? '⭐' : '☆'"></span>
+									</template>
+								</div>
+								<span class="text-sm text-gray-600">(<span x-text="product.review_count"></span>)</span>
+							</div>
+                            
+                            <!-- Price -->
+							<div class="flex items-center gap-2 mb-4">
+								<span class="text-2xl font-bold text-neon">₹<span x-text="product.display_price"></span></span>
+								<span x-show="product.discount_percentage > 0" class="text-sm text-gray-500 line-through">
+									₹<span x-text="product.price"></span>
+								</span>
+							</div>
+                            
+                            <!-- Unit -->
+                            <div class="text-sm text-gray-600 mb-4" x-text="`${product.unit_value}${product.unit}`"></div>
+                            
+							<!-- Actions -->
+							<div class="flex gap-2">
+								<button 
+									@click="toggleWishlist(product.id)"
+									class="flex-1 px-4 py-2 border-2 rounded-lg transition font-semibold text-sm"
+									:class="wishlist.includes(product.id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-300 hover:border-neon hover:text-neon'">
+									<span x-text="wishlist.includes(product.id) ? '❤️' : '🤍'"></span>
+								</button>
+								<a 
+									:href="`/products/${product.slug}/`"
+									class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition text-center font-semibold text-sm">
+									View Details
+								</a>
+							</div>
+			
+
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+        
+        <!-- Empty State -->
+        <template x-if="!loading && products.length === 0">
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">??</div>
+                <h3 class="text-2xl font-bold mb-2">No products found</h3>
+                <p class="text-gray-600 mb-6">Try adjusting your filters</p>
+                <button @click="resetFilters" class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                    Clear Filters
+                </button>
+            </div>
+        </template>
+		
+		<!-- Login Required Modal -->
+		<div x-show="showLoginModal" 
+			 x-transition
+			 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+			 @click.self="showLoginModal = false">
+			<div class="glass rounded-2xl p-8 max-w-md w-full text-center" @click.stop>
+				<div class="text-6xl mb-4">??</div>
+				<h2 class="font-display text-2xl font-bold mb-4">Login Required</h2>
+				<p class="text-gray-600 mb-6">Please login to add items to your wishlist or cart.</p>
+				<div class="flex gap-4">
+					<button 
+						@click="showLoginModal = false"
+						class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition font-semibold">
+						Cancel
+					</button>
+					<a 
+						href="/auth/login/?next=/products/"
+						class="flex-1 px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+						Login
+					</a>
+				</div>
+			</div>
+		</div>
+		
+		
+    </div>
+</div>
+
+<script>
+
+		function productCatalog() {
+			return {
+				products: [],
+				categories: [],
+				wishlist: [],
+				loading: true,
+				showLoginModal: false,
+				filters: {
+					search: '',
+					category: '',
+					sort_by: 'newest',
+					in_stock: false,
+					is_featured: false
+				},
+				
+				async init() {
+					await this.fetchCategories();
+					await this.fetchProducts();
+					await this.loadWishlist();
+					
+					// ✅ Reload wishlist when page becomes visible (user comes back from detail page)
+					document.addEventListener('visibilitychange', () => {
+						if (!document.hidden) {
+							this.loadWishlist();
+						}
+					});
+				},
+            
+            async fetchCategories() {
+                try {
+                    const response = await fetch('/api/catalog/categories');
+                    if (response.ok) {
+                        this.categories = await response.json();
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch categories', err);
+                }
+            },
+            
+            async fetchProducts() {
+                this.loading = true;
+                
+                // Build query params
+                const params = new URLSearchParams();
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.category) params.append('category', this.filters.category);
+                if (this.filters.sort_by) params.append('sort_by', this.filters.sort_by);
+                if (this.filters.in_stock) params.append('in_stock', 'true');
+                if (this.filters.is_featured) params.append('is_featured', 'true');
+                
+                try {
+                    const response = await fetch(`/api/catalog/products?${params}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.products = data.items || data;
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch products', err);
+                } finally {
+                    this.loading = false;
+                }
+            },
+            
+            async loadWishlist() {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+                
+                try {
+                    const response = await fetch('/api/catalog/wishlist', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const items = await response.json();
+                        this.wishlist = items.map(item => item.id);
+                    }
+                } catch (err) {
+                    console.error('Failed to load wishlist', err);
+                }
+            },
+            
+			async toggleWishlist(productId) {
+				const token = localStorage.getItem('access_token');
+				if (!token) {
+					this.showLoginModal = true;  // ? Show modal instead of alert
+					return;
+				}
+				
+				const isInWishlist = this.wishlist.includes(productId);
+				const url = isInWishlist 
+					? `/api/catalog/wishlist/remove/${productId}`
+					: `/api/catalog/wishlist/add/${productId}`;
+				
+				const method = isInWishlist ? 'DELETE' : 'POST';
+				
+				try {
+					const response = await fetch(url, {
+						method: method,
+						headers: {
+							'Authorization': `Bearer ${token}`
+						}
+					});
+					
+					if (response.ok) {
+						if (isInWishlist) {
+							this.wishlist = this.wishlist.filter(id => id !== productId);
+						} else {
+							this.wishlist.push(productId);
+						}
+					}
+				} catch (err) {
+					console.error('Failed to toggle wishlist', err);
+				}
+			},
+            
+            resetFilters() {
+                this.filters = {
+                    search: '',
+                    category: '',
+                    sort_by: 'newest',
+                    in_stock: false,
+                    is_featured: false
+                };
+                this.fetchProducts();
+            }
+        }
+    }
+</script>
+{% endblock %}

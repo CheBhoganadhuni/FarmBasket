@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(to right, #32b848, #2a9e3d); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; }
+        .order-details { background: white; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
+        .total { font-weight: bold; font-size: 18px; margin-top: 15px; padding-top: 15px; border-top: 2px solid #32b848; }
+        .button { display: inline-block; background: #32b848; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #777; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Order Confirmed!</h1>
+            <p>Order #{{ order.order_number }}</p>
+        </div>
+        <div class="content">
+            <h2>Hi {{ order.user.first_name }}! 👋</h2>
+            <p>Thank you for your order! We're preparing your fresh organic produce.</p>
+            
+            <div class="order-details">
+                <h3>Order Details:</h3>
+                {% for item in order.items.all %}
+                <div class="item">
+                    <div>
+                        <strong>{{ item.product_name }}</strong><br>
+                        <small>{{ item.quantity }} × ₹{{ item.unit_price }}</small>
+                    </div>
+                    <div>₹{{ item.total_price }}</div>
+                </div>
+                {% endfor %}
+                
+                <div class="total">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Total:</span>
+                        <span>₹{{ order.total }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <p><strong>Delivery Address:</strong><br>
+            {{ order.delivery_address }}</p>
+            
+            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+            <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+            
+            <center>
+                <a href="{{ site_url }}/orders/{{ order.id }}/" class="button">Track Order</a>
+            </center>
+            
+            <p>We'll send you another email when your order is out for delivery!</p>
+            <p>- The FarmBasket Team</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 FarmBasket. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

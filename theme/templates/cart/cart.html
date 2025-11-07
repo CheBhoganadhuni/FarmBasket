@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+
+{% block title %}Shopping Cart - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4" x-data="cartPage()">
+    <div class="container mx-auto max-w-7xl">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="font-display text-4xl font-bold mb-2">🛒 Shopping Cart</h1>
+                <p class="text-gray-600" x-text="cart ? `${cart.items_count} items in your cart` : 'Loading...'"></p>
+            </div>
+            <a href="/products/" class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
+                🛍️ Continue Shopping
+            </a>
+			
+        </div>
+        
+        <!-- Loading -->
+        <template x-if="loading">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <div class="skeleton h-40 rounded-xl mb-4"></div>
+                    <div class="skeleton h-40 rounded-xl mb-4"></div>
+                </div>
+                <div class="skeleton h-60 rounded-xl"></div>
+            </div>
+        </template>
+        
+        <!-- Cart Content -->
+        <template x-if="!loading && cart && cart.items.length > 0">
+            <div class="grid md:grid-cols-3 gap-6">
+                
+                <!-- Cart Items -->
+                <div class="md:col-span-2 space-y-4">
+                    <template x-for="item in cart.items" :key="item.id">
+                        <div class="glass rounded-xl p-6 flex gap-6">
+                            
+                            <!-- Product Image -->
+                            <a :href="`/products/${item.product_slug}/`" class="flex-shrink-0">
+                                <div class="w-24 h-24 bg-gradient-to-br from-green-100 to-green-50 rounded-lg overflow-hidden flex items-center justify-center">
+                                    <img 
+                                        x-show="item.product_image"
+                                        :src="item.product_image" 
+                                        :alt="item.product_name"
+                                        class="w-full h-full object-cover"
+                                    >
+                                    <span x-show="!item.product_image" class="text-4xl">🧺</span>
+                                </div>
+                            </a>
+                            
+                            <!-- Product Info -->
+                            <div class="flex-1">
+                                <a :href="`/products/${item.product_slug}/`" class="hover:text-neon">
+                                    <h3 class="font-bold text-lg mb-1" x-text="item.product_name"></h3>
+                                </a>
+                                
+                                <!-- Stock Status -->
+                                <div class="mb-3">
+                                    <span x-show="item.in_stock" class="text-green-600 text-sm">✓ In Stock</span>
+                                    <span x-show="!item.in_stock" class="text-red-600 text-sm">✗ Out of Stock</span>
+                                    <span x-show="item.quantity > item.available_quantity" class="text-orange-500 text-sm ml-2">
+                                        (Only <span x-text="item.available_quantity"></span> available)
+                                    </span>
+                                </div>
+                                
+                                <!-- Price & Quantity -->
+                                <div class="flex items-center justify-between">
+                                    <div class="text-2xl font-bold text-neon">
+                                        ₹<span x-text="item.total_price"></span>
+                                    </div>
+                                    
+                                    <!-- Quantity Controls -->
+                                    <div class="flex items-center gap-3">
+                                        <button 
+                                            @click="updateQuantity(item.id, item.quantity - 1)"
+                                            :disabled="updating"
+                                            class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                            </svg>
+                                        </button>
+                                        
+                                        <input 
+                                            type="number" 
+                                            :value="item.quantity"
+                                            @change="updateQuantity(item.id, parseInt($event.target.value))"
+                                            min="1"
+                                            :max="item.available_quantity"
+                                            class="w-16 text-center px-2 py-1 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                                        >
+                                        
+                                        <button 
+                                            @click="updateQuantity(item.id, item.quantity + 1)"
+                                            :disabled="updating || item.quantity >= item.available_quantity"
+                                            class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                            </svg>
+                                        </button>
+                                        
+                                        <button 
+                                            @click="removeItem(item.id)"
+                                            :disabled="updating"
+                                            class="ml-2 w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Price per unit -->
+                                <div class="text-sm text-gray-500 mt-2">
+                                    ₹<span x-text="item.unit_price"></span> per item
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Clear Cart Button -->
+                    <button 
+                        @click="clearCart()"
+                        :disabled="updating"
+                        class="w-full px-6 py-3 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition font-semibold disabled:opacity-50">
+                        🗑️ Clear Cart
+                    </button>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="glass rounded-xl p-6 h-fit sticky top-24">
+                    <h2 class="font-display text-2xl font-bold mb-6">Order Summary</h2>
+                    
+                    <!-- Summary Details -->
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Subtotal (<span x-text="cart.items_count"></span> items)</span>
+                            <span>₹<span x-text="cart.subtotal"></span></span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Delivery</span>
+                            <span class="text-green-600">FREE</span>
+                        </div>
+                        <div class="border-t pt-3 flex justify-between font-bold text-xl">
+                            <span>Total</span>
+                            <span class="text-neon">₹<span x-text="cart.total"></span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Checkout Button -->
+                    <button 
+                        @click="proceedToCheckout()"
+                        class="w-full px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg transform hover:scale-105">
+                        Proceed to Checkout 🚀
+                    </button>
+                    
+                    <!-- Trust Badges -->
+                    <div class="mt-6 pt-6 border-t space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>100% Organic & Fresh</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Same-day delivery</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Quality guaranteed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Empty Cart -->
+        <template x-if="!loading && cart && cart.items.length === 0">
+            <div class="text-center py-20">
+                <div class="text-6xl mb-4">🛒</div>
+                <h3 class="text-2xl font-bold mb-2">Your cart is empty</h3>
+                <p class="text-gray-600 mb-6">Add some fresh organic products!</p>
+                <a href="/products/" class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                    Browse Products 🛍️
+                </a>
+            </div>
+        </template>
+    </div>
+</div>
+<script>
+function cartPage() {
+    return {
+        cart: null,
+        loading: true,
+        updating: false,
+        
+        async init() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/auth/login/?next=/cart/';
+                return;
+            }
+            
+            await this.fetchCart();
+        },
+        
+        async fetchCart() {
+            const token = localStorage.getItem('access_token');
+            
+            try {
+                const response = await fetch('/api/cart/', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                console.log('Cart response status:', response.status);
+                
+                if (response.ok) {
+                    this.cart = await response.json();
+                    console.log('Cart data:', this.cart);
+                    this.updateNavbarCart();
+                } else if (response.status === 401) {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/auth/login/?next=/cart/';
+                } else {
+                    console.error('Cart fetch failed:', response.status);
+                }
+            } catch (err) {
+                console.error('Failed to fetch cart', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async updateQuantity(itemId, newQuantity) {
+            if (newQuantity < 1) return;
+            
+            const token = localStorage.getItem('access_token');
+            this.updating = true;
+            
+            try {
+                const response = await fetch(`/api/cart/update/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: newQuantity })
+                });
+                
+                if (response.ok) {
+                    await this.fetchCart();
+                    
+                    gsap.from('.glass', {
+                        scale: 0.98,
+                        duration: 0.2
+                    });
+                } else {
+                    const error = await response.json();
+                    window.showNotification({
+                        type: 'error',
+                        title: 'Cannot Update',
+                        message: error.message || 'Failed to update quantity'
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to update quantity', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to update quantity. Please try again.'
+                });
+            } finally {
+                this.updating = false;
+            }
+        },
+        
+        removeItem(itemId) {
+            window.showNotification({
+                type: 'delete',
+                title: 'Remove Item?',
+                message: 'Are you sure you want to remove this item from your cart?',
+                showCancel: true,
+                confirmText: 'Remove',
+                onConfirm: () => {
+                    this.doRemoveItem(itemId);
+                }
+            });
+        },
+        
+        async doRemoveItem(itemId) {
+            const token = localStorage.getItem('access_token');
+            this.updating = true;
+            
+            try {
+                const response = await fetch(`/api/cart/remove/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    await this.fetchCart();
+                    
+                    gsap.from('.glass', {
+                        x: -20,
+                        opacity: 0,
+                        duration: 0.3,
+                        stagger: 0.1
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to remove item', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to remove item. Please try again.'
+                });
+            } finally {
+                this.updating = false;
+            }
+        },
+        
+        clearCart() {
+            window.showNotification({
+                type: 'warning',
+                title: 'Clear Cart?',
+                message: 'This will remove all items from your cart. This action cannot be undone.',
+                showCancel: true,
+                confirmText: 'Clear Cart',
+                onConfirm: () => {
+                    this.doClearCart();
+                }
+            });
+        },
+        
+        async doClearCart() {
+            const token = localStorage.getItem('access_token');
+            this.updating = true;
+            
+            try {
+                const response = await fetch('/api/cart/clear', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    await this.fetchCart();
+                }
+            } catch (err) {
+                console.error('Failed to clear cart', err);
+                window.showNotification({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to clear cart. Please try again.'
+                });
+            } finally {
+                this.updating = false;
+            }
+        },
+        
+        updateNavbarCart() {
+            window.dispatchEvent(new CustomEvent('cart-updated', {
+                detail: { count: this.cart.items_count }
+            }));
+        },
+        
+        proceedToCheckout() {
+            window.location.href = '/checkout/';
+        }
+    }
+}
+</script>
+
+{% endblock %}

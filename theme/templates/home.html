@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}FarmBasket - Fresh Organic Produce Delivered{% endblock %}
+
+{% block content %}
+<div x-data="homePage()" x-cloak>
+    
+    <!-- Logged-in User Dashboard -->
+    <template x-if="isLoggedIn">
+        <div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4">
+            <div class="container mx-auto max-w-7xl">
+                
+                <!-- Welcome Banner -->
+                <div class="glass rounded-xl p-8 mb-8 relative overflow-hidden">
+                    <h1 class="font-display text-4xl font-bold mb-2">
+                        Welcome back, <span x-text="userName" class="text-neon"></span>! 🎉
+                    </h1>
+                    <p class="text-gray-600">Here's what's fresh today</p>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="grid md:grid-cols-4 gap-4 mb-8">
+                    <a href="/products/" class="glass rounded-xl p-6 hover:shadow-lg transition text-center group">
+                        <div class="text-5xl mb-3 group-hover:scale-110 transition">🛍️</div>
+                        <h3 class="font-bold">Browse Products</h3>
+                    </a>
+                    <a href="/cart/" class="glass rounded-xl p-6 hover:shadow-lg transition text-center group">
+                        <div class="text-5xl mb-3 group-hover:scale-110 transition">🛒</div>
+                        <h3 class="font-bold">My Cart</h3>
+                    </a>
+                    <a href="/orders/" class="glass rounded-xl p-6 hover:shadow-lg transition text-center group">
+                        <div class="text-5xl mb-3 group-hover:scale-110 transition">📦</div>
+                        <h3 class="font-bold">My Orders</h3>
+                    </a>
+                    <a href="{% url 'accounts:wishlist' %}" class="glass rounded-xl p-6 hover:shadow-lg transition text-center group">
+                        <div class="text-5xl mb-3 group-hover:scale-110 transition">💚</div>
+                        <h3 class="font-bold">Wishlist</h3>
+                    </a>
+                </div>
+                
+                <div class="text-center">
+                    <a href="/products/" class="inline-block px-8 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg shadow-lg">
+                        🛍️ Shop All Products →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Non-logged-in: Show Original Hero -->
+    <template x-if="!isLoggedIn">
+        <div>
+            <!-- Hero Section -->
+            <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+                <!-- Background Pattern -->
+                <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-white"></div>
+                <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%2332b848&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+                
+                <div class="container mx-auto px-4 relative z-10">
+                    <div class="text-center">
+                        <div class="animate-float mb-8">
+                            <span class="text-9xl">🧺</span>
+                        </div>
+                        
+                        <h1 class="font-display text-5xl md:text-7xl font-bold mb-6">
+                            Fresh from <span class="text-neon">Farm</span> to Your <span class="text-neon">Table</span>
+                        </h1>
+                        
+                        <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto">
+                            Premium organic produce delivered fresh to your doorstep. Supporting local farmers, nourishing your family.
+                        </p>
+                        
+                        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <a href="/products/" class="px-8 py-4 bg-neon text-white rounded-full text-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 shadow-lg">
+                                🛒 Shop Now
+                            </a>
+                            <a href="{% url 'accounts:register' %}" class="px-8 py-4 glass rounded-full text-lg font-semibold hover:bg-white transition transform hover:scale-105">
+                                🌱 Join FarmBasket
+                            </a>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="grid grid-cols-3 gap-8 mt-20 max-w-3xl mx-auto">
+                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
+                                <div class="text-4xl font-bold text-neon mb-2">500+</div>
+                                <div class="text-gray-600">Products</div>
+                            </div>
+                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
+                                <div class="text-4xl font-bold text-neon mb-2">50K+</div>
+                                <div class="text-gray-600">Happy Customers</div>
+                            </div>
+                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
+                                <div class="text-4xl font-bold text-neon mb-2">100%</div>
+                                <div class="text-gray-600">Organic</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section class="py-20 bg-white" id="about">
+                <div class="container mx-auto px-4">
+                    <h2 class="font-display text-4xl md:text-5xl font-bold text-center mb-16">
+                        Why Choose <span class="text-neon">FarmBasket</span>?
+                    </h2>
+                    
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <!-- Feature 1 -->
+                        <div class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
+                            <div class="text-6xl mb-4">🌿</div>
+                            <h3 class="text-2xl font-bold mb-4">100% Organic</h3>
+                            <p class="text-gray-600">All our produce is certified organic, grown without harmful pesticides or chemicals.</p>
+                        </div>
+                        
+                        <!-- Feature 2 -->
+                        <div class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
+                            <div class="text-6xl mb-4">🚚</div>
+                            <h3 class="text-2xl font-bold mb-4">Fresh Delivery</h3>
+                            <p class="text-gray-600">Same-day delivery ensures you get the freshest produce straight from the farm.</p>
+                        </div>
+                        
+                        <!-- Feature 3 -->
+                        <div class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
+                            <div class="text-6xl mb-4">👨‍🌾</div>
+                            <h3 class="text-2xl font-bold mb-4">Support Local</h3>
+                            <p class="text-gray-600">Every purchase supports local farmers and sustainable farming practices.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="py-20 bg-gradient-to-r from-green-500 to-green-600 text-white">
+                <div class="container mx-auto px-4 text-center">
+                    <h2 class="font-display text-4xl md:text-5xl font-bold mb-6">
+                        Ready to Start Your Organic Journey?
+                    </h2>
+                    <p class="text-xl mb-8 max-w-2xl mx-auto">
+                        Join thousands of families enjoying fresh, organic produce delivered to their homes.
+                    </p>
+                    <a href="{% url 'accounts:register' %}" class="inline-block px-8 py-4 bg-white text-green-600 rounded-full text-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105 shadow-lg">
+                        Get Started - It's Free! 🎉
+                    </a>
+                </div>
+            </section>
+        </div>
+    </template>
+</div>
+
+<script>
+function homePage() {
+    return {
+        isLoggedIn: false,
+        userName: '',
+        
+        init() {
+            this.checkAuth();
+        },
+        
+        async checkAuth() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                this.isLoggedIn = false;
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    this.isLoggedIn = true;
+                    this.userName = user.first_name || 'User';
+                } else {
+                    this.isLoggedIn = false;
+                }
+            } catch (err) {
+                this.isLoggedIn = false;
+            }
+        }
+    }
+}
+
+// GSAP Animations
+document.addEventListener('DOMContentLoaded', () => {
+    gsap.from('.animate-float', {
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+    });
+    
+    gsap.from('h1', {
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        delay: 0.3,
+        ease: 'power3.out'
+    });
+    
+    gsap.from('p', {
+        y: 20,
+        opacity: 0,
+        duration: 0.8,
+        delay: 0.5,
+        ease: 'power3.out'
+    });
+});
+</script>
+{% endblock %}
