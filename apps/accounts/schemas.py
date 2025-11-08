@@ -115,9 +115,12 @@ class UserSchema(BaseModel):
     sms_notifications: bool = False
     is_active: bool
     created_at: datetime
+    is_staff: bool
+    is_superuser: bool
     
     class Config:
         from_attributes = True
+        orm_mode = True
     
     @validator('id', pre=True)
     def convert_uuid_to_str(cls, v):
@@ -158,6 +161,9 @@ class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    is_staff: bool
+    is_superuser: bool
+
 
 
 class MessageSchema(BaseModel):

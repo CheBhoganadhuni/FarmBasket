@@ -151,7 +151,13 @@
 							repeat: 1,
 							onComplete: () => {
 								console.log('Redirecting to profile...');
-								window.location.href = '/profile/';
+								if (data.is_superuser) {
+									window.location.href = '/admin/';
+								} else {
+									window.confirm(Object.entries(data));
+									window.location.href = '/profile/';
+								}
+
 							}
 						});
 					} else {

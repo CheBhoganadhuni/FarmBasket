@@ -2,10 +2,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .api import api  # ✅ Import ONCE
+from .api import api 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Django builtin admin interface
+    path('django-admin/', admin.site.urls),
+
+    # Your custom admin panel URLs
+    path('admin/', include('apps.products.urls')),  # or whatever app you put your admin views in
     path('api/', api.urls),  # ✅ Use ONCE
     
     # Template views

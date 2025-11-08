@@ -1,0 +1,219 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Orders{% endblock %}
+{% block page_title %}Order Management{% endblock %}
+{% block page_subtitle %}View and manage customer orders{% endblock %}
+
+{% block content %}
+<div x-data="ordersManager()" x-init="init()" class="space-y-6">
+    
+    <!-- Toolbar -->
+    <div class="admin-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex-1 flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <!-- Search -->
+            <div class="relative flex-1">
+                <input 
+                    type="text" 
+                    x-model="filters.search"
+                    @input.debounce.500ms="loadOrders()"
+                    placeholder="Search by order number, customer..." 
+                    class="admin-input pl-10"
+                >
+                <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            
+            <!-- Status Filter -->
+            <select x-model="filters.status" @change="loadOrders()" class="admin-input">
+                <option value="">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="PROCESSING">Processing</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+            </select>
+        </div>
+        
+        <div class="text-sm text-gray-400">
+            Total: <span class="font-bold text-white" x-text="orders.length"></span> orders
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <template x-if="loading">
+        <div class="flex items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+    </template>
+    
+    <!-- Orders Table -->
+    <template x-if="!loading && orders.length > 0">
+        <div class="admin-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-800 border-b border-gray-700">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Order</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Items</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Payment</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <template x-for="order in orders" :key="order.id">
+                            <tr class="hover:bg-gray-800 transition">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                        <p class="font-semibold">#<span x-text="order.order_number"></span></p>
+                                        <p class="text-xs text-gray-500" x-text="order.items_count + ' items'"></p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <p class="font-semibold" x-text="order.user.name"></p>
+                                        <p class="text-xs text-gray-500" x-text="order.user.email"></p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="badge badge-info" x-text="order.items_count"></span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-lg">₹<span x-text="order.total"></span></p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <select 
+                                        :value="order.status"
+                                        @change="updateOrderStatus(order, $event.target.value)"
+                                        class="badge cursor-pointer"
+                                        :class="{
+                                            'badge-warning': order.status === 'PENDING' || order.status === 'PROCESSING',
+                                            'badge-info': order.status === 'CONFIRMED' || order.status === 'SHIPPED',
+                                            'badge-success': order.status === 'DELIVERED',
+                                            'badge-danger': order.status === 'CANCELLED'
+                                        }"
+                                    >
+                                        <option value="PENDING">Pending</option>
+                                        <option value="PROCESSING">Processing</option>
+                                        <option value="CONFIRMED">Confirmed</option>
+                                        <option value="SHIPPED">Shipped</option>
+                                        <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                                        <option value="DELIVERED">Delivered</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span 
+                                        class="badge text-xs"
+                                        :class="{
+                                            'badge-success': order.payment_status === 'PAID',
+                                            'badge-warning': order.payment_status === 'PENDING',
+                                            'badge-danger': order.payment_status === 'FAILED'
+                                        }"
+                                        x-text="order.payment_status === 'PAID' ? '✓ Paid' : order.payment_status"
+                                    ></span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-400" x-text="new Date(order.created_at).toLocaleDateString()"></td>
+                                <td class="px-6 py-4">
+                                    <a :href="`/orders/${order.id}/`" target="_blank" class="text-blue-500 hover:text-blue-400 text-sm font-semibold">
+                                        View →
+                                    </a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Empty State -->
+    <template x-if="!loading && orders.length === 0">
+        <div class="admin-card p-20 text-center">
+            <div class="text-6xl mb-4">📦</div>
+            <h3 class="text-2xl font-bold mb-2">No orders found</h3>
+            <p class="text-gray-400">Orders will appear here once customers start purchasing</p>
+        </div>
+    </template>
+</div>
+
+<script>
+function ordersManager() {
+    return {
+        loading: true,
+        orders: [],
+        filters: {
+            search: '',
+            status: ''
+        },
+        
+        async init() {
+            await this.loadOrders();
+        },
+        
+        async loadOrders() {
+            this.loading = true;
+            const token = localStorage.getItem('access_token');
+            
+            const params = new URLSearchParams();
+            if (this.filters.search) params.append('search', this.filters.search);
+            if (this.filters.status) params.append('status', this.filters.status);
+            
+            try {
+                const response = await fetch(`/api/admin/orders?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.orders = data.orders;
+                }
+            } catch (err) {
+                console.error('Failed to load orders', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async updateOrderStatus(order, newStatus) {
+            const token = localStorage.getItem('access_token');
+            
+            try {
+                const response = await fetch(`/api/admin/orders/${order.id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (window.showNotification) {
+                        window.showNotification(data.message, 'success');
+                    }
+                    order.status = newStatus;
+                } else {
+                    if (window.showNotification) {
+                        window.showNotification('Failed to update order status', 'error');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to update order status', err);
+                if (window.showNotification) {
+                    window.showNotification('Error updating order status', 'error');
+                }
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Address, PasswordResetToken
 from .schemas import (
     UserRegisterSchema, 
-    UserLoginSchema, 
+    UserLoginSchema,
     UserSchema, 
     TokenSchema,
     PasswordResetRequestSchema, 
@@ -74,7 +74,7 @@ def register(request, data: UserRegisterSchema):
 @router.post("/login", response=TokenSchema)
 def login(request, data: UserLoginSchema):
     """User login"""
-    
+
     user = authenticate_user(data.email, data.password)
     
     if not user:
@@ -91,7 +91,11 @@ def login(request, data: UserLoginSchema):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
+        "email": user.email,  # optional extras
+        "full_name": user.get_full_name(),  # optional
     }
 
 

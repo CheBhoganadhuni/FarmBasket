@@ -26,6 +26,7 @@ django-rq==2.10.2
 django-storages==1.14.6
 django-tailwind==4.4.0
 djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
 dnspython==2.8.0
 ecdsa==0.19.1
 email-validator==2.3.0
@@ -46,6 +47,7 @@ pydantic==2.12.4
 pydantic-settings==2.11.0
 pydantic_core==2.41.5
 Pygments==2.19.2
+PyJWT==2.10.1
 pytailwindcss==0.3.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
@@ -54,6 +56,7 @@ python-multipart==0.0.20
 python-slugify==8.0.4
 pytz==2025.2
 PyYAML==6.0.3
+razorpay==2.0.0
 redis==5.0.1
 requests==2.32.5
 rich==14.2.0

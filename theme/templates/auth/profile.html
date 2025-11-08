@@ -5,12 +5,10 @@
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4">
     <div class="container mx-auto max-w-6xl">
-        
         <!-- Profile Header -->
         <div class="glass rounded-2xl shadow-2xl p-8 mb-8" x-data="profileData()">
-            
             <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
-                
+
                 <!-- Avatar Section -->
                 <div class="relative" x-data="{ uploading: false }">
                     <img 
@@ -18,7 +16,6 @@
                         alt="Profile Picture"
                         class="w-32 h-32 rounded-full border-4 border-neon shadow-lg object-cover"
                     >
-                    
                     <!-- Upload Button -->
                     <label class="absolute bottom-0 right-0 bg-neon text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition transform hover:scale-110">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +24,6 @@
                         </svg>
                         <input type="file" class="hidden" @change="uploadAvatar" accept="image/*">
                     </label>
-                    
                     <!-- Uploading Spinner -->
                     <div x-show="uploading" class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
                         <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -36,90 +32,77 @@
                         </svg>
                     </div>
                 </div>
-                
+
                 <!-- User Info -->
                 <div class="flex-1 text-center md:text-left">
-                    <h1 class="font-display text-4xl font-bold mb-2" x-text="user.full_name"></h1>
-                    <p class="text-gray-600 mb-4" x-text="user.email"></p>
-                    
-                    <!-- Loyalty Badge -->
-                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
-                        <span x-text="user.loyalty_tier"></span>
-                        <span class="text-sm">•</span>
-                        <span x-text="user.xp_points + ' XP'"></span>
-                    </div>
-                    
-                    <!-- Stats with Real Data -->
-                    <div class="grid grid-cols-3 gap-4 mt-6">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-neon" x-text="stats.orders_count"></div>
-                            <div class="text-sm text-gray-600">Orders</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-neon" x-text="'₹' + stats.total_spent"></div>
-                            <div class="text-sm text-gray-600">Total Spent</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-neon" x-text="stats.addresses_count"></div>
-                            <div class="text-sm text-gray-600">Addresses</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Edit Button -->
-                    <button @click="editMode = true" class="mt-6 px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
-                        Edit Profile ✏️
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Edit Form Modal -->
-            <div x-show="editMode" 
-                 x-transition
-                 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                 @click.self="editMode = false">
-                
-                <div class="glass rounded-2xl p-8 max-w-md w-full" @click.stop>
-                    <h2 class="font-display text-2xl font-bold mb-6">Edit Profile</h2>
-                    
-                    <form @submit.prevent="updateProfile">
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold mb-2">First Name</label>
-                            <input type="text" x-model="editData.first_name" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold mb-2">Last Name</label>
-                            <input type="text" x-model="editData.last_name" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold mb-2">Phone</label>
-                            <input type="tel" x-model="editData.phone" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                        </div>
-                        
-                        <div class="mb-6">
-                            <label class="flex items-center">
-                                <input type="checkbox" x-model="editData.email_notifications" class="mr-2 rounded">
-                                <span class="text-sm">Email notifications</span>
-                            </label>
-                        </div>
-                        
-                        <div class="flex gap-4">
-                            <button type="button" @click="editMode = false" class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition">
-                                Cancel
-                            </button>
-                            <button type="submit" class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
-                                Save Changes
+                    <template x-if="!editMode">
+                        <div>
+                            <h1 class="font-display text-4xl font-bold mb-2" x-text="user.full_name"></h1>
+                            <p class="text-gray-600 mb-4" x-text="user.email"></p>
+                            <!-- Loyalty Badge -->
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
+                                <span x-text="user.loyalty_tier"></span>
+                                <span class="text-sm">•</span>
+                                <span x-text="user.xp_points + ' XP'"></span>
+                            </div>
+                            <!-- Stats with Real Data -->
+                            <div class="grid grid-cols-3 gap-4 mt-6">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-neon" x-text="stats.orders_count"></div>
+                                    <div class="text-sm text-gray-600">Orders</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-neon" x-text="'₹' + stats.total_spent"></div>
+                                    <div class="text-sm text-gray-600">Total Spent</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-neon" x-text="stats.addresses_count"></div>
+                                    <div class="text-sm text-gray-600">Addresses</div>
+                                </div>
+                            </div>
+                            <!-- Edit Button -->
+                            <button @click="editMode = true" class="mt-6 px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                                Edit Profile ✏️
                             </button>
                         </div>
-                    </form>
+                    </template>
+
+                    <!-- Edit Profile Form -->
+                    <template x-if="editMode">
+                        <form @submit.prevent="updateProfile" class="space-y-4 mt-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Full Name</label>
+                                <input type="text" x-model="editData.full_name" required
+                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Email</label>
+                                <input type="email" x-model="editData.email" required
+                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+                            </div>
+							<div>
+								<label class="block text-sm font-semibold mb-1">Mobile Number</label>
+								<input type="text" x-model="editData.phone" required
+									   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+							</div>
+
+                            <!-- Add more fields as necessary -->
+                            <div class="flex gap-4">
+                                <button type="submit" class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                                    Save Changes
+                                </button>
+                                <button type="button" @click="editMode = false" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </template>
                 </div>
             </div>
         </div>
-        
+
         <!-- Tabs -->
         <div class="glass rounded-2xl shadow-2xl overflow-hidden" x-data="{ activeTab: 'orders' }">
-            
             <!-- Tab Headers -->
             <div class="flex border-b border-gray-200">
                 <button @click="activeTab = 'orders'" 
@@ -138,10 +121,9 @@
                     ⚙️ Settings
                 </button>
             </div>
-            
+
             <!-- Tab Content -->
             <div class="p-8">
-                
                 <!-- Orders Tab with Real Data -->
                 <div x-show="activeTab === 'orders'" x-transition x-data="{ orders: [], loading: true }"
                      x-init="
@@ -155,16 +137,13 @@
                         <h3 class="text-2xl font-bold">Recent Orders</h3>
                         <a href="/orders/" class="text-neon hover:underline font-semibold">View All →</a>
                     </div>
-                    
-                    <!-- Loading -->
                     <template x-if="loading">
                         <div class="space-y-4">
                             <div class="skeleton h-24 rounded-lg"></div>
                             <div class="skeleton h-24 rounded-lg"></div>
                         </div>
                     </template>
-                    
-                    <div class="space-y-4">
+                    <div class="space-y-4" >
                         <template x-for="order in orders" :key="order.id">
                             <a :href="'/orders/' + order.id + '/'" class="block border-2 border-gray-200 rounded-lg p-4 hover:border-neon transition">
                                 <div class="flex items-center justify-between mb-2">
@@ -175,19 +154,17 @@
                                     <div>
                                         <div class="text-sm text-gray-600" x-text="order.items_count + ' items • ₹' + order.total"></div>
                                     </div>
-                                    <div class="px-3 py-1 rounded-full text-sm font-semibold" 
+                                    <div class="px-3 py-1 rounded-full text-sm font-semibold"
                                          :class="{
-                                             'bg-green-100 text-green-700': order.status === 'DELIVERED',
-                                             'bg-blue-100 text-blue-700': order.status === 'SHIPPED',
-                                             'bg-yellow-100 text-yellow-700': order.status === 'PROCESSING' || order.status === 'CONFIRMED',
-                                             'bg-gray-100 text-gray-700': order.status === 'PENDING'
-                                         }" 
-                                         x-text="order.status_display"></div>
+                                            'bg-green-100 text-green-700': order.status === 'DELIVERED',
+                                            'bg-blue-100 text-blue-700': order.status === 'SHIPPED',
+                                            'bg-yellow-100 text-yellow-700': order.status === 'PROCESSING' || order.status === 'CONFIRMED',
+                                            'bg-gray-100 text-gray-700': order.status === 'PENDING'
+                                        }"
+                                        x-text="order.status_display"></div>
                                 </div>
                             </a>
                         </template>
-                        
-                        <!-- Empty State -->
                         <div x-show="orders.length === 0 && !loading" class="text-center py-12">
                             <div class="text-6xl mb-4">📦</div>
                             <h3 class="text-xl font-bold mb-2">No orders yet</h3>
@@ -196,7 +173,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Addresses Tab with Real Data -->
                 <div x-show="activeTab === 'addresses'" x-transition x-data="{ addresses: [], loading: true }"
                      x-init="
@@ -212,15 +189,12 @@
                             + Add New
                         </a>
                     </div>
-                    
-                    <!-- Loading -->
                     <template x-if="loading">
                         <div class="space-y-4">
                             <div class="skeleton h-32 rounded-lg"></div>
                             <div class="skeleton h-32 rounded-lg"></div>
                         </div>
                     </template>
-                    
                     <div class="space-y-4">
                         <template x-for="address in addresses" :key="address.id">
                             <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-neon transition">
@@ -243,8 +217,6 @@
                                 </div>
                             </div>
                         </template>
-                        
-                        <!-- Empty State -->
                         <div x-show="addresses.length === 0 && !loading" class="text-center py-12">
                             <div class="text-6xl mb-4">📭</div>
                             <h3 class="text-xl font-bold mb-2">No addresses yet</h3>
@@ -253,351 +225,445 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Settings Tab -->
                 <div x-show="activeTab === 'settings'" x-transition x-data="profileData()">
                     <h3 class="text-2xl font-bold mb-6">Account Settings</h3>
-                    
-                    <div class="space-y-6">
-                        <!-- Notifications -->
-                        <div class="border-2 border-gray-200 rounded-lg p-4">
-                            <h4 class="font-semibold mb-4">Notifications</h4>
-                            <div class="space-y-3">
-                                <label class="flex items-center justify-between">
-                                    <span>Email notifications</span>
-                                    <input type="checkbox" checked class="toggle">
-                                </label>
-                                <label class="flex items-center justify-between">
-                                    <span>SMS notifications</span>
-                                    <input type="checkbox" class="toggle">
-                                </label>
+
+                    <!-- Notifications -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold mb-4">Notifications</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center justify-between">
+                                <span>Email notifications</span>
+                                <input type="checkbox" checked class="toggle">
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span>SMS notifications</span>
+                                <input type="checkbox" class="toggle">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Section -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold mb-4">🔐 Change Password</h4>
+
+                        <form @submit.prevent="changePassword" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Current Password</label>
+                                <input type="password" x-model="passwordForm.old_password" required
+                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
                             </div>
-                        </div>
-                        
-                        <!-- Change Password Section -->
-                        <div class="border-2 border-gray-200 rounded-lg p-4">
-                            <h4 class="font-semibold mb-4">🔐 Change Password</h4>
-                            
-                            <form @submit.prevent="changePassword" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Current Password</label>
-                                    <input type="password" x-model="passwordForm.old_password" required
-                                           class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">New Password</label>
-                                    <input type="password" x-model="passwordForm.new_password" required minlength="6"
-                                           class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Confirm New Password</label>
-                                    <input type="password" x-model="passwordForm.confirm_password" required minlength="6"
-                                           class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
-                                </div>
-                                
-                                <button type="submit" class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
-                                    Change Password
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <!-- Danger Zone -->
-                        <div class="border-2 border-red-200 rounded-lg p-4 bg-red-50">
-                            <h4 class="font-semibold mb-2 text-red-700">Danger Zone</h4>
-                            <p class="text-sm text-red-600 mb-4">Once you delete your account, there is no going back.</p>
-                            <button @click="confirmDeleteAccount()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                                Delete Account
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">New Password</label>
+                                <input type="password" x-model="passwordForm.new_password" required minlength="6"
+                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Confirm New Password</label>
+                                <input type="password" x-model="passwordForm.confirm_password" required minlength="6"
+                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                            </div>
+
+                            <button type="submit" class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                                Change Password
                             </button>
-                        </div>
+                        </form>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="border-2 border-red-200 rounded-lg p-4 bg-red-50">
+                        <h4 class="font-semibold mb-2 text-red-700">Danger Zone</h4>
+                        <p class="text-sm text-red-600 mb-4">Once you delete your account, there is no going back.</p>
+                        <button @click="confirmDeleteAccount()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                            Delete Account
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <script>
-    function profileData() {
-        return {
-            user: {
-                full_name: 'Loading...',
-                email: '',
-                phone: '',
-                avatar_url: 'https://ui-avatars.com/api/?name=User&background=32b848&color=fff&size=400',
-                loyalty_tier: '🌱 Seedling',
-                xp_points: 0
-            },
-            stats: {
-                orders_count: 0,
-                total_spent: 0,
-                addresses_count: 0
-            },
-            editMode: false,
-            editData: {},
-            
-            // Password change form
-            passwordForm: {
-                old_password: '',
-                new_password: '',
-                confirm_password: ''
-            },
-            
-            async init() {
-                await this.fetchProfile();
-                await this.fetchStats();
-            },
-            
-            async fetchProfile() {
-                const token = localStorage.getItem('access_token');
-                
-                if (!token) {
+function profileData() {
+    return {
+        user: {
+            full_name: 'Loading...',
+            email: '',
+            phone: '',
+            avatar_url: 'https://ui-avatars.com/api/?name=User&background=32b848&color=fff&size=400',
+            loyalty_tier: '🌱 Seedling',
+            xp_points: 0
+        },
+        stats: {
+            orders_count: 0,
+            total_spent: 0,
+            addresses_count: 0
+        },
+        editMode: false,
+		editData: {
+			full_name: '',
+			email: '',
+			phone: '',  // Add phone here
+		},
+        passwordForm: {
+            old_password: '',
+            new_password: '',
+            confirm_password: ''
+        },
+
+        async init() {
+            await this.fetchProfile();
+            await this.fetchStats();
+        },
+
+        promptEditProfile() {
+            if (window.showNotification) {
+                window.showNotification({
+                    type: 'info',
+                    title: 'Edit',
+                    message: 'Do you want to update your profile now?',
+                    buttons: [
+                        { text: 'Cancel', value: false },
+                        { text: 'Yes, update', value: true, style: 'primary' }
+                    ],
+                    onConfirm: (confirmed) => {
+                        if (confirmed) {
+                            this.updateProfile();
+                        }
+                    }
+                });
+            } else {
+                if (confirm('Do you want to update your profile now?')) {
+                    this.updateProfile();
+                }
+            }
+        },
+
+        async fetchProfile() {
+            const token = localStorage.getItem('access_token');
+
+            if (!token) {
+                window.location.href = '{% url "accounts:login" %}';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    this.user = await response.json();
+                    this.editData = { ...this.user };
+                } else {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
                     window.location.href = '{% url "accounts:login" %}';
-                    return;
                 }
-                
-                try {
-                    const response = await fetch('/api/auth/me', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        this.user = await response.json();
-                        this.editData = { ...this.user };
-                    } else {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        window.location.href = '{% url "accounts:login" %}';
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch profile', err);
+            } catch (err) {
+                console.error('Failed to fetch profile', err);
+            }
+        },
+
+        async fetchStats() {
+            const token = localStorage.getItem('access_token');
+
+            try {
+                const ordersResponse = await fetch('/api/orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (ordersResponse.ok) {
+                    const orders = await ordersResponse.json();
+                    this.stats.orders_count = orders.length;
+                    this.stats.total_spent = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0).toFixed(2);
                 }
-            },
-            
-            async fetchStats() {
-                const token = localStorage.getItem('access_token');
-                
-                try {
-                    // Fetch orders - CORRECT ENDPOINT (list endpoint without trailing orders)
-                    const ordersResponse = await fetch('/api/orders', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (ordersResponse.ok) {
-                        const orders = await ordersResponse.json();
-                        this.stats.orders_count = orders.length;
-                        this.stats.total_spent = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0).toFixed(2);
-                    }
-                    
-                    // Fetch addresses
-                    const addressesResponse = await fetch('/api/auth/addresses', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (addressesResponse.ok) {
-                        const addresses = await addressesResponse.json();
-                        this.stats.addresses_count = addresses.length;
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch stats', err);
+
+                const addressesResponse = await fetch('/api/auth/addresses', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (addressesResponse.ok) {
+                    const addresses = await addressesResponse.json();
+                    this.stats.addresses_count = addresses.length;
                 }
-            },
-            
-            async updateProfile() {
-                const token = localStorage.getItem('access_token');
-                
-                try {
-                    const response = await fetch('/api/auth/me', {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(this.editData)
-                    });
-                    
-                    if (response.ok) {
-                        this.user = await response.json();
-                        this.editMode = false;
-                        
-                        if (window.showNotification) {
-                            window.showNotification('Profile updated successfully! ✅', 'success');
-                        }
-                        
-                        // Success animation
-                        if (typeof gsap !== 'undefined') {
-                            gsap.fromTo('.glass', 
-                                { scale: 1 }, 
-                                { scale: 1.02, duration: 0.3, yoyo: true, repeat: 1 }
-                            );
-                        }
-                    } else {
-                        if (window.showNotification) {
-                            window.showNotification('Failed to update profile ❌', 'error');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Failed to update profile', err);
+            } catch (err) {
+                console.error('Failed to fetch stats', err);
+            }
+        },
+
+        async updateProfile() {
+            const token = localStorage.getItem('access_token');
+
+            try {
+                const response = await fetch('/api/auth/me', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.editData)
+                });
+
+                if (response.ok) {
+                    this.user = await response.json();
+                    this.editMode = false;
+
                     if (window.showNotification) {
-                        window.showNotification('Error updating profile ❌', 'error');
+                        window.showNotification({
+                            title: "Success",
+                            type: "success",
+                            message: 'Profile updated successfully! ✅'
+                        });
                     }
-                }
-            },
-            
-            async changePassword() {
-                // Validate passwords match
-                if (this.passwordForm.new_password !== this.passwordForm.confirm_password) {
+
+                    if (typeof gsap !== 'undefined') {
+                        gsap.fromTo('.glass', 
+                            { scale: 1 }, 
+                            { scale: 1.02, duration: 0.3, yoyo: true, repeat: 1 }
+                        );
+                    }
+                } else {
                     if (window.showNotification) {
-                        window.showNotification('Passwords don\'t match! ❌', 'error');
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Failed to update profile ❌'
+                        });
                     }
-                    return;
                 }
-                
-                // Validate password length
-                if (this.passwordForm.new_password.length < 6) {
-                    if (window.showNotification) {
-                        window.showNotification('Password must be at least 6 characters! ❌', 'error');
-                    }
-                    return;
-                }
-                
-                const token = localStorage.getItem('access_token');
-                
-                try {
-                    const response = await fetch('/api/auth/change-password', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(this.passwordForm)
+            } catch (err) {
+                console.error('Failed to update profile', err);
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Error updating profile ❌'
                     });
-                    
+                }
+            }
+        },
+
+        async changePassword() {
+            if (this.passwordForm.new_password !== this.passwordForm.confirm_password) {
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Passwords don\'t match! ❌'
+                    });
+                }
+                return;
+            }
+
+            if (this.passwordForm.new_password.length < 6) {
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Password must be at least 6 characters! ❌'
+                    });
+                }
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.passwordForm)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Success",
+                            type: "success",
+                            message: data.message || 'Password changed successfully! ✅'
+                        });
+                    }
+
+                    this.passwordForm = {
+                        old_password: '',
+                        new_password: '',
+                        confirm_password: ''
+                    };
+                } else {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: data.message || 'Failed to change password ❌'
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Password change failed', err);
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Error changing password ❌'
+                    });
+                }
+            }
+        },
+
+        async uploadAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Please select an image file 📷'
+                    });
+                }
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Image must be less than 5MB ⚠️'
+                    });
+                }
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            try {
+                const response = await fetch('/api/auth/upload-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
                     const data = await response.json();
-                    
-                    if (data.success) {
-                        if (window.showNotification) {
-                            window.showNotification(data.message || 'Password changed successfully! ✅', 'success');
-                        }
-                        
-                        // Reset form
-                        this.passwordForm = {
-                            old_password: '',
-                            new_password: '',
-                            confirm_password: ''
-                        };
-                    } else {
-                        if (window.showNotification) {
-                            window.showNotification(data.message || 'Failed to change password ❌', 'error');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Password change failed', err);
+                    this.user.avatar_url = data.avatar_url;
                     if (window.showNotification) {
-                        window.showNotification('Error changing password ❌', 'error');
+                        window.showNotification({
+                            title: "Success",
+                            type: "success",
+                            message: 'Avatar updated successfully! ✅'
+                        });
+                    }
+                } else {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Failed to upload avatar ❌'
+                        });
                     }
                 }
-            },
-            
-            async uploadAvatar(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    if (window.showNotification) {
-                        window.showNotification('Please select an image file 📷', 'error');
-                    }
-                    return;
-                }
-                
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    if (window.showNotification) {
-                        window.showNotification('Image must be less than 5MB ⚠️', 'error');
-                    }
-                    return;
-                }
-                
-                const token = localStorage.getItem('access_token');
-                const formData = new FormData();
-                formData.append('avatar', file);
-                
-                try {
-                    const response = await fetch('/api/auth/upload-avatar', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: formData
+            } catch (err) {
+                console.error('Avatar upload failed', err);
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Error uploading avatar ❌'
                     });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.user.avatar_url = data.avatar_url;
-                        if (window.showNotification) {
-                            window.showNotification('Avatar updated successfully! ✅', 'success');
-                        }
-                    } else {
-                        if (window.showNotification) {
-                            window.showNotification('Failed to upload avatar ❌', 'error');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Avatar upload failed', err);
-                    if (window.showNotification) {
-                        window.showNotification('Error uploading avatar ❌', 'error');
-                    }
                 }
-            },
-            
-            confirmDeleteAccount() {
+            }
+        },
+
+        confirmDeleteAccount() {
+            if (!window.showNotification) {
+                window.showNotification({
+                    type: 'warning',
+                    title: 'Confirm Account Deletion',
+                    message: 'Are you sure you want to delete your account? This action cannot be undone!',
+                    showCancel: true,
+                    confirmText: 'Delete Account',
+                    onConfirm: (confirmed) => {
+                        if (confirmed) {
+                            this.deleteAccount();
+                        }
+                    }
+                });
+            } else {
                 const confirmed = window.confirm('⚠️ Are you sure you want to delete your account?\n\nThis will permanently delete:\n• All orders\n• Wishlist items\n• Saved addresses\n• Cart items\n• Reviews\n\nThis action CANNOT be undone!');
                 if (confirmed) {
                     this.deleteAccount();
                 }
-            },
-            
-            async deleteAccount() {
-                const token = localStorage.getItem('access_token');
-                
-                try {
-                    const response = await fetch('/api/auth/account', {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        
-                        if (window.showNotification) {
-                            window.showNotification('Account deleted successfully ✅', 'success');
-                        }
-                        
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 2000);
-                    } else {
-                        if (window.showNotification) {
-                            window.showNotification(data.message || 'Failed to delete account ❌', 'error');
-                        }
+            }
+        },
+
+        async deleteAccount() {
+            const token = localStorage.getItem('access_token');
+
+            try {
+                const response = await fetch('/api/auth/account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
                     }
-                } catch (err) {
-                    console.error('Account deletion failed', err);
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+
                     if (window.showNotification) {
-                        window.showNotification('Error deleting account ❌', 'error');
+                        window.showNotification({
+                            title: "Success",
+                            type: "success",
+                            message: 'Account deleted successfully ✅'
+                        });
                     }
+
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: data.message || 'Failed to delete account ❌'
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Account deletion failed', err);
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: "Error",
+                        type: "error",
+                        message: 'Error deleting account ❌'
+                    });
                 }
             }
         }
     }
+}
 </script>
-
 {% endblock %}
