@@ -131,6 +131,7 @@ function dashboardData() {
                     alert('Access denied. Admin privileges required.');
                     window.location.href = '/';
                 } else {
+					alert(Object.entries(response));
                     alert('Failed to load dashboard data');
                 }
             } catch (err) {

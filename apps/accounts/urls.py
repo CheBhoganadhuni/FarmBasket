@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .api import user_wallet_view
 
 app_name = 'accounts'
 
@@ -24,6 +25,9 @@ urlpatterns = [
     path('terms/', views.terms_of_service, name='terms'),
     path('privacy/', views.privacy_policy, name='privacy'),
     path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('contact/', views.contact_view, name='contact'),
+    path('user/wallet/', user_wallet_view, name='user_wallet'),
+
     
     path('', views.home_view, name='home'),  # ✅ Add this
 

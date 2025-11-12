@@ -41,9 +41,9 @@
                             <p class="text-gray-600 mb-4" x-text="user.email"></p>
                             <!-- Loyalty Badge -->
                             <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
-                                <span x-text="user.loyalty_tier"></span>
-                                <span class="text-sm">•</span>
-                                <span x-text="user.xp_points + ' XP'"></span>
+                                <div x-data="profileData()" x-init="init()">
+									<p>Your Wallet Balance: ₹<span x-text="walletBalance"></span></p>
+								</div>
                             </div>
                             <!-- Stats with Real Data -->
                             <div class="grid grid-cols-3 gap-4 mt-6">
@@ -54,6 +54,7 @@
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="'₹' + stats.total_spent"></div>
                                     <div class="text-sm text-gray-600">Total Spent</div>
+									<div class="text-sm text-gray-600">(Includes Wallet)</div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="stats.addresses_count"></div>
@@ -287,7 +288,26 @@
         </div>
     </div>
 </div>
+<!-- <script> -->
+<!-- function walletManager() { -->
+    <!-- return { -->
+        <!-- walletBalance: 0, -->
+        <!-- async loadWallet() { -->
+    <!-- console.log("Loading wallet..."); -->
+    <!-- const token = localStorage.getItem('access_token'); -->
+    <!-- const response = await fetch('/api/wallet/balance', { -->
+        <!-- headers: { 'Authorization': `Bearer ${token}` } -->
+    <!-- }); -->
+    <!-- if(response.ok){ -->
+        <!-- const data = await response.json(); -->
+        <!-- this.walletBalance = data.balance; -->
+        <!-- console.log("Wallet balance fetched:", data.balance); -->
+    <!-- } -->
+<!-- } -->
 
+    <!-- } -->
+<!-- } -->
+<!-- </script> -->
 <script>
 function profileData() {
     return {
@@ -304,6 +324,7 @@ function profileData() {
             total_spent: 0,
             addresses_count: 0
         },
+		
         editMode: false,
 		editData: {
 			full_name: '',
@@ -315,10 +336,30 @@ function profileData() {
             new_password: '',
             confirm_password: ''
         },
-
+        walletBalance: 0,
+		
         async init() {
             await this.fetchProfile();
             await this.fetchStats();
+			await this.loadWallet();
+        },
+		
+		async loadWallet() {
+            const token = localStorage.getItem('access_token');
+			console.log(`wallettoken: ${token}`);
+            try {
+                const response = await fetch('/api/wallet/balance', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(response.ok){
+					console.log()
+                    const data = await response.json();
+                    this.walletBalance = data.balance;
+                    console.log('Wallet balance fetched:', data.balance);
+                }
+            } catch (e) {
+                console.error('Failed to load wallet', e);
+            }
         },
 
         promptEditProfile() {
@@ -376,6 +417,8 @@ function profileData() {
 
         async fetchStats() {
             const token = localStorage.getItem('access_token');
+			console.log(`statstoken: ${token}`);
+			
 
             try {
                 const ordersResponse = await fetch('/api/orders', {
@@ -494,7 +537,7 @@ function profileData() {
                             title: "Success",
                             type: "success",
                             message: data.message || 'Password changed successfully! ✅'
-                        });
+                        });this.fetchProfile();
                     }
 
                     this.passwordForm = {

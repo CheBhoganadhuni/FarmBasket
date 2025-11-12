@@ -23,7 +23,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </div>
-            
             <!-- Status Filter -->
             <select x-model="filters.status" @change="loadOrders()" class="admin-input">
                 <option value="">All Statuses</option>
@@ -36,103 +35,125 @@
                 <option value="CANCELLED">Cancelled</option>
             </select>
         </div>
-        
         <div class="text-sm text-gray-400">
             Total: <span class="font-bold text-white" x-text="orders.length"></span> orders
         </div>
     </div>
-    
+
     <!-- Loading State -->
     <template x-if="loading">
         <div class="flex items-center justify-center py-20">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
     </template>
-    
-    <!-- Orders Table -->
-    <template x-if="!loading && orders.length > 0">
-        <div class="admin-card overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-800 border-b border-gray-700">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Order</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Customer</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Items</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Total</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Payment</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700">
-                        <template x-for="order in orders" :key="order.id">
-                            <tr class="hover:bg-gray-800 transition">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div>
-                                        <p class="font-semibold">#<span x-text="order.order_number"></span></p>
-                                        <p class="text-xs text-gray-500" x-text="order.items_count + ' items'"></p>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div>
-                                        <p class="font-semibold" x-text="order.user.name"></p>
-                                        <p class="text-xs text-gray-500" x-text="order.user.email"></p>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="badge badge-info" x-text="order.items_count"></span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="font-bold text-lg">₹<span x-text="order.total"></span></p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <select 
-                                        :value="order.status"
-                                        @change="updateOrderStatus(order, $event.target.value)"
-                                        class="badge cursor-pointer"
-                                        :class="{
-                                            'badge-warning': order.status === 'PENDING' || order.status === 'PROCESSING',
-                                            'badge-info': order.status === 'CONFIRMED' || order.status === 'SHIPPED',
-                                            'badge-success': order.status === 'DELIVERED',
-                                            'badge-danger': order.status === 'CANCELLED'
-                                        }"
-                                    >
-                                        <option value="PENDING">Pending</option>
-                                        <option value="PROCESSING">Processing</option>
-                                        <option value="CONFIRMED">Confirmed</option>
-                                        <option value="SHIPPED">Shipped</option>
-                                        <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-                                        <option value="DELIVERED">Delivered</option>
-                                        <option value="CANCELLED">Cancelled</option>
-                                    </select>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span 
-                                        class="badge text-xs"
-                                        :class="{
-                                            'badge-success': order.payment_status === 'PAID',
-                                            'badge-warning': order.payment_status === 'PENDING',
-                                            'badge-danger': order.payment_status === 'FAILED'
-                                        }"
-                                        x-text="order.payment_status === 'PAID' ? '✓ Paid' : order.payment_status"
-                                    ></span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-400" x-text="new Date(order.created_at).toLocaleDateString()"></td>
-                                <td class="px-6 py-4">
-                                    <a :href="`/orders/${order.id}/`" target="_blank" class="text-blue-500 hover:text-blue-400 text-sm font-semibold">
-                                        View →
-                                    </a>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+
+    <!-- Order Details Modal -->
+    <div x-show="showOrderDetails" style="display:none" @keydown.escape.window="showOrderDetails = false" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div @click.away="showOrderDetails = false" class="bg-white dark:bg-gray-900 p-6 rounded max-w-3xl w-full max-h-[80vh] overflow-auto">
+            <h2 class="text-2xl font-bold mb-4">Order #<span x-text="selectedOrder.order_number"></span></h2>
+            
+            <div class="mb-2">
+                <strong>Date:</strong> <span x-text="new Date(selectedOrder.created_at).toLocaleString()"></span>
+            </div>
+            
+            <div class="mb-4">
+                <strong>Customer:</strong> <span x-text="selectedOrder.user.name"></span> (<span x-text="selectedOrder.user.email"></span>)
+            </div>
+            
+            <div class="mb-4">
+                <strong>Items:</strong>
+                <ul class="list-disc pl-6">
+                    <template x-for="item in selectedOrder.items" :key="item.id">
+                        <li><span x-text="item.product_name"></span> x <span x-text="item.quantity"></span> @ ₹<span x-text="item.unit_price.toFixed(2)"></span></li>
+                    </template>
+                </ul>
+            </div>
+
+            <div class="mb-4">
+                <strong>Delivery Address:</strong>
+                <p x-text="selectedOrder.delivery_name + ', ' + selectedOrder.delivery_address + ', ' + selectedOrder.delivery_city + ', ' + selectedOrder.delivery_state + ', ' + selectedOrder.delivery_postal_code"></p>
+                <p class="text-sm text-gray-600" x-text="'Phone: ' + selectedOrder.delivery_phone"></p>
+            </div>
+
+            <div class="text-right">
+                <button @click="showOrderDetails = false" class="btn btn-secondary px-6">Close</button>
             </div>
         </div>
-    </template>
-    
+    </div>
+
+<!-- Orders Cards -->
+<template x-if="!loading && orders.length > 0">
+    <div class="space-y-6">
+        <template x-for="order in orders" :key="order.id">
+            <div class="admin-card p-4 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-lg">#<span x-text="order.order_number"></span></h3>
+                    <button @click="openOrderDetails(order)" type="button" 
+                        class="px-4 py-2 bg-neon text-white rounded hover:bg-green-600 font-semibold">
+                        View Order
+                    </button>
+                </div>
+                <div class="flex gap-2 items-center mb-2">
+                    <!-- Order Status Dropdown -->
+                    <select 
+                        :value="order.status"
+                        @change.stop="updateOrderStatus(order, $event.target.value)"
+                        class="badge cursor-pointer"
+                        :class="{
+                            'badge-warning': ['PENDING', 'PROCESSING'].includes(order.status),
+                            'badge-info': ['CONFIRMED', 'SHIPPED'].includes(order.status),
+                            'badge-success': order.status === 'DELIVERED',
+                            'badge-danger': order.status === 'CANCELLED'
+                        }"
+                        :disabled="order.status === 'CANCELLED'"
+                    >
+                        <option value="PENDING">Pending</option>
+                        <option value="PROCESSING">Processing</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+
+                    <!-- Payment Status Dropdown -->
+                    <select 
+                        :value="order.payment_status"
+                        @change.stop="updatePaymentStatus(order, $event.target.value)"
+                        class="badge cursor-pointer"
+                        :class="{
+                            'badge-info': order.payment_status === 'PAID',
+							'badge-success': order.payment_status === 'REFUNDED',
+                            'badge-warning': order.payment_status === 'PENDING',
+                            'badge-danger': order.payment_status === 'FAILED',
+                            'badge-gray': order.payment_status === 'REFUNDED'
+                        }"
+                        :disabled="order.payment_status === 'REFUNDED'"
+                    >
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="REFUNDED">Refunded</option>
+                    </select>
+                </div>
+
+                <p class="text-sm text-gray-500 mt-1"><strong>Payment:</strong> <span x-text="order.payment_method"></span></p>
+                <p class="text-sm mt-1"><strong>Customer:</strong> <span x-text="order.user.name"></span> (<a :href="'mailto:' + order.user.email" x-text="order.user.email"></a>)</p>
+
+                <ul class="list-disc list-inside my-2">
+                    <template x-for="item in order.items" :key="item.id">
+                        <li><span x-text="item.product_name"></span> x <span x-text="item.quantity"></span></li>
+                    </template>
+                </ul>
+
+                <p class="text-lg font-bold mt-2">₹<span x-text="order.total"></span></p>
+                <p class="text-xs text-gray-400 mt-1" x-text="(new Date(order.created_at)).toLocaleString()"></p>
+            </div>
+        </template>
+    </div>
+</template>
+
+
     <!-- Empty State -->
     <template x-if="!loading && orders.length === 0">
         <div class="admin-card p-20 text-center">
@@ -144,6 +165,21 @@
 </div>
 
 <script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for(let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function ordersManager() {
     return {
         loading: true,
@@ -152,66 +188,99 @@ function ordersManager() {
             search: '',
             status: ''
         },
-        
+        showOrderDetails: false,
+        selectedOrder: null,
+
         async init() {
             await this.loadOrders();
         },
-        
+
         async loadOrders() {
             this.loading = true;
             const token = localStorage.getItem('access_token');
-            
             const params = new URLSearchParams();
-            if (this.filters.search) params.append('search', this.filters.search);
-            if (this.filters.status) params.append('status', this.filters.status);
-            
+            if(this.filters.search) params.append('search', this.filters.search);
+            if(this.filters.status) params.append('status', this.filters.status);
+
             try {
-                const response = await fetch(`/api/admin/orders?${params}`, {
+                const response = await fetch(`/api/admin/orders?${params.toString()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
-                if (response.ok) {
+
+                if(response.ok){
                     const data = await response.json();
                     this.orders = data.orders;
                 }
-            } catch (err) {
+            } catch(err) {
                 console.error('Failed to load orders', err);
             } finally {
                 this.loading = false;
             }
         },
-        
+
+        openOrderDetails(order) {
+            this.selectedOrder = {...order};
+            this.showOrderDetails = true;
+        },
+
         async updateOrderStatus(order, newStatus) {
             const token = localStorage.getItem('access_token');
-            
+            const csrftoken = getCookie('csrftoken');
+
             try {
                 const response = await fetch(`/api/admin/orders/${order.id}/status`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
                     },
                     body: JSON.stringify({ status: newStatus })
                 });
-                
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    if (window.showNotification) {
-                        window.showNotification(data.message, 'success');
-                    }
+                    if(window.showNotification) window.showNotification(data.message, 'success');
                     order.status = newStatus;
+                    await this.loadOrders();
                 } else {
-                    if (window.showNotification) {
-                        window.showNotification('Failed to update order status', 'error');
-                    }
+                    if(window.showNotification) window.showNotification('Failed to update order status', 'error');
                 }
-            } catch (err) {
+            } catch(err) {
                 console.error('Failed to update order status', err);
-                if (window.showNotification) {
-                    window.showNotification('Error updating order status', 'error');
+                if(window.showNotification) window.showNotification('Error updating order status', 'error');
+            } finally {await this.loadOrders();}
+        },
+
+        async updatePaymentStatus(order, newStatus) {
+            const token = localStorage.getItem('access_token');
+            const csrftoken = getCookie('csrftoken');
+
+            try {
+                const response = await fetch(`/api/admin/orders/${order.id}/payment_status`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ payment_status: newStatus })
+                });
+                const data = await response.json();
+
+                if(data.success){
+                    if(window.showNotification) window.showNotification(data.message, 'success');
+                    order.payment_status = newStatus;
+                    await this.loadOrders();
+                } else {
+                    if(window.showNotification) window.showNotification('Failed to update payment status', 'error');
                 }
-            }
+            } catch(err){
+                console.error('Failed to update payment status', err);
+                if(window.showNotification) window.showNotification('Error updating payment status', 'error');
+            }finally {await this.loadOrders();}
         }
     }
 }

@@ -116,16 +116,16 @@
                     </div>
                     
 					<!-- Test Payment Info -->
-					<div x-show="useTestPayment" class="glass rounded-xl p-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500">
-						<h3 class="font-bold text-blue-800 dark:text-blue-400 mb-3">🧪 Test Payment Instructions</h3>
-						<div class="text-sm text-blue-700 dark:text-blue-300 space-y-2">
-							<p class="font-semibold">Use these test credentials:</p>
+					<!-- <div x-show="useTestPayment" class="glass rounded-xl p-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500"> -->
+						<!-- <h3 class="font-bold text-blue-800 dark:text-blue-400 mb-3">🧪 Test Payment Instructions</h3> -->
+						<!-- <div class="text-sm text-blue-700 dark:text-blue-300 space-y-2"> -->
+							<!-- <p class="font-semibold">Use these test credentials:</p> -->
 							
-							<p class="mt-2"><strong>Test UPI:</strong> <code class="bg-white dark:bg-gray-800 px-2 py-1 rounded">success@razorpay</code></p>
+							<!-- <p class="mt-2"><strong>Test UPI:</strong> <code class="bg-white dark:bg-gray-800 px-2 py-1 rounded">success@razorpay</code></p> -->
 							
-							<p class="text-red-600 dark:text-red-400 font-semibold mt-3">⚠️ Don't scan QR codes in test mode!</p>
-						</div>
-					</div>
+							<!-- <p class="text-red-600 dark:text-red-400 font-semibold mt-3">⚠️ Don't scan QR codes in test mode!</p> -->
+						<!-- </div> -->
+					<!-- </div> -->
 
 					
                     <!-- Order Notes -->
@@ -136,15 +136,15 @@
                     </div>
                     
                     <!-- ✅ Test Payment Toggle -->
-                    <div x-show="testModeEnabled" class="glass rounded-xl p-6 bg-yellow-50 border-2 border-yellow-500">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" x-model="useTestPayment" class="mr-3">
-                            <div>
-                                <div class="font-semibold text-yellow-800">🧪 Test Payment Mode (₹1 Only)</div>
-                                <div class="text-sm text-yellow-700">Enable this to test with ₹1 payment instead of full amount</div>
-                            </div>
-                        </label>
-                    </div>
+                    <!-- <div x-show="testModeEnabled" class="glass rounded-xl p-6 bg-yellow-50 border-2 border-yellow-500"> -->
+                        <!-- <label class="flex items-center cursor-pointer"> -->
+                            <!-- <input type="checkbox" x-model="useTestPayment" class="mr-3"> -->
+                            <!-- <div> -->
+                                <!-- <div class="font-semibold text-yellow-800">🧪 Test Payment Mode (₹1 Only)</div> -->
+                                <!-- <div class="text-sm text-yellow-700">Enable this to test with ₹1 payment instead of full amount</div> -->
+                            <!-- </div> -->
+                        <!-- </label> -->
+                    <!-- </div> -->
                 </div>
                 
                 <!-- Right Column: Order Summary -->
@@ -168,31 +168,49 @@
                     </div>
                     
                     <!-- Pricing -->
-                    <div class="space-y-3 border-t pt-4">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal</span>
-                            <span>₹<span x-text="cart.subtotal"></span></span>
-                        </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Delivery</span>
-                            <span x-show="deliveryCharge > 0">₹<span x-text="deliveryCharge"></span></span>
-                            <span x-show="deliveryCharge === 0" class="text-green-600">FREE</span>
-                        </div>
-                        <div x-show="useTestPayment" class="flex justify-between text-yellow-600">
-                            <span>Test Discount</span>
-                            <span>-₹<span x-text="(parseFloat(cart.subtotal) + deliveryCharge - 1).toFixed(2)"></span></span>
-                        </div>
-                        <div class="border-t pt-3 flex justify-between font-bold text-xl">
-                            <span>Total</span>
-                            <span class="text-neon">₹<span x-text="useTestPayment ? '1.00' : (parseFloat(cart.subtotal) + deliveryCharge).toFixed(2)"></span></span>
-                        </div>
-                    </div>
+					<div class="space-y-3 border-t pt-4">
+						<div class="flex justify-between text-gray-600">
+							<span>Subtotal</span>
+							<span>₹<span x-text="cart.subtotal"></span></span>
+						</div>
+						<div class="flex justify-between text-gray-600">
+							<span>Delivery</span>
+							<span x-show="deliveryCharge > 0">₹<span x-text="deliveryCharge"></span></span>
+							<span x-show="deliveryCharge === 0" class="text-green-600">FREE</span>
+						</div>
+						<div class="flex justify-between text-gray-600">
+							<span>Processing Fee Of ₹1 Mandatory</span>
+						</div>
+						<!-- <div x-show="useTestPayment" class="flex justify-between text-yellow-600"> -->
+							<!-- <span>Test Discount</span> -->
+							<!-- <span>-₹<span x-text="(parseFloat(cart.subtotal) + deliveryCharge - 1).toFixed(2)"></span></span> -->
+						<!-- </div> -->
+						<div x-show="useWallet" class="flex justify-between text-green-600">
+							<span>Wallet Deduction</span>
+							<span>-₹<span x-text="walletDeduction.toFixed(2)"></span></span>
+						</div>
+						<div class="border-t pt-3 flex justify-between font-bold text-xl">
+							<span>Total</span>
+							<span class="text-neon">₹<span x-text="payableAmount"></span></span>
+						</div>
+					</div>
                     
+					<!-- Wallet Balance and Use Wallet -->
+					<div class="glass rounded-xl p-6 mb-6">
+						<h3 class="font-semibold mb-2">Wallet</h3>
+						<p>Available balance: ₹ <span x-text="walletBalance.toFixed(2)"></span></p>
+						<label class="inline-flex items-center mt-2">
+							<input type="checkbox" x-model="useWallet" class="form-checkbox h-5 w-5 text-green-500" />
+							<span class="ml-2">Use wallet balance for this order</span>
+						</label>
+					</div>
+
+					
                     <!-- Place Order Button -->
                     <button type="submit" :disabled="placing"
                             class="w-full mt-6 px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg disabled:opacity-50">
                         <span x-show="!placing">Place Order 🚀</span>
-                        <span x-show="placing">Processing...</span>
+                        <span x-show="placing">Processing, Do Not Click Anything...</span>
                     </button>
                     
                     <!-- Trust Badges -->
@@ -252,24 +270,54 @@ function checkoutPage() {
             postal_code: '',
             landmark: ''
         },
-        
+        walletBalance: 0,
+        useWallet: false,
+		
+		get walletDeduction() {
+            // Deduct min of walletBalance or order subtotal + deliveryCharge - 1 (platform fee)
+            if (!this.useWallet) return 0;
+            const maxDeductable = Math.max(0, parseFloat(this.cart.subtotal) + this.deliveryCharge - 1);
+            return Math.min(this.walletBalance, maxDeductable);
+        },
+		get payableAmount() {
+            // Total amount after wallet deduction, minimum 1 for platform fee or test payment 1
+            <!-- if (this.useTestPayment) return '1.00'; -->
+            const total = parseFloat(this.cart.subtotal) + this.deliveryCharge + 1 - this.walletDeduction;
+            return (total < 1 ? 1 : total).toFixed(2);
+        },
         get deliveryCharge() {
             if (!this.cart) return 0;
             return parseFloat(this.cart.subtotal) >= 500 ? 0 : 40;
         },
         
+		
         async init() {
             const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = '/auth/login/?next=/checkout/';
                 return;
             }
-            
+            await this.loadWallet();            
             await this.fetchCart();
             await this.fetchAddresses();
             await this.fetchUserProfile();
         },
         
+		async loadWallet() {
+            const token = localStorage.getItem('access_token');
+            try {
+                const response = await fetch('/api/wallet/balance', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.walletBalance = data.balance;
+                }
+            } catch(err){
+                console.error('Failed to load wallet', err);
+            }
+        },
+		
         async fetchCart() {
             const token = localStorage.getItem('access_token');
             
@@ -416,7 +464,8 @@ function checkoutPage() {
                         },
                         payment_method: this.paymentMethod,
                         order_notes: this.orderNotes,
-                        use_test_payment: this.useTestPayment
+                        use_wallet: this.useWallet,
+						payable_amount: parseFloat(this.payableAmount)
                     })
                 });
                 

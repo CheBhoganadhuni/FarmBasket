@@ -10,9 +10,8 @@ from apps.catalog.api import router as catalog_router
 from apps.cart.api import router as cart_router
 from apps.orders.api import router as orders_router  # ✅ Add this
 from apps.products.api import router as products_router
+from apps.wallet.api import wallet_router
 
-
-from apps.products.admin_views import admin_dashboard_stats, admin_products_list, admin_product_detail, admin_orders_list, admin_order_update_status, admin_users_list, admin_categories_list
 
 from ninja.security import django_auth
 
@@ -32,6 +31,9 @@ api.add_router('/admin', products_router)
 api.add_router("/catalog/", catalog_router)
 api.add_router("/cart/", cart_router)
 api.add_router("/", orders_router)  # ✅ Add this
+
+
+api.add_router("/wallet/", wallet_router)  # Now accessible at /api/wallet/balance
 
 # Health check endpoint
 @api.get("/health", tags=["System"])

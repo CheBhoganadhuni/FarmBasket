@@ -164,3 +164,21 @@ class PasswordResetToken(models.Model):
         """Check if token is still valid"""
         from django.utils import timezone
         return not self.used and timezone.now() < self.expires_at
+
+from django.db import models
+from django.conf import settings
+
+class Wallet(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def credit(self, amount):
+        self.balance += amount
+        self.save()
+
+    def debit(self, amount):
+        if self.balance >= amount:
+            self.balance -= amount
+            self.save()
+            return True
+        return False

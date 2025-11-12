@@ -62,3 +62,7 @@ def privacy_policy(request):
 def wishlist_view(request):
     """Wishlist page"""
     return render(request, 'accounts/wishlist.html')
+
+def contact_view(request):
+    """contact page"""
+    return render(request, 'legal/contact.html')

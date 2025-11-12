@@ -340,3 +340,14 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
         message="Avatar uploaded successfully",
         avatar_url=avatar_url
     )
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import Wallet
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_wallet_view(request):
+    wallet, created = Wallet.objects.get_or_create(user=request.user)
+    return Response({'balance': float(wallet.balance)})

@@ -11,7 +11,7 @@ from decimal import Decimal
 from apps.catalog.models import Product, Category
 from apps.orders.models import Order
 from apps.accounts.models import User
-from .serializers import ProductSerializer, CategorySerializer
+from .serializers import ProductSerializer, CategorySerializer, OrderStatusUpdateSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -110,7 +110,7 @@ def admin_dashboard_stats(request):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
-def admin_products_list(request):
+def admin_products_list(request, data = None):    
     """
     List all products or create new product
     """
@@ -148,7 +148,7 @@ def admin_products_list(request):
         })
     
     elif request.method == 'POST':
-        serializer = ProductSerializer(data=request.data)
+        serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -161,10 +161,7 @@ def admin_products_list(request):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
-def admin_product_detail(request, pk):
+def admin_product_detail(request, pk, data=None):
     """
     Get, update or delete a specific product
     """
@@ -181,7 +178,7 @@ def admin_product_detail(request, pk):
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        serializer = ProductSerializer(product, data=request.data, partial=True)
+        serializer = ProductSerializer(product, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
@@ -202,24 +199,17 @@ def admin_product_detail(request, pk):
             'message': f'Product "{product_name}" deleted successfully'
         }, status=status.HTTP_200_OK)
 
-
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def admin_orders_list(request):
-    """
-    List all orders with filters
-    """
-    # Get query parameters
     status_filter = request.GET.get('status', '')
     search = request.GET.get('search', '')
-    
-    # Base queryset
+
     orders = Order.objects.select_related('user').prefetch_related('items')
-    
-    # Apply filters
+
     if status_filter:
         orders = orders.filter(status=status_filter)
-    
+
     if search:
         orders = orders.filter(
             Q(order_number__icontains=search) |
@@ -227,10 +217,9 @@ def admin_orders_list(request):
             Q(user__first_name__icontains=search) |
             Q(user__last_name__icontains=search)
         )
-    
+
     orders = orders.order_by('-created_at')
-    
-    # Serialize data
+
     orders_data = [{
         'id': str(order.id),
         'order_number': order.order_number,
@@ -239,64 +228,64 @@ def admin_orders_list(request):
             'name': order.user.get_full_name() or order.user.email,
             'email': order.user.email
         },
+        'items_count': order.items.count(),
+        'items': [
+            {
+                'id': str(item.id),
+                'product_name': item.product_name,
+                'quantity': item.quantity,
+                'unit_price': float(item.unit_price)
+            }
+            for item in order.items.all()
+        ],
         'total': float(order.total),
         'status': order.status,
-        'status_display': order.get_status_display(),
         'payment_status': order.payment_status,
         'payment_method': order.payment_method,
-        'items_count': order.items.count(),
+        'delivery_name': order.delivery_name,
+        'delivery_address': order.delivery_address,
+        'delivery_city': order.delivery_city,
+        'delivery_state': order.delivery_state,
+        'delivery_postal_code': order.delivery_postal_code,
+        'delivery_phone': order.delivery_phone,
+        'admin_notes': order.admin_notes,
         'created_at': order.created_at.isoformat(),
         'updated_at': order.updated_at.isoformat()
     } for order in orders]
-    
+
     return Response({
         'orders': orders_data,
         'count': len(orders_data)
     })
 
 
-@api_view(['PUT'])
-@permission_classes([IsAdminUser])
-def admin_order_update_status(request, pk):
-    """
-    Update order status
-    """
+def admin_order_update_status(request, pk, data=None):
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
-        return Response({
-            'success': False,
-            'message': 'Order not found'
-        }, status=status.HTTP_404_NOT_FOUND)
+        return Response({'success': False, 'message': 'Order not found'}, status=404)
     
-    new_status = request.data.get('status')
-    if not new_status:
-        return Response({
-            'success': False,
-            'message': 'Status is required'
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Validate status
+    status = data.get('status') if data else None
+    if not status:
+        return Response({'success': False, 'message': 'Status required'}, status=400)
+
+    # validate status
     valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
-    if new_status not in valid_statuses:
-        return Response({
-            'success': False,
-            'message': 'Invalid status'
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    order.status = new_status
+    if status not in valid_statuses:
+        return Response({'success': False, 'message': 'Invalid status'}, status=400)
+
+    prev_status = order.status
+    order.status = status
     order.save()
-    
-    return Response({
-        'success': True,
-        'message': f'Order status updated to {order.get_status_display()}',
-        'order': {
-            'id': str(order.id),
-            'order_number': order.order_number,
-            'status': order.status,
-            'status_display': order.get_status_display()
-        }
-    })
+
+    if prev_status != 'CANCELLED' and status == 'CANCELLED':
+        for item in order.items.all():
+            if item.product:
+                item.product.stock_quantity += item.quantity
+                item.product.orders_count = max(0, item.product.orders_count - 1)
+                item.product.save()
+
+    return Response({'success': True, 'message': f'Order status updated to {order.get_status_display()}'})
 
 
 @api_view(['GET'])
@@ -375,3 +364,36 @@ def admin_delete_user(request, pk):
         return Response({'success': True, 'message': 'User deleted successfully'})
     except User.DoesNotExist:
         return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework import status
+from apps.orders.models import Order
+from apps.accounts.models import Wallet
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def admin_payment_update_status(request, pk, data = None):
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # if data is None:
+        # data = request.data
+    new_payment_status = data.get('payment_status')
+    valid_statuses = ['PENDING', 'PAID', 'FAILED', 'REFUNDED']
+
+    if new_payment_status not in valid_statuses:
+        return Response({'success': False, 'message': 'Invalid payment status'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if new_payment_status == 'REFUNDED':
+        wallet, created = Wallet.objects.get_or_create(user=order.user)
+        wallet.credit(order.total)
+    
+    order.payment_status = new_payment_status
+    order.save()
+
+    return Response({'success': True, 'message': f'Payment status updated to {new_payment_status}'})

@@ -7,6 +7,9 @@ import razorpay
 import hmac
 import hashlib
 
+from decimal import Decimal
+
+
 from .models import Order, OrderItem
 from apps.cart.models import Cart
 from apps.accounts.models import Address
@@ -14,6 +17,10 @@ from .schemas import (
     CreateOrderSchema, OrderSchema, OrderSummarySchema,
     RazorpayOrderSchema, VerifyPaymentSchema, MessageSchema
 )
+
+from apps.accounts.models import Wallet
+
+
 from apps.accounts.auth import AuthBearer
 
 router = Router(tags=['Orders'])
@@ -59,12 +66,12 @@ def create_order(request, data: CreateOrderSchema):
     delivery_charge = 0 if subtotal >= 500 else 40  # Free delivery above ₹500
     
     # ✅ Test payment mode: Only ₹1 for testing
-    if data.use_test_payment and settings.ENABLE_TEST_PAYMENTS:
-        discount = subtotal + delivery_charge - 1  # Make total = ₹1
-        total = 1
+    if data.use_wallet:
+        discount = subtotal + delivery_charge + 1 - data.payable_amount
+        total = data.payable_amount
     else:
         discount = 0
-        total = subtotal + delivery_charge
+        total = subtotal + delivery_charge + 1
     
     # Create order
     order = Order.objects.create(
@@ -108,12 +115,17 @@ def create_order(request, data: CreateOrderSchema):
                 'receipt': order.order_number,
                 'notes': {
                     'order_id': str(order.id),
-                    'user_email': user.email
+                    'user_email': user.email,
+                    'use_wallet': str(data.use_wallet),
+                    'subtotal': str(subtotal),
+                    'delivery_charge': str(delivery_charge)
                 }
             })
             
             order.razorpay_order_id = razorpay_order['id']
-            order.save()
+            # order.save()
+            
+            
             
             return {
                 "success": True,
@@ -142,6 +154,16 @@ def create_order(request, data: CreateOrderSchema):
     else:  # COD
         order.status = 'CONFIRMED'
         order.save()
+        
+        if data.use_wallet:
+            wallet, _ = Wallet.objects.get_or_create(user=user)
+            wallet_balance = float(wallet.balance)
+            max_deductable = max(0, subtotal + delivery_charge + 1)
+            wallet_deduction = min(wallet_balance, max_deductable)
+        
+        if data.use_wallet and wallet_deduction > 0:
+            wallet.balance = wallet.balance - Decimal(str(wallet_deduction))
+            wallet.save()
         
         # Clear cart
         cart.items.all().delete()
@@ -190,6 +212,13 @@ def verify_payment(request, data: VerifyPaymentSchema):
         
         razorpay_client.utility.verify_payment_signature(params_dict)
         
+        # Fetch razorpay order details for notes
+        razorpay_order_info = razorpay_client.order.fetch(data.razorpay_order_id)
+        notes = razorpay_order_info.get('notes', {})
+        use_wallet = notes.get('use_wallet', 'False') == 'True'
+        subtotal = float(notes.get('subtotal', 0))
+        delivery_charge = float(notes.get('delivery_charge', 0))
+        
         # Payment verified!
         order.payment_status = 'PAID'
         order.status = 'CONFIRMED'
@@ -197,6 +226,16 @@ def verify_payment(request, data: VerifyPaymentSchema):
         order.razorpay_signature = data.razorpay_signature
         order.paid_at = timezone.now()
         order.save()
+        
+        if use_wallet:
+                wallet, _ = Wallet.objects.get_or_create(user=user)
+                wallet_balance = float(wallet.balance)
+                max_deductable = max(0, subtotal + delivery_charge + 1)
+                wallet_deduction = min(wallet_balance, max_deductable)
+                
+        if use_wallet and wallet_deduction > 0:
+            wallet.balance = wallet.balance - Decimal(str(wallet_deduction))
+            wallet.save()
         
         # Clear cart
         try:
@@ -227,7 +266,7 @@ def verify_payment(request, data: VerifyPaymentSchema):
         
     except razorpay.errors.SignatureVerificationError:
         order.payment_status = 'FAILED'
-        order.save()
+        # order.save()
         
         return MessageSchema(
             success=False,

@@ -24,8 +24,8 @@ class CreateOrderSchema(BaseModel):
     delivery_address: CheckoutAddressSchema
     payment_method: str = Field(..., pattern='^(RAZORPAY|COD)$')
     order_notes: str = Field(default='', max_length=500)
-    use_test_payment: bool = False  # ✅ For ₹1 test payments
-
+    use_wallet: bool = False  # ✅ For ₹1 test payments
+    payable_amount: Decimal
 
 class VerifyPaymentSchema(BaseModel):
     """Schema for verifying Razorpay payment"""
