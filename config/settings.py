@@ -76,22 +76,22 @@ INSTALLED_APPS = [
 ]
 
 
+import dj_database_url
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # ✅ Add Whitenoise
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
 ]
 
 # CSRF Settings for Django Ninja
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
 
 # Allow AJAX requests
 CSRF_COOKIE_HTTPONLY = False
@@ -132,14 +132,10 @@ AUTH_USER_MODEL = 'accounts.User'
 # ==============================================================================
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'farmbasket'),
-        'USER': os.getenv('DB_USER', 'farmuser'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'farm_pass'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=f"postgres://{os.getenv('DB_USER', 'farmuser')}:{os.getenv('DB_PASSWORD', 'farm_pass')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'farmbasket')}",
+        conn_max_age=600
+    )
 }
 
 
@@ -186,8 +182,20 @@ STATICFILES_DIRS = [
     BASE_DIR / 'theme' / 'static',
 ]
 
+# Whitenoise Configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Cloudinary Storage
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+# Media Settings
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 
 # ==============================================================================
@@ -200,19 +208,7 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-# ==============================================================================
-# CLOUDINARY CONFIGURATION
-# ==============================================================================
-'''
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-}
-'''
 
-# Use Cloudinary for media files
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 
 # ==============================================================================
