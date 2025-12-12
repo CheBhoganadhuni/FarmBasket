@@ -74,44 +74,72 @@ def register(request, data: UserRegisterSchema):
         'user': user_data
     }
 
-@router.post("/google-login", response=TokenSchema)
-def google_login(request, payload: GoogleLoginSchema):
-    """
-    Google Sign-In using id_token:
-    - verifies Google token
-    - finds or creates user
-    - returns same token shape as /login
-    """
-    try:
-        # Verify the token and get Google user info
-        idinfo = id_token.verify_oauth2_token(
-            payload.id_token,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
-    except Exception:
-        raise HttpError(400, "Invalid Google token")
+from django.shortcuts import redirect
+import requests
 
-    # Extra safety: check issuer
-    if idinfo.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
-        raise HttpError(400, "Invalid token issuer")
+@router.get("/google/login")
+def google_login_init(request):
+    """Start Google OAuth2 Flow"""
+    scope = "email profile openid"
+    auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?response_type=code"
+        f"&client_id={settings.GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"
+        f"&scope={scope}"
+        f"&access_type=offline"
+        f"&prompt=select_account"
+    )
+    return redirect(auth_url)
 
-    email = idinfo.get("email")
-    email_verified = idinfo.get("email_verified", False)
 
-    if not email or not email_verified:
-        raise HttpError(400, "Email not verified by Google")
+@router.get("/google/callback")
+def google_callback(request, code: str):
+    """Handle Google OAuth2 Callback"""
+    
+    # 1. Exchange code for tokens
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "client_secret": settings.GOOGLE_CLIENT_SECRET,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+    }
+    
+    res = requests.post(token_url, data=token_data)
+    if not res.ok:
+        raise HttpError(400, f"Failed to get token from Google: {res.text}")
+    
+    tokens = res.json()
+    id_token_str = tokens.get("id_token")
+    access_token_google = tokens.get("access_token")
+    
+    # 2. Get User Info
+    user_info_res = requests.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        headers={"Authorization": f"Bearer {access_token_google}"}
+    )
+    
+    if not user_info_res.ok:
+         raise HttpError(400, "Failed to fetch user info from Google")
+         
+    user_info = user_info_res.json()
+    email = user_info.get("email")
+    email_verified = user_info.get("email_verified")
+    
+    if not email_verified:
+        raise HttpError(400, "Google email not verified")
 
     # Name fields
-    given_name = idinfo.get("given_name") or ""
-    family_name = idinfo.get("family_name") or ""
-    full_name = (given_name + " " + family_name).strip() or email.split("@")[0]
+    given_name = user_info.get("given_name", "")
+    family_name = user_info.get("family_name", "")
 
-    # 1) Find or create user by email
+    # 3. Find or Create User
     try:
         user = User.objects.get(email=email, is_active=True)
+        created = False
     except User.DoesNotExist:
-        # New user via Google – no password, unusable password
         user = User.objects.create_user(
             email=email,
             password=None,
@@ -119,27 +147,35 @@ def google_login(request, payload: GoogleLoginSchema):
             last_name=family_name,
         )
         user.set_unusable_password()
-        user.save()
+        created = True
+    
+    # Update social avatar if provided
+    picture = user_info.get("picture")
+    if picture and not user.social_avatar_url:
+        user.social_avatar_url = picture
+        
+    user.save()
+    
+    # Send welcome email if new user
+    if created:
+        try:
+            from apps.accounts.emails import send_welcome_email
+            send_welcome_email(user)
+        except Exception as e:
+            print(f"Failed to send welcome email: {e}")
 
-    # 2) Update last_login like in normal login
+    # 4. Generate App Tokens (JWT)
     from django.utils import timezone
     user.last_login = timezone.now()
     user.save(update_fields=["last_login"])
 
-    # 3) Generate tokens using same helpers as /login
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    
+    # 5. Redirect to Success Page with Tokens
+    # We redirect to a simple HTML page that saves tokens to localStorage and forwards to profile
+    return redirect(f"/google-success/?access={access_token}&refresh={refresh_token}&superuser={str(user.is_superuser).lower()}")
 
-    # 4) Return same structure as /login
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "is_staff": user.is_staff,
-        "is_superuser": user.is_superuser,
-        "email": user.email,
-        "full_name": user.get_full_name() or full_name,
-    }
 
 @router.post("/login", response=TokenSchema)
 def login(request, data: UserLoginSchema):
@@ -174,10 +210,10 @@ def get_current_user(request):
     """Get current user profile"""
     try:
         user = request.auth
-        print(f"✅ Authenticated user: {user.email}")
+        # print(f"Authenticated user: {user.email}")
         return user
     except Exception as e:
-        print(f"❌ Error in /me endpoint: {e}")
+        print(f"Error in /me endpoint: {e}")
         import traceback
         traceback.print_exc()
         raise
@@ -411,11 +447,9 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
         avatar_url=avatar_url
     )
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_wallet_view(request):
-    return Response({'balance': float(request.user.wallet_balance)})
+
+@router.get("/wallet/balance", response=dict, auth=auth)
+def get_wallet_balance(request):
+    """Get user wallet balance"""
+    return {"balance": float(request.auth.wallet_balance)}

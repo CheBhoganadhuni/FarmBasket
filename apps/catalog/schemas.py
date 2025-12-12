@@ -124,6 +124,9 @@ class ProductDetailSchema(BaseModel):
     def get_image_url(cls, v):
         if v and hasattr(v, 'url'):
             return v.url
+        if isinstance(v, str):
+            # If already a string (processed URL), return as is
+            return v
         return None
 
 

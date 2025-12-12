@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Our Story - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="bg-stone-50 overflow-hidden">
+    <!-- Hero Section -->
+    <div class="relative bg-[#1a3c34] text-white py-32 overflow-hidden">
+        <!-- Abstract Shapes -->
+        <div
+            class="absolute top-0 right-0 w-96 h-96 bg-[#265c4f] rounded-full mix-blend-overlay filter blur-3xl opacity-50 transform translate-x-1/2 -translate-y-1/2">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 w-72 h-72 bg-[#32b848] rounded-full mix-blend-overlay filter blur-3xl opacity-20 transform -translate-x-1/2 translate-y-1/2">
+        </div>
+
+        <div class="container mx-auto max-w-6xl px-4 relative z-10 text-center">
+            <span class="text-neon font-bold tracking-[0.2em] uppercase mb-4 block animate-fade-in-up">Since 2023</span>
+            <h1 class="font-display text-6xl md:text-8xl font-bold mb-6 animate-fade-in-up animation-delay-200">Roots to
+                Table</h1>
+            <p
+                class="text-xl md:text-2xl font-light text-gray-300 max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-400">
+                Reconnecting you with the hands that feed you. A story of soil, sweat, and sustainability.
+            </p>
+        </div>
+    </div>
+
+    <!-- The Mission -->
+    <section class="py-24 px-4 container mx-auto max-w-6xl">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            <!-- Visual Side (CSS Art) -->
+            <div
+                class="relative h-[400px] bg-[#e8f5e9] rounded-[3rem] overflow-hidden flex items-center justify-center group">
+                <div
+                    class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0yMCAyMEwyMCAwLjJDMzAuOTI4IDAuMiAzOS44IDIwIDM5LjggMjBIMjB6IiBmaWxsPSIjMmU3ZDMyIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz48L3N2Zz4=')] opacity-50">
+                </div>
+                <!-- Animated Sprout -->
+                <div class="relative z-10 text-9xl transform group-hover:scale-110 transition duration-700">
+                    🌱
+                </div>
+                <div class="absolute bottom-10 text-center w-full">
+                    <div
+                        class="inline-block px-6 py-2 bg-white/80 backdrop-blur rounded-full text-green-800 font-bold shadow-lg">
+                        100% Organic Certified
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-8">
+                <h2 class="font-display text-5xl font-bold text-gray-900 leading-tight">We Believe in <br><span
+                        class="text-neon">Real Food</span></h2>
+                <p class="text-xl text-gray-600 leading-relaxed">
+                    FarmBasket began with a simple question: "Where does our food actually come from?"
+                    <br><br>
+                    In a world of mass production, we wanted to reconnect with the hands that feed us. We partner
+                    directly with small-scale farmers who treat the earth with respect, ensuring that what lands on your
+                    plate is as pure as nature intended.
+                </p>
+
+                <div class="grid grid-cols-2 gap-8 border-t pt-8">
+                    <div>
+                        <div class="font-display text-4xl font-bold text-gray-900 mb-1">50+</div>
+                        <div class="text-gray-500 text-sm uppercase tracking-wider">Local Farms</div>
+                    </div>
+                    <div>
+                        <div class="font-display text-4xl font-bold text-gray-900 mb-1">24h</div>
+                        <div class="text-gray-500 text-sm uppercase tracking-wider">Harvest to Home</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Grid -->
+    <section class="py-24 bg-white">
+        <div class="container mx-auto max-w-7xl px-4">
+            <h2 class="font-display text-4xl font-bold text-center mb-16">Our Core Values</h2>
+            <div class="grid md:grid-cols-3 gap-12">
+                <!-- Value 1 -->
+                <div
+                    class="bg-gray-50 p-10 rounded-3xl hover:bg-green-50 transition duration-500 group border border-gray-100 hover:border-green-200">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition">
+                        🌍</div>
+                    <h3 class="font-bold text-2xl mb-4 text-gray-900">Sustainable Farming</h3>
+                    <p class="text-gray-600">We only work with farmers who practice regenerative agriculture, enriching
+                        the soil for future generations.</p>
+                </div>
+                <!-- Value 2 -->
+                <div
+                    class="bg-gray-50 p-10 rounded-3xl hover:bg-blue-50 transition duration-500 group border border-gray-100 hover:border-blue-200">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition">
+                        🤝</div>
+                    <h3 class="font-bold text-2xl mb-4 text-gray-900">Fair Trade</h3>
+                    <p class="text-gray-600">Our farmers set their own prices. We believe that those who feed us should
+                        be fed well too.</p>
+                </div>
+                <!-- Value 3 -->
+                <div
+                    class="bg-gray-50 p-10 rounded-3xl hover:bg-orange-50 transition duration-500 group border border-gray-100 hover:border-orange-200">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl mb-6 shadow-sm group-hover:scale-110 transition">
+                        🚚</div>
+                    <h3 class="font-bold text-2xl mb-4 text-gray-900">Zero Waste</h3>
+                    <p class="text-gray-600">No plastic packaging. We use biodegradable materials and collect them back
+                        for composting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-24 bg-[#1a3c34] text-white text-center relative overflow-hidden">
+        <div
+            class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] top-0 left-0 w-full h-full">
+        </div>
+        <div class="relative z-10 container mx-auto px-4">
+            <h2 class="font-display text-4xl md:text-5xl font-bold mb-8">Ready to taste the difference?</h2>
+            <a href="/products/"
+                class="inline-flex items-center gap-3 px-10 py-4 bg-neon text-gray-900 rounded-full font-bold hover:bg-white transition transform hover:scale-105 shadow-xl group">
+                <span>Start Shopping</span>
+                <span class="group-hover:translate-x-1 transition">→</span>
+            </a>
+        </div>
+    </section>
+</div>
+
+<style>
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+
+    .animation-delay-400 {
+        animation-delay: 400ms;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 40px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+    }
+</style>
+{% endblock %}

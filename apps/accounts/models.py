@@ -46,6 +46,7 @@ class User(AbstractUser):
         null=True,
         help_text='User profile picture'
     )
+    social_avatar_url = models.URLField(max_length=500, blank=True, null=True, help_text="Avatar URL from Google/Social")
     
     # Preferences
     email_notifications = models.BooleanField(default=True)
@@ -97,6 +98,8 @@ class User(AbstractUser):
         """Get avatar URL with fallback to default"""
         if self.avatar:
             return self.avatar.url
+        if self.social_avatar_url:
+            return self.social_avatar_url
         return f"https://ui-avatars.com/api/?name={self.full_name}&background=32b848&color=fff&size=400"
 
     def credit_wallet(self, amount):

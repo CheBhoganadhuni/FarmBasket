@@ -11,11 +11,11 @@ class CheckoutAddressSchema(BaseModel):
     """Schema for delivery address during checkout"""
     address_id: Optional[str] = None  # Use existing address
     name: str = Field(..., min_length=2, max_length=200)
-    phone: str = Field(..., min_length=10, max_length=15)
-    address: str = Field(..., min_length=10)
+    phone: str = Field(..., max_length=20)  # Relaxed validation
+    address: str = Field(..., min_length=5) # Relaxed
     city: str = Field(..., min_length=2, max_length=100)
     state: str = Field(..., min_length=2, max_length=100)
-    postal_code: str = Field(..., min_length=6, max_length=10)
+    postal_code: str = Field(..., max_length=10) # Relaxed
     landmark: str = Field(default='', max_length=200)
 
 
@@ -41,6 +41,7 @@ class OrderItemSchema(BaseModel):
     """Schema for order item output"""
     id: str
     product_id: Optional[str]
+    product_slug: Optional[str]
     product_name: str
     product_image: str
     unit_price: Decimal

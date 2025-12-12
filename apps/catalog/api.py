@@ -1,6 +1,7 @@
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, F
+from django.db.models.functions import Coalesce
 from ninja import Router, Query
 from ninja.pagination import paginate
 
@@ -87,7 +88,7 @@ def list_products(
         queryset = queryset.order_by('-price')
     elif sort_by == 'rating':
         queryset = queryset.annotate(
-            avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            avg_rating=Coalesce(Avg('reviews__rating', filter=Q(reviews__is_approved=True)), 0.0)
         ).order_by('-avg_rating')
     elif sort_by == 'popular':
         queryset = queryset.order_by('-orders_count', '-views_count')
@@ -109,7 +110,7 @@ def list_products(
             'discount_percentage': product.discount_percentage,
             'unit': product.unit,
             'unit_value': product.unit_value,
-            'featured_image': product.featured_image.url if product.featured_image else None,
+            'featured_image': product.featured_image.url.replace('/media/http', 'http') if product.featured_image else None,
             'is_featured': product.is_featured,
             'is_organic_certified': product.is_organic_certified,
             'in_stock': product.in_stock,
@@ -162,11 +163,11 @@ def get_product(request, slug: str):
         'is_organic_certified': product.is_organic_certified,
         'in_stock': product.in_stock,
         'is_low_stock': product.is_low_stock,
-        'featured_image': product.featured_image.url if product.featured_image else None,
+        'featured_image': product.featured_image.url.replace('/media/http', 'http') if product.featured_image else None,
         'images': [
             {
                 'id': str(img.id),
-                'image': img.image.url if img.image else '',
+                'image': img.image.url.replace('/media/http', 'http') if img.image else '',
                 'alt_text': img.alt_text or product.name,
             }
             for img in product.images.all()

@@ -156,8 +156,10 @@ def admin_products_list(request, data = None):
                 'message': 'Product created successfully',
                 'product': serializer.data
             }, status=status.HTTP_201_CREATED)
+        print("Create Error:", serializer.errors)
         return Response({
             'success': False,
+            'message': f"Validation Error: {serializer.errors}",
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -178,18 +180,31 @@ def admin_product_detail(request, pk, data=None):
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        serializer = ProductSerializer(product, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
+        # Ensure we use request.data if data arg is missing
+        update_data = data if data is not None else request.data
+        serializer = ProductSerializer(product, data=update_data, partial=True)
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'success': True,
+                    'message': 'Product updated successfully',
+                    'product': serializer.data
+                })
+            print("Update Error:", serializer.errors)
             return Response({
-                'success': True,
-                'message': 'Product updated successfully',
-                'product': serializer.data
-            })
-        return Response({
-            'success': False,
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+                'success': False,
+                'message': f"Validation Error: {serializer.errors}",
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc()) # Log to console
+            return Response({
+                'success': False,
+                'message': f'Server Error: {str(e)}',
+                'trace': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     elif request.method == 'DELETE':
         product_name = product.name
@@ -239,6 +254,7 @@ def admin_orders_list(request):
             for item in order.items.all()
         ],
         'total': float(order.total),
+        'wallet_amount': float(order.wallet_amount) if hasattr(order, 'wallet_amount') and order.wallet_amount else 0,
         'status': order.status,
         'payment_status': order.payment_status,
         'payment_method': order.payment_method,
@@ -389,10 +405,49 @@ def admin_payment_update_status(request, pk, data = None):
     if new_payment_status not in valid_statuses:
         return Response({'success': False, 'message': 'Invalid payment status'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Status Sync Logic
     if new_payment_status == 'REFUNDED':
-        order.user.credit_wallet(order.total)
-    
+        # Condition refund amount based on what was ACTUALLY paid
+        # If order was marked PAID, we assume full amount was collected (Razorpay + Wallet or COD + Wallet)
+        # If order was NOT paid (e.g. Pending, Failed), only refund the Wallet portion used.
+        
+        refund_amount = Decimal('0')
+        
+        if order.payment_status == 'PAID':
+            # Was fully paid -> Refund Total (which covers Wallet + Cash)
+            refund_amount = order.total
+        else:
+             # Was not fully paid (e.g. Razorpay failed/pending) -> Refund only Wallet usage
+             if hasattr(order, 'wallet_amount'):
+                 refund_amount = order.wallet_amount
+             else:
+                 # Fallback if field missing (shouldn't happen with migration)
+                 refund_amount = Decimal('0')
+
+        if refund_amount > 0:
+            order.user.credit_wallet(refund_amount)
+            
+        order.status = 'CANCELLED'
+        
+        # Restore stock
+        for item in order.items.all():
+            if item.product:
+                item.product.stock_quantity += item.quantity
+                item.product.orders_count = max(0, item.product.orders_count - 1)
+                item.product.save()
+
+    elif new_payment_status == 'FAILED':
+         order.status = 'CANCELLED'
+
     order.payment_status = new_payment_status
     order.save()
+    
+    # Send Email Notification
+    from apps.accounts.emails import send_payment_status_email
+    try:
+        if order.user.email_notifications:
+             send_payment_status_email(order)
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
     return Response({'success': True, 'message': f'Payment status updated to {new_payment_status}'})

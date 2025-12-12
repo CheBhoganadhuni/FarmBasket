@@ -11,24 +11,30 @@
 
                 <!-- Avatar Section -->
                 <div class="relative" x-data="{ uploading: false }">
-                    <img 
-                        :src="user.avatar_url" 
-                        alt="Profile Picture"
-                        class="w-32 h-32 rounded-full border-4 border-neon shadow-lg object-cover"
-                    >
+                    <img :src="user.avatar_url" alt="Profile Picture"
+                        class="w-32 h-32 rounded-full border-4 border-neon shadow-lg object-cover">
                     <!-- Upload Button -->
-                    <label class="absolute bottom-0 right-0 bg-neon text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition transform hover:scale-110">
+                    <label
+                        class="absolute bottom-0 right-0 bg-neon text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition transform hover:scale-110">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <input type="file" class="hidden" @change="uploadAvatar" accept="image/*">
                     </label>
                     <!-- Uploading Spinner -->
-                    <div x-show="uploading" class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                        <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <div x-show="uploading"
+                        class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
                         </svg>
                     </div>
                 </div>
@@ -40,10 +46,11 @@
                             <h1 class="font-display text-4xl font-bold mb-2" x-text="user.full_name"></h1>
                             <p class="text-gray-600 mb-4" x-text="user.email"></p>
                             <!-- Loyalty Badge -->
-                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
+                            <div
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
                                 <div x-data="profileData()" x-init="init()">
-									<p>Your Wallet Balance: ₹<span x-text="walletBalance"></span></p>
-								</div>
+                                    <p>Your Wallet Balance: ₹<span x-text="walletBalance"></span></p>
+                                </div>
                             </div>
                             <!-- Stats with Real Data -->
                             <div class="grid grid-cols-3 gap-4 mt-6">
@@ -54,7 +61,6 @@
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="'₹' + stats.total_spent"></div>
                                     <div class="text-sm text-gray-600">Total Spent</div>
-									<div class="text-sm text-gray-600">(Includes Wallet)</div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="stats.addresses_count"></div>
@@ -62,7 +68,8 @@
                                 </div>
                             </div>
                             <!-- Edit Button -->
-                            <button @click="editMode = true" class="mt-6 px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                            <button @click="editMode = true"
+                                class="mt-6 px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
                                 Edit Profile ✏️
                             </button>
                         </div>
@@ -74,25 +81,27 @@
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Full Name</label>
                                 <input type="text" x-model="editData.full_name" required
-                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Email</label>
                                 <input type="email" x-model="editData.email" required
-                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
                             </div>
-							<div>
-								<label class="block text-sm font-semibold mb-1">Mobile Number</label>
-								<input type="text" x-model="editData.phone" required
-									   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
-							</div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Mobile Number</label>
+                                <input type="text" x-model="editData.phone" required
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+                            </div>
 
                             <!-- Add more fields as necessary -->
                             <div class="flex gap-4">
-                                <button type="submit" class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                                <button type="submit"
+                                    class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
                                     Save Changes
                                 </button>
-                                <button type="button" @click="editMode = false" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
+                                <button type="button" @click="editMode = false"
+                                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
                                     Cancel
                                 </button>
                             </div>
@@ -106,19 +115,16 @@
         <div class="glass rounded-2xl shadow-2xl overflow-hidden" x-data="{ activeTab: 'orders' }">
             <!-- Tab Headers -->
             <div class="flex border-b border-gray-200">
-                <button @click="activeTab = 'orders'" 
-                        class="flex-1 px-6 py-4 font-semibold transition"
-                        :class="activeTab === 'orders' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                <button @click="activeTab = 'orders'" class="flex-1 px-6 py-4 font-semibold transition"
+                    :class="activeTab === 'orders' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
                     📦 Orders
                 </button>
-                <button @click="activeTab = 'addresses'" 
-                        class="flex-1 px-6 py-4 font-semibold transition"
-                        :class="activeTab === 'addresses' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                <button @click="activeTab = 'addresses'" class="flex-1 px-6 py-4 font-semibold transition"
+                    :class="activeTab === 'addresses' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
                     📍 Addresses
                 </button>
-                <button @click="activeTab = 'settings'" 
-                        class="flex-1 px-6 py-4 font-semibold transition"
-                        :class="activeTab === 'settings' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
+                <button @click="activeTab = 'settings'" class="flex-1 px-6 py-4 font-semibold transition"
+                    :class="activeTab === 'settings' ? 'bg-neon text-white' : 'text-gray-600 hover:bg-gray-100'">
                     ⚙️ Settings
                 </button>
             </div>
@@ -126,8 +132,7 @@
             <!-- Tab Content -->
             <div class="p-8">
                 <!-- Orders Tab with Real Data -->
-                <div x-show="activeTab === 'orders'" x-transition x-data="{ orders: [], loading: true }"
-                     x-init="
+                <div x-show="activeTab === 'orders'" x-transition x-data="{ orders: [], loading: true }" x-init="
                         const token = localStorage.getItem('access_token');
                         fetch('/api/orders', { headers: { 'Authorization': 'Bearer ' + token } })
                         .then(r => r.json())
@@ -144,25 +149,26 @@
                             <div class="skeleton h-24 rounded-lg"></div>
                         </div>
                     </template>
-                    <div class="space-y-4" >
+                    <div class="space-y-4">
                         <template x-for="order in orders" :key="order.id">
-                            <a :href="'/orders/' + order.id + '/'" class="block border-2 border-gray-200 rounded-lg p-4 hover:border-neon transition">
+                            <a :href="'/orders/' + order.id + '/'"
+                                class="block border-2 border-gray-200 rounded-lg p-4 hover:border-neon transition">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="font-semibold">#<span x-text="order.order_number"></span></div>
-                                    <div class="text-sm text-gray-600" x-text="new Date(order.created_at).toLocaleDateString('en-IN')"></div>
+                                    <div class="text-sm text-gray-600"
+                                        x-text="new Date(order.created_at).toLocaleDateString('en-IN')"></div>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <div class="text-sm text-gray-600" x-text="order.items_count + ' items • ₹' + order.total"></div>
+                                        <div class="text-sm text-gray-600"
+                                            x-text="order.items_count + ' items • ₹' + order.total"></div>
                                     </div>
-                                    <div class="px-3 py-1 rounded-full text-sm font-semibold"
-                                         :class="{
+                                    <div class="px-3 py-1 rounded-full text-sm font-semibold" :class="{
                                             'bg-green-100 text-green-700': order.status === 'DELIVERED',
                                             'bg-blue-100 text-blue-700': order.status === 'SHIPPED',
                                             'bg-yellow-100 text-yellow-700': order.status === 'PROCESSING' || order.status === 'CONFIRMED',
                                             'bg-gray-100 text-gray-700': order.status === 'PENDING'
-                                        }"
-                                        x-text="order.status_display"></div>
+                                        }" x-text="order.status_display"></div>
                                 </div>
                             </a>
                         </template>
@@ -170,14 +176,15 @@
                             <div class="text-6xl mb-4">📦</div>
                             <h3 class="text-xl font-bold mb-2">No orders yet</h3>
                             <p class="text-gray-600 mb-6">Start shopping!</p>
-                            <a href="/products/" class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">Browse Products</a>
+                            <a href="/products/"
+                                class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">Browse
+                                Products</a>
                         </div>
                     </div>
                 </div>
 
                 <!-- Addresses Tab with Real Data -->
-                <div x-show="activeTab === 'addresses'" x-transition x-data="{ addresses: [], loading: true }"
-                     x-init="
+                <div x-show="activeTab === 'addresses'" x-transition x-data="{ addresses: [], loading: true }" x-init="
                         const token = localStorage.getItem('access_token');
                         fetch('/api/auth/addresses', { headers: { 'Authorization': 'Bearer ' + token } })
                         .then(r => r.json())
@@ -186,7 +193,8 @@
                      ">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-2xl font-bold">Saved Addresses</h3>
-                        <a href="{% url 'accounts:addresses' %}" class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                        <a href="{% url 'accounts:addresses' %}"
+                            class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
                             + Add New
                         </a>
                     </div>
@@ -202,7 +210,8 @@
                                 <div class="flex items-start justify-between mb-2">
                                     <div>
                                         <div class="font-semibold mb-1">
-                                            <span x-text="address.address_type === 'HOME' ? '🏠' : address.address_type === 'WORK' ? '💼' : '📍'"></span>
+                                            <span
+                                                x-text="address.address_type === 'HOME' ? '🏠' : address.address_type === 'WORK' ? '💼' : '📍'"></span>
                                             <span x-text="address.label"></span>
                                         </div>
                                         <div class="text-sm text-gray-600">
@@ -210,11 +219,13 @@
                                             <template x-if="address.apartment">
                                                 <span><span x-text="address.apartment"></span><br></span>
                                             </template>
-                                            <span x-text="address.city"></span>, <span x-text="address.state"></span> <span x-text="address.postal_code"></span><br>
+                                            <span x-text="address.city"></span>, <span x-text="address.state"></span>
+                                            <span x-text="address.postal_code"></span><br>
                                             Phone: <span x-text="address.phone"></span>
                                         </div>
                                     </div>
-                                    <span x-show="address.is_default" class="px-2 py-1 bg-neon text-white text-xs rounded-full">Default</span>
+                                    <span x-show="address.is_default"
+                                        class="px-2 py-1 bg-neon text-white text-xs rounded-full">!</span>
                                 </div>
                             </div>
                         </template>
@@ -222,7 +233,9 @@
                             <div class="text-6xl mb-4">📭</div>
                             <h3 class="text-xl font-bold mb-2">No addresses yet</h3>
                             <p class="text-gray-600 mb-6">Add your first delivery address</p>
-                            <a href="{% url 'accounts:addresses' %}" class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">Add Address</a>
+                            <a href="{% url 'accounts:addresses' %}"
+                                class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">Add
+                                Address</a>
                         </div>
                     </div>
                 </div>
@@ -237,12 +250,17 @@
                         <div class="space-y-3">
                             <label class="flex items-center justify-between">
                                 <span>Email notifications</span>
-                                <input type="checkbox" checked class="toggle">
+                                <input type="checkbox" x-model="user.email_notifications"
+                                    @change="updatePreferences('email')" class="toggle">
                             </label>
                             <label class="flex items-center justify-between">
                                 <span>SMS notifications</span>
-                                <input type="checkbox" class="toggle">
+                                <input type="checkbox" x-model="user.sms_notifications"
+                                    @change="updatePreferences('sms')" class="toggle">
                             </label>
+                            <p class="text-xs text-gray-500 mt-2">
+                                * Enable SMS to receive order updates on your phone.
+                            </p>
                         </div>
                     </div>
 
@@ -254,22 +272,23 @@
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Current Password</label>
                                 <input type="password" x-model="passwordForm.old_password" required
-                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-semibold mb-2">New Password</label>
                                 <input type="password" x-model="passwordForm.new_password" required minlength="6"
-                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Confirm New Password</label>
                                 <input type="password" x-model="passwordForm.confirm_password" required minlength="6"
-                                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none">
                             </div>
 
-                            <button type="submit" class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                            <button type="submit"
+                                class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
                                 Change Password
                             </button>
                         </form>
@@ -279,7 +298,8 @@
                     <div class="border-2 border-red-200 rounded-lg p-4 bg-red-50">
                         <h4 class="font-semibold mb-2 text-red-700">Danger Zone</h4>
                         <p class="text-sm text-red-600 mb-4">Once you delete your account, there is no going back.</p>
-                        <button @click="confirmDeleteAccount()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <button @click="confirmDeleteAccount()"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                             Delete Account
                         </button>
                     </div>
@@ -290,404 +310,408 @@
 </div>
 
 <script>
-function profileData() {
-    return {
-        user: {
-            full_name: 'Loading...',
-            email: '',
-            phone: '',
-            avatar_url: 'https://ui-avatars.com/api/?name=User&background=32b848&color=fff&size=400',
-            loyalty_tier: '🌱 Seedling',
-            xp_points: 0
-        },
-        stats: {
-            orders_count: 0,
-            total_spent: 0,
-            addresses_count: 0
-        },
-		
-        editMode: false,
-		editData: {
-			full_name: '',
-			email: '',
-			phone: '',  // Add phone here
-		},
-        passwordForm: {
-            old_password: '',
-            new_password: '',
-            confirm_password: ''
-        },
-        walletBalance: 0,
-		
-        async init() {
-            await this.fetchProfile();
-            await this.fetchStats();
-			await this.loadWallet();
-        },
-		
-		async loadWallet() {
-            const token = localStorage.getItem('access_token');
-			console.log(`wallettoken: ${token}`);
-            try {
-                const response = await fetch('/api/wallet/balance', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(response.ok){
-					console.log()
-                    const data = await response.json();
-                    this.walletBalance = data.balance;
-                    console.log('Wallet balance fetched:', data.balance);
-                }
-            } catch (e) {
-                console.error('Failed to load wallet', e);
-            }
-        },
+    function profileData() {
+        return {
+            user: {
+                full_name: 'Loading...',
+                email: '',
+                phone: '',
+                avatar_url: 'https://ui-avatars.com/api/?name=User&background=32b848&color=fff&size=400',
+                loyalty_tier: '🌱 Seedling',
+                xp_points: 0
+            },
+            stats: {
+                orders_count: 0,
+                total_spent: 0,
+                addresses_count: 0
+            },
 
-        promptEditProfile() {
-            if (window.showNotification) {
-                window.showNotification({
-                    type: 'info',
-                    title: 'Edit',
-                    message: 'Do you want to update your profile now?',
-                    buttons: [
-                        { text: 'Cancel', value: false },
-                        { text: 'Yes, update', value: true, style: 'primary' }
-                    ],
-                    onConfirm: (confirmed) => {
-                        if (confirmed) {
-                            this.updateProfile();
+            editMode: false,
+            editData: {
+                full_name: '',
+                email: '',
+                phone: '',  // Add phone here
+            },
+            passwordForm: {
+                old_password: '',
+                new_password: '',
+                confirm_password: ''
+            },
+            walletBalance: 0,
+
+            async init() {
+                await this.fetchProfile();
+                await this.fetchStats();
+                await this.loadWallet();
+            },
+
+            async loadWallet() {
+                const token = localStorage.getItem('access_token');
+                console.log(`wallettoken: ${token}`);
+                try {
+                    const response = await fetch('/api/wallet/balance', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        console.log()
+                        const data = await response.json();
+                        this.walletBalance = data.balance;
+                        console.log('Wallet balance fetched:', data.balance);
+                    }
+                } catch (e) {
+                    console.error('Failed to load wallet', e);
+                }
+            },
+
+            promptEditProfile() {
+                if (window.showNotification) {
+                    window.showNotification({
+                        type: 'info',
+                        title: 'Edit',
+                        message: 'Do you want to update your profile now?',
+                        buttons: [
+                            { text: 'Cancel', value: false },
+                            { text: 'Yes, update', value: true, style: 'primary' }
+                        ],
+                        onConfirm: (confirmed) => {
+                            if (confirmed) {
+                                this.updateProfile();
+                            }
                         }
-                    }
-                });
-            } else {
-                if (confirm('Do you want to update your profile now?')) {
-                    this.updateProfile();
-                }
-            }
-        },
-
-        async fetchProfile() {
-            const token = localStorage.getItem('access_token');
-
-            if (!token) {
-                window.location.href = '{% url "accounts:login" %}';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/auth/me', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    this.user = await response.json();
-                    this.editData = { ...this.user };
+                    });
                 } else {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
+                    if (confirm('Do you want to update your profile now?')) {
+                        this.updateProfile();
+                    }
+                }
+            },
+
+            async fetchProfile() {
+                const token = localStorage.getItem('access_token');
+
+                if (!token) {
                     window.location.href = '{% url "accounts:login" %}';
-                }
-            } catch (err) {
-                console.error('Failed to fetch profile', err);
-            }
-        },
-
-        async fetchStats() {
-            const token = localStorage.getItem('access_token');
-			console.log(`statstoken: ${token}`);
-			
-
-            try {
-                const ordersResponse = await fetch('/api/orders', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (ordersResponse.ok) {
-                    const orders = await ordersResponse.json();
-                    this.stats.orders_count = orders.length;
-                    this.stats.total_spent = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0).toFixed(2);
+                    return;
                 }
 
-                const addressesResponse = await fetch('/api/auth/addresses', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (addressesResponse.ok) {
-                    const addresses = await addressesResponse.json();
-                    this.stats.addresses_count = addresses.length;
+                try {
+                    const response = await fetch('/api/auth/me', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        this.user = await response.json();
+                        this.editData = { ...this.user };
+                    } else {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        window.location.href = '{% url "accounts:login" %}';
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch profile', err);
                 }
-            } catch (err) {
-                console.error('Failed to fetch stats', err);
-            }
-        },
+            },
 
-        async updateProfile() {
-            const token = localStorage.getItem('access_token');
+            async fetchStats() {
+                const token = localStorage.getItem('access_token');
+                console.log(`statstoken: ${token}`);
 
-            try {
-                const response = await fetch('/api/auth/me', {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.editData)
-                });
 
-                if (response.ok) {
-                    this.user = await response.json();
-                    this.editMode = false;
-
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Success",
-                            type: "success",
-                            message: 'Profile updated successfully! ✅'
-                        });
+                try {
+                    const ordersResponse = await fetch('/api/orders', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (ordersResponse.ok) {
+                        const orders = await ordersResponse.json();
+                        this.stats.orders_count = orders.length;
+                        this.stats.total_spent = orders
+                            .filter(order => order.status !== 'CANCELLED')
+                            .reduce((sum, order) => sum + parseFloat(order.total || 0), 0)
+                            .toFixed(2);
                     }
 
-                    if (typeof gsap !== 'undefined') {
-                        gsap.fromTo('.glass', 
-                            { scale: 1 }, 
-                            { scale: 1.02, duration: 0.3, yoyo: true, repeat: 1 }
-                        );
+                    const addressesResponse = await fetch('/api/auth/addresses', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (addressesResponse.ok) {
+                        const addresses = await addressesResponse.json();
+                        this.stats.addresses_count = addresses.length;
                     }
-                } else {
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Error",
-                            type: "error",
-                            message: 'Failed to update profile ❌'
-                        });
-                    }
+                } catch (err) {
+                    console.error('Failed to fetch stats', err);
                 }
-            } catch (err) {
-                console.error('Failed to update profile', err);
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Error updating profile ❌'
+            },
+
+            async updateProfile() {
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch('/api/auth/me', {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.editData)
                     });
-                }
-            }
-        },
 
-        async changePassword() {
-            if (this.passwordForm.new_password !== this.passwordForm.confirm_password) {
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Passwords don\'t match! ❌'
-                    });
-                }
-                return;
-            }
+                    if (response.ok) {
+                        this.user = await response.json();
+                        this.editMode = false;
 
-            if (this.passwordForm.new_password.length < 6) {
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Password must be at least 6 characters! ❌'
-                    });
-                }
-                return;
-            }
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Success",
+                                type: "success",
+                                message: 'Profile updated successfully! ✅'
+                            });
+                        }
 
-            const token = localStorage.getItem('access_token');
-
-            try {
-                const response = await fetch('/api/auth/change-password', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.passwordForm)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Success",
-                            type: "success",
-                            message: data.message || 'Password changed successfully! ✅'
-                        });this.fetchProfile();
-                    }
-
-                    this.passwordForm = {
-                        old_password: '',
-                        new_password: '',
-                        confirm_password: ''
-                    };
-                } else {
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Error",
-                            type: "error",
-                            message: data.message || 'Failed to change password ❌'
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error('Password change failed', err);
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Error changing password ❌'
-                    });
-                }
-            }
-        },
-
-        async uploadAvatar(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Please select an image file 📷'
-                    });
-                }
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Image must be less than 5MB ⚠️'
-                    });
-                }
-                return;
-            }
-
-            const token = localStorage.getItem('access_token');
-            const formData = new FormData();
-            formData.append('avatar', file);
-
-            try {
-                const response = await fetch('/api/auth/upload-avatar', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    this.user.avatar_url = data.avatar_url;
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Success",
-                            type: "success",
-                            message: 'Avatar updated successfully! ✅'
-                        });
-                    }
-                } else {
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Error",
-                            type: "error",
-                            message: 'Failed to upload avatar ❌'
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error('Avatar upload failed', err);
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Error uploading avatar ❌'
-                    });
-                }
-            }
-        },
-
-        confirmDeleteAccount() {
-            if (!window.showNotification) {
-                window.showNotification({
-                    type: 'warning',
-                    title: 'Confirm Account Deletion',
-                    message: 'Are you sure you want to delete your account? This action cannot be undone!',
-                    showCancel: true,
-                    confirmText: 'Delete Account',
-                    onConfirm: (confirmed) => {
-                        if (confirmed) {
-                            this.deleteAccount();
+                        if (typeof gsap !== 'undefined') {
+                            gsap.fromTo('.glass',
+                                { scale: 1 },
+                                { scale: 1.02, duration: 0.3, yoyo: true, repeat: 1 }
+                            );
+                        }
+                    } else {
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Error",
+                                type: "error",
+                                message: 'Failed to update profile ❌'
+                            });
                         }
                     }
-                });
-            } else {
-                const confirmed = window.confirm('⚠️ Are you sure you want to delete your account?\n\nThis will permanently delete:\n• All orders\n• Wishlist items\n• Saved addresses\n• Cart items\n• Reviews\n\nThis action CANNOT be undone!');
-                if (confirmed) {
-                    this.deleteAccount();
-                }
-            }
-        },
-
-        async deleteAccount() {
-            const token = localStorage.getItem('access_token');
-
-            try {
-                const response = await fetch('/api/auth/account', {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-
-                    if (window.showNotification) {
-                        window.showNotification({
-                            title: "Success",
-                            type: "success",
-                            message: 'Account deleted successfully ✅'
-                        });
-                    }
-
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                } else {
+                } catch (err) {
+                    console.error('Failed to update profile', err);
                     if (window.showNotification) {
                         window.showNotification({
                             title: "Error",
                             type: "error",
-                            message: data.message || 'Failed to delete account ❌'
+                            message: 'Error updating profile ❌'
                         });
                     }
                 }
-            } catch (err) {
-                console.error('Account deletion failed', err);
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: "Error",
-                        type: "error",
-                        message: 'Error deleting account ❌'
+            },
+
+            async changePassword() {
+                if (this.passwordForm.new_password !== this.passwordForm.confirm_password) {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Passwords don\'t match! ❌'
+                        });
+                    }
+                    return;
+                }
+
+                if (this.passwordForm.new_password.length < 6) {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Password must be at least 6 characters! ❌'
+                        });
+                    }
+                    return;
+                }
+
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch('/api/auth/change-password', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.passwordForm)
                     });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Success",
+                                type: "success",
+                                message: data.message || 'Password changed successfully! ✅'
+                            }); this.fetchProfile();
+                        }
+
+                        this.passwordForm = {
+                            old_password: '',
+                            new_password: '',
+                            confirm_password: ''
+                        };
+                    } else {
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Error",
+                                type: "error",
+                                message: data.message || 'Failed to change password ❌'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Password change failed', err);
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Error changing password ❌'
+                        });
+                    }
+                }
+            },
+
+            async uploadAvatar(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Please select an image file 📷'
+                        });
+                    }
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Image must be less than 5MB ⚠️'
+                        });
+                    }
+                    return;
+                }
+
+                const token = localStorage.getItem('access_token');
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                try {
+                    const response = await fetch('/api/auth/upload-avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.user.avatar_url = data.avatar_url;
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Success",
+                                type: "success",
+                                message: 'Avatar updated! 📸'
+                            });
+                        }
+                        this.fetchProfile();
+                    } else {
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Error",
+                                type: "error",
+                                message: 'Failed to upload avatar ❌'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Avatar upload failed', err);
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Error uploading avatar ❌'
+                        });
+                    }
+                }
+            },
+
+            confirmDeleteAccount() {
+                if (!window.showNotification) {
+                    window.showNotification({
+                        type: 'warning',
+                        title: 'Confirm Account Deletion',
+                        message: 'Are you sure you want to delete your account? This action cannot be undone!',
+                        showCancel: true,
+                        confirmText: 'Delete Account',
+                        onConfirm: (confirmed) => {
+                            if (confirmed) {
+                                this.deleteAccount();
+                            }
+                        }
+                    });
+                } else {
+                    const confirmed = window.confirm('⚠️ Are you sure you want to delete your account?\n\nThis will permanently delete:\n• All orders\n• Wishlist items\n• Saved addresses\n• Cart items\n• Reviews\n\nThis action CANNOT be undone!');
+                    if (confirmed) {
+                        this.deleteAccount();
+                    }
+                }
+            },
+
+            async deleteAccount() {
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch('/api/auth/account', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Success",
+                                type: "success",
+                                message: 'Account deleted successfully ✅'
+                            });
+                        }
+
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        if (window.showNotification) {
+                            window.showNotification({
+                                title: "Error",
+                                type: "error",
+                                message: data.message || 'Failed to delete account ❌'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Account deletion failed', err);
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: "Error",
+                            type: "error",
+                            message: 'Error deleting account ❌'
+                        });
+                    }
                 }
             }
         }
     }
-}
 </script>
 {% endblock %}

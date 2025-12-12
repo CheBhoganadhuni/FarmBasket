@@ -5,112 +5,95 @@
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-green-50 to-white">
     <div class="max-w-md w-full">
-        
+
         <!-- Card -->
         <div class="glass rounded-2xl shadow-2xl p-8" x-data="loginForm()">
-            
+
             <!-- Logo -->
             <div class="text-center mb-8">
                 <div class="text-6xl mb-4">🧺</div>
                 <h2 class="font-display text-3xl font-bold mb-2">Welcome Back!</h2>
                 <p class="text-gray-600">Login to continue shopping organic</p>
             </div>
-            
+
             <!-- Error Alert -->
             <div x-show="error" x-transition class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
                 <span x-text="error"></span>
             </div>
-            
+
             <!-- Form -->
             <form @submit.prevent="submitLogin">
-                
+
                 <!-- Email -->
                 <div class="mb-6">
                     <label class="block text-sm font-semibold mb-2">Email</label>
-                    <input 
-                        type="email" 
-                        x-model="formData.email"
-                        @input="validateEmail"
+                    <input type="email" x-model="formData.email" @input="validateEmail"
                         class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
                         :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
-                        placeholder="you@example.com"
-                        required
-                    >
+                        placeholder="you@example.com" required>
                     <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
                 </div>
-                
+
                 <!-- Password -->
                 <div class="mb-6">
                     <label class="block text-sm font-semibold mb-2">Password</label>
                     <div class="relative">
-                        <input 
-                            :type="showPassword ? 'text' : 'password'"
-                            x-model="formData.password"
+                        <input :type="showPassword ? 'text' : 'password'" x-model="formData.password"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
-                            placeholder="••••••••"
-                            required
-                        >
-                        <button 
-                            type="button"
-                            @click="showPassword = !showPassword"
+                            placeholder="••••••••" required>
+                        <button type="button" @click="showPassword = !showPassword"
                             class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                             <span x-show="!showPassword">👁️</span>
                             <span x-show="showPassword">👁️‍🗨️</span>
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Forgot -->
-				<div class="flex items-center justify-end mb-6">
-					<a href="{% url 'accounts:password_reset_request' %}" class="text-sm text-neon hover:underline">Forgot password?</a>
-				</div>
-                
+                <div class="flex items-center justify-end mb-6">
+                    <a href="{% url 'accounts:password_reset_request' %}"
+                        class="text-sm text-neon hover:underline">Forgot password?</a>
+                </div>
+
                 <!-- Submit Button -->
-                <button 
-                    type="submit"
-                    :disabled="loading"
+                <button type="submit" :disabled="loading"
                     class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span x-show="!loading">Login 🚀</span>
                     <span x-show="loading">
-                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
                         </svg>
                     </span>
                 </button>
             </form>
             <!-- OR Divider -->
-			<div class="flex items-center my-6">
-				<div class="flex-grow border-t border-gray-300"></div>
-				<span class="mx-2 text-gray-500 text-sm">OR</span>
-				<div class="flex-grow border-t border-gray-300"></div>
-			</div>
-			<!-- Google Sign-In -->
-			<div class="flex justify-center">
-				<div id="g_id_onload"
-					 data-client_id="838220989580-o4t26t31mrvkvtopj7pg3c0ekps10j7k.apps.googleusercontent.com"
-					 data-context="signin"
-					 data-callback="handleCredentialResponse"
-					 data-auto_prompt="false">
-				</div>
-
-				<div class="g_id_signin"
-					 data-type="standard"
-					 data-size="large"
-					 data-shape="rectangular"
-					 data-theme="outline"
-					 data-width="250">
-				</div>
-			</div>
+            <div class="flex items-center my-6">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="mx-2 text-gray-500 text-sm">OR</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+            <!-- Google Sign-In (Redirect) -->
+            <div class="flex justify-center">
+                <a href="/api/auth/google/login"
+                    class="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm font-semibold text-gray-700">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+                    Continue with Google
+                </a>
+            </div>
             <!-- Register Link -->
             <p class="text-center mt-6 text-gray-600">
-                Don't have an account? 
+                Don't have an account?
                 <a href="{% url 'accounts:register' %}" class="text-neon font-semibold hover:underline">Sign up</a>
             </p>
         </div>
     </div>
 </div>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 
 <script>
     // Check if already logged in
@@ -121,46 +104,9 @@
             window.location.href = '/profile/';
         }
     });
-	
-	// ✅ Google Sign-In callback
-    async function handleCredentialResponse(response) {
-        const idToken = response.credential;
 
-        try {
-            const res = await fetch('/api/auth/google-login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id_token: idToken })
-            });
 
-            const data = await res.json();
 
-            if (res.ok) {
-                // Save tokens same as normal login
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('refresh_token', data.refresh_token);
-
-                // Optional: debug
-                console.log('Google login successful, tokens saved');
-
-                // Redirect like normal login
-                if (data.is_superuser) {
-                    window.location.href = '/admin/';
-                } else {
-                    window.location.href = '/profile/';
-                }
-            } else {
-                console.error('Google login failed:', data);
-                alert(data.detail || 'Google login failed. Please try again.');
-            }
-        } catch (err) {
-            console.error('Google login error:', err);
-            alert('Something went wrong with Google login. Please try again.');
-        }
-    }
-	
     function loginForm() {
         return {
             formData: {
@@ -171,7 +117,7 @@
             emailError: '',
             showPassword: false,
             loading: false,
-            
+
             validateEmail() {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(this.formData.email)) {
@@ -180,64 +126,64 @@
                     this.emailError = '';
                 }
             },
-            
-			async submitLogin() {
-				this.error = '';
-				this.loading = true;
-				
-				try {
-					const response = await fetch('/api/auth/login', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify(this.formData)
-					});
-					
-					const data = await response.json();
-					
-					if (response.ok) {
-						console.log('Login successful, tokens received');
-						
-						// ✅ SAVE TOKENS FIRST (critical!)
-						localStorage.setItem('access_token', data.access_token);
-						localStorage.setItem('refresh_token', data.refresh_token);
-						
-						console.log('Tokens saved to localStorage');
-						console.log('Access token:', localStorage.getItem('access_token'));
-						
-						// ✅ THEN animate and redirect
-						gsap.to('.glass', {
-							scale: 1.05,
-							duration: 0.3,
-							yoyo: true,
-							repeat: 1,
-							onComplete: () => {
-								console.log('Redirecting to profile...');
-								if (data.is_superuser) {
-									window.location.href = '/admin/';
-								} else {
-									<!-- window.confirm(Object.entries(data)); -->
-									window.location.href = '/profile/';
-								}
 
-							}
-						});
-					} else {
-						this.error = data.detail || 'Invalid email or password';
-						console.error('Login failed:', data);
-						gsap.fromTo('.glass', 
-							{ x: -10 }, 
-							{ x: 10, duration: 0.1, repeat: 5, yoyo: true }
-						);
-					}
-				} catch (err) {
-					console.error('Login error:', err);
-					this.error = 'Something went wrong. Please try again.';
-				} finally {
-					this.loading = false;
-				}
-			}
+            async submitLogin() {
+                this.error = '';
+                this.loading = true;
+
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.formData)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        console.log('Login successful, tokens received');
+
+                        // ✅ SAVE TOKENS FIRST (critical!)
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('refresh_token', data.refresh_token);
+
+                        console.log('Tokens saved to localStorage');
+                        console.log('Access token:', localStorage.getItem('access_token'));
+
+                        // ✅ THEN animate and redirect
+                        gsap.to('.glass', {
+                            scale: 1.05,
+                            duration: 0.3,
+                            yoyo: true,
+                            repeat: 1,
+                            onComplete: () => {
+                                console.log('Redirecting to profile...');
+                                if (data.is_superuser) {
+                                    window.location.href = '/admin/';
+                                } else {
+                                    <!-- window.confirm(Object.entries(data)); -->
+                                    window.location.href = '/profile/';
+                                }
+
+                            }
+                        });
+                    } else {
+                        this.error = data.detail || 'Invalid email or password';
+                        console.error('Login failed:', data);
+                        gsap.fromTo('.glass',
+                            { x: -10 },
+                            { x: 10, duration: 0.1, repeat: 5, yoyo: true }
+                        );
+                    }
+                } catch (err) {
+                    console.error('Login error:', err);
+                    this.error = 'Something went wrong. Please try again.';
+                } finally {
+                    this.loading = false;
+                }
+            }
 
         }
     }

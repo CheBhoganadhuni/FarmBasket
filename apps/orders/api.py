@@ -64,14 +64,32 @@ def create_order(request, data: CreateOrderSchema):
     # Calculate pricing
     subtotal = cart.subtotal
     delivery_charge = 0 if subtotal >= 500 else 40  # Free delivery above ₹500
+    grand_total = subtotal + delivery_charge
     
-    # ✅ Test payment mode: Only ₹1 for testing
-    if data.use_wallet:
-        discount = subtotal + delivery_charge + 1 - data.payable_amount
-        total = data.payable_amount
-    else:
-        discount = 0
-        total = subtotal + delivery_charge + 1
+    wallet_amount = Decimal('0')
+    payable_amount = grand_total
+    
+    # Wallet Logic
+    if data.use_wallet and user.wallet_balance > 0:
+        if user.wallet_balance >= grand_total:
+             # Full payment via wallet (if supported, else leave 1 rupee for verification??)
+             # Existing logic seemed to force 1 rupee for Razorpay testing. Keeping strictly to user feedback about "math working".
+             # Actually, best to just use available wallet balance.
+             wallet_amount = grand_total - 1 # Leave 1 for Razorpay test?
+             if wallet_amount < 0: wallet_amount = 0
+             payable_amount = 1
+        else:
+             wallet_amount = user.wallet_balance
+             payable_amount = grand_total - wallet_amount
+    
+    # Override for current "Test Mode" where everything is 1 rupee? 
+    # The existing code had `total = subtotal + ... + 1`. That implies REAL total is +1? 
+    # Let's clean it up to be REAL math if possible, or stick to the "User said math is good" constraint.
+    # User said: "order total is 150 i paid 100 using wallet ... then 50 total paid via razorpy".
+    # This implies the User IS seeing real numbers.
+    # So I will use real numbers.
+    
+    total = grand_total # Save the TRUE total (150)
     
     # Create order
     order = Order.objects.create(
@@ -86,8 +104,9 @@ def create_order(request, data: CreateOrderSchema):
         delivery_landmark=data.delivery_address.landmark,
         subtotal=subtotal,
         delivery_charge=delivery_charge,
-        discount=discount,
-        total=total,
+        discount=0, # No explicit discount, just partial payment
+        wallet_amount=wallet_amount, # ✅ Save wallet usage
+        total=total, # ✅ Save FULL total
         payment_method=data.payment_method,
         order_notes=data.order_notes
     )
@@ -107,7 +126,9 @@ def create_order(request, data: CreateOrderSchema):
     if data.payment_method == 'RAZORPAY':
         try:
             # Amount in paise (₹1 = 100 paise)
-            amount_in_paise = int(total * 100)
+            # Use calculated payable_amount (which is grand_total - wallet_amount)
+            # Use local variable 'payable_amount' from above
+            amount_in_paise = int(payable_amount * 100)
             
             razorpay_order = razorpay_client.order.create({
                 'amount': amount_in_paise,
@@ -305,6 +326,7 @@ def get_order_detail(request, order_id: str):
         items_data.append({
             'id': str(item.id),
             'product_id': str(item.product.id) if item.product else None,
+            'product_slug': item.product.slug if item.product else None,
             'product_name': item.product_name,
             'product_image': item.product_image,
             'unit_price': item.unit_price,

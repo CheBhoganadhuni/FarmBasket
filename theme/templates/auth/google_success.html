@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Authenticating...{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-green-50">
+    <div class="glass p-8 rounded-2xl text-center">
+        <div class="text-6xl mb-4 animate-bounce">🧺</div>
+        <h2 class="text-2xl font-bold mb-2">Authenticating with Google...</h2>
+        <p class="text-gray-600">Please wait while we log you in.</p>
+    </div>
+</div>
+
+<script>
+    window.onload = function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get('access');
+        const refreshToken = urlParams.get('refresh');
+        const isSuperuser = urlParams.get('superuser') === 'true';
+
+        if (accessToken && refreshToken) {
+            console.log('Google Auth tokens received');
+            localStorage.setItem('access_token', accessToken);
+            localStorage.setItem('refresh_token', refreshToken);
+
+            setTimeout(() => {
+                if (isSuperuser) {
+                    window.location.href = '/admin/';
+                } else {
+                    window.location.href = '/profile/';
+                }
+            }, 1000); // Short delay for UX
+        } else {
+            alert('Google Auth Failed: No tokens received.');
+            window.location.href = '/auth/login/';
+        }
+    }
+</script>
+{% endblock %}

@@ -50,7 +50,8 @@ def decode_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
+        print(f"JWT Decode Error: {e}")
         return None
 
 
@@ -58,9 +59,16 @@ class AuthBearer(HttpBearer):
     """JWT Bearer authentication for Django Ninja"""
     
     def authenticate(self, request, token):
+        # DEBUG PRINTS
+        # print(f"AuthBearer: Verifying token: {token[:20]}...")
         payload = decode_token(token)
         
-        if payload is None or payload.get("type") != "access":
+        if payload is None:
+            print("AuthBearer: Payload is None (Decode failed)")
+            return None
+            
+        if payload.get("type") != "access":
+            print(f"AuthBearer: Invalid token type: {payload.get('type')}")
             return None
         
         user_id = payload.get("sub")
