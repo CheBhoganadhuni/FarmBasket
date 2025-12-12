@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 # from cloudinary.models import CloudinaryField
 import uuid
+from decimal import Decimal
 
 
 class CustomUserManager(BaseUserManager):
@@ -62,6 +63,9 @@ class User(AbstractUser):
         ],
         default='SEEDLING'
     )
+
+    # Wallet
+    wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -70,6 +74,8 @@ class User(AbstractUser):
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
+    
+    
     
     objects = CustomUserManager()
     
@@ -92,6 +98,20 @@ class User(AbstractUser):
         if self.avatar:
             return self.avatar.url
         return f"https://ui-avatars.com/api/?name={self.full_name}&background=32b848&color=fff&size=400"
+
+    def credit_wallet(self, amount):
+        """Add funds to wallet"""
+        self.wallet_balance += Decimal(str(amount))
+        self.save(update_fields=['wallet_balance'])
+
+    def debit_wallet(self, amount):
+        """Deduct funds from wallet if sufficient balance"""
+        amount = Decimal(str(amount))
+        if self.wallet_balance >= amount:
+            self.wallet_balance -= amount
+            self.save(update_fields=['wallet_balance'])
+            return True
+        return False
 
 
 class Address(models.Model):
@@ -165,20 +185,4 @@ class PasswordResetToken(models.Model):
         from django.utils import timezone
         return not self.used and timezone.now() < self.expires_at
 
-from django.db import models
-from django.conf import settings
 
-class Wallet(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    def credit(self, amount):
-        self.balance += amount
-        self.save()
-
-    def debit(self, amount):
-        if self.balance >= amount:
-            self.balance -= amount
-            self.save()
-            return True
-        return False

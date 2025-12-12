@@ -79,7 +79,29 @@
                     </span>
                 </button>
             </form>
-            
+            <!-- OR Divider -->
+			<div class="flex items-center my-6">
+				<div class="flex-grow border-t border-gray-300"></div>
+				<span class="mx-2 text-gray-500 text-sm">OR</span>
+				<div class="flex-grow border-t border-gray-300"></div>
+			</div>
+			<!-- Google Sign-In -->
+			<div class="flex justify-center">
+				<div id="g_id_onload"
+					 data-client_id="838220989580-o4t26t31mrvkvtopj7pg3c0ekps10j7k.apps.googleusercontent.com"
+					 data-context="signin"
+					 data-callback="handleCredentialResponse"
+					 data-auto_prompt="false">
+				</div>
+
+				<div class="g_id_signin"
+					 data-type="standard"
+					 data-size="large"
+					 data-shape="rectangular"
+					 data-theme="outline"
+					 data-width="250">
+				</div>
+			</div>
             <!-- Register Link -->
             <p class="text-center mt-6 text-gray-600">
                 Don't have an account? 
@@ -88,6 +110,7 @@
         </div>
     </div>
 </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
     // Check if already logged in
@@ -98,6 +121,46 @@
             window.location.href = '/profile/';
         }
     });
+	
+	// ✅ Google Sign-In callback
+    async function handleCredentialResponse(response) {
+        const idToken = response.credential;
+
+        try {
+            const res = await fetch('/api/auth/google-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id_token: idToken })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // Save tokens same as normal login
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('refresh_token', data.refresh_token);
+
+                // Optional: debug
+                console.log('Google login successful, tokens saved');
+
+                // Redirect like normal login
+                if (data.is_superuser) {
+                    window.location.href = '/admin/';
+                } else {
+                    window.location.href = '/profile/';
+                }
+            } else {
+                console.error('Google login failed:', data);
+                alert(data.detail || 'Google login failed. Please try again.');
+            }
+        } catch (err) {
+            console.error('Google login error:', err);
+            alert('Something went wrong with Google login. Please try again.');
+        }
+    }
+	
     function loginForm() {
         return {
             formData: {

@@ -26,6 +26,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production'
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# ======================================================================
+# GOOGLE SIGN-IN
+# ======================================================================
+
+GOOGLE_CLIENT_ID = "838220989580-o4t26t31mrvkvtopj7pg3c0ekps10j7k.apps.googleusercontent.com"
+
 
 
 # ==============================================================================
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+
     # Third-party apps
     'channels',
     'django_rq',
@@ -62,6 +69,7 @@ INSTALLED_APPS = [
     'apps.products'
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -70,6 +78,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 # CSRF Settings for Django Ninja

@@ -12,6 +12,8 @@ urlpatterns = [
     path('admin/', include('apps.products.urls')),  # or whatever app you put your admin views in
     path('api/', api.urls),  # ✅ Use ONCE
     
+   
+    
     # Template views
     path('', include('apps.accounts.urls')),
     path('', include('apps.catalog.urls')),

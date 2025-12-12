@@ -18,6 +18,7 @@ urlpatterns = [
     path('auth/password-reset/', views.password_reset_request_view, name='password_reset_request'),
     path('auth/password-reset/confirm/', views.password_reset_confirm_view, name='password_reset_confirm'),
     
+    
     # Address management
     path('profile/addresses/', views.addresses_view, name='addresses'),
     

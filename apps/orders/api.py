@@ -18,7 +18,7 @@ from .schemas import (
     RazorpayOrderSchema, VerifyPaymentSchema, MessageSchema
 )
 
-from apps.accounts.models import Wallet
+
 
 
 from apps.accounts.auth import AuthBearer
@@ -156,14 +156,12 @@ def create_order(request, data: CreateOrderSchema):
         order.save()
         
         if data.use_wallet:
-            wallet, _ = Wallet.objects.get_or_create(user=user)
-            wallet_balance = float(wallet.balance)
+            # Check balance and deduct
             max_deductable = max(0, subtotal + delivery_charge + 1)
-            wallet_deduction = min(wallet_balance, max_deductable)
-        
-        if data.use_wallet and wallet_deduction > 0:
-            wallet.balance = wallet.balance - Decimal(str(wallet_deduction))
-            wallet.save()
+            wallet_deduction = min(user.wallet_balance, max_deductable)
+            
+            if wallet_deduction > 0:
+                user.debit_wallet(wallet_deduction)
         
         # Clear cart
         cart.items.all().delete()
@@ -228,14 +226,12 @@ def verify_payment(request, data: VerifyPaymentSchema):
         order.save()
         
         if use_wallet:
-                wallet, _ = Wallet.objects.get_or_create(user=user)
-                wallet_balance = float(wallet.balance)
-                max_deductable = max(0, subtotal + delivery_charge + 1)
-                wallet_deduction = min(wallet_balance, max_deductable)
-                
-        if use_wallet and wallet_deduction > 0:
-            wallet.balance = wallet.balance - Decimal(str(wallet_deduction))
-            wallet.save()
+            # Check balance and deduct
+            max_deductable = max(0, subtotal + delivery_charge + 1)
+            wallet_deduction = min(user.wallet_balance, max_deductable)
+            
+            if wallet_deduction > 0:
+                user.debit_wallet(wallet_deduction)
         
         # Clear cart
         try:

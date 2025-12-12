@@ -180,3 +180,7 @@ class AuthSchema(BaseModel):
     class Config:
         from_attributes = True
 
+from ninja import Schema
+
+class GoogleLoginSchema(Schema):
+    id_token: str

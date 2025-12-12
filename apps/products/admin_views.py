@@ -370,7 +370,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 from apps.orders.models import Order
-from apps.accounts.models import Wallet
+
 
 
 @api_view(['PUT'])
@@ -390,8 +390,7 @@ def admin_payment_update_status(request, pk, data = None):
         return Response({'success': False, 'message': 'Invalid payment status'}, status=status.HTTP_400_BAD_REQUEST)
 
     if new_payment_status == 'REFUNDED':
-        wallet, created = Wallet.objects.get_or_create(user=order.user)
-        wallet.credit(order.total)
+        order.user.credit_wallet(order.total)
     
     order.payment_status = new_payment_status
     order.save()

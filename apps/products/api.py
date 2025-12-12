@@ -25,6 +25,24 @@ class PaymentStatusSchema(Schema):
 class OrderStatusUpdateSchema(Schema):
     status: str
 
+# from ninja.security import HttpBearer
+# from django.contrib.auth.models import User
+
+# class AuthBearer(HttpBearer):
+    # def authenticate(self, request, token):
+        # from rest_framework_simplejwt.tokens import AccessToken
+        # try:
+            # validated = AccessToken(token)
+            # user = User.objects.get(id=validated['user_id'])
+            # if not user.is_superuser:  # restrict to admins
+                # return None
+            # request.user = user
+            # return user
+        # except Exception:
+            # return None
+
+# auth = AuthBearer()
+# router = Router(tags=['Admin'], auth=auth)
 router = Router(tags=['Admin'])
 
 # Dashboard stats
@@ -124,13 +142,19 @@ def product_delete(request, pk: UUID):
 def orders_list(request):
     return admin_orders_list(request)
 
+from ninja.responses import Response as NinjaResponse
+
 @router.put('/orders/{pk}/status')
 def order_update_status(request, pk: UUID, data: OrderStatusUpdateSchema = Body(...)):
-    return admin_order_update_status(request, pk, data.dict())
+    drf_response = admin_order_update_status(request, pk, data.dict())
+    # Convert DRF Response -> Ninja compatible
+    return NinjaResponse(drf_response.data, status=drf_response.status_code)
+
 
 @router.put('/orders/{pk}/payment_status')
 def order_update_payment_status(request, pk: UUID, data: PaymentStatusSchema = Body(...)):
-    return admin_payment_update_status(request, pk, data.dict())
+    drf_response = admin_payment_update_status(request, pk, data.dict())
+    return NinjaResponse(drf_response.data, status=drf_response.status_code)
 
 
 # Users

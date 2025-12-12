@@ -66,3 +66,4 @@ def wishlist_view(request):
 def contact_view(request):
     """contact page"""
     return render(request, 'legal/contact.html')
+    

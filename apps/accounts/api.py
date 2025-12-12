@@ -29,7 +29,11 @@ from .auth import (
     get_password_hash, AuthBearer
 )
 from .emails import send_welcome_email, send_password_reset_email  # ✅ Changed from tasks to emails
+from django.conf import settings
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
+from .schemas import GoogleLoginSchema
 
 router = Router(tags=['Authentication'])
 auth = AuthBearer()
@@ -70,6 +74,72 @@ def register(request, data: UserRegisterSchema):
         'user': user_data
     }
 
+@router.post("/google-login", response=TokenSchema)
+def google_login(request, payload: GoogleLoginSchema):
+    """
+    Google Sign-In using id_token:
+    - verifies Google token
+    - finds or creates user
+    - returns same token shape as /login
+    """
+    try:
+        # Verify the token and get Google user info
+        idinfo = id_token.verify_oauth2_token(
+            payload.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except Exception:
+        raise HttpError(400, "Invalid Google token")
+
+    # Extra safety: check issuer
+    if idinfo.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
+        raise HttpError(400, "Invalid token issuer")
+
+    email = idinfo.get("email")
+    email_verified = idinfo.get("email_verified", False)
+
+    if not email or not email_verified:
+        raise HttpError(400, "Email not verified by Google")
+
+    # Name fields
+    given_name = idinfo.get("given_name") or ""
+    family_name = idinfo.get("family_name") or ""
+    full_name = (given_name + " " + family_name).strip() or email.split("@")[0]
+
+    # 1) Find or create user by email
+    try:
+        user = User.objects.get(email=email, is_active=True)
+    except User.DoesNotExist:
+        # New user via Google – no password, unusable password
+        user = User.objects.create_user(
+            email=email,
+            password=None,
+            first_name=given_name,
+            last_name=family_name,
+        )
+        user.set_unusable_password()
+        user.save()
+
+    # 2) Update last_login like in normal login
+    from django.utils import timezone
+    user.last_login = timezone.now()
+    user.save(update_fields=["last_login"])
+
+    # 3) Generate tokens using same helpers as /login
+    access_token = create_access_token(data={"sub": str(user.id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    # 4) Return same structure as /login
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
+        "email": user.email,
+        "full_name": user.get_full_name() or full_name,
+    }
 
 @router.post("/login", response=TokenSchema)
 def login(request, data: UserLoginSchema):
@@ -344,10 +414,8 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Wallet
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_wallet_view(request):
-    wallet, created = Wallet.objects.get_or_create(user=request.user)
-    return Response({'balance': float(wallet.balance)})
+    return Response({'balance': float(request.user.wallet_balance)})

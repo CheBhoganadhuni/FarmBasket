@@ -8,7 +8,7 @@ def order_status_changed(sender, instance, created, **kwargs):
     """Send email when order status changes"""
     if not created:  # Only for updates, not creation
         # Check if status actually changed
-        if instance.status in ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED']:
+        if instance.status in ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']:
             try:
                 if instance.user.email_notifications:
                     send_order_status_email(instance)
