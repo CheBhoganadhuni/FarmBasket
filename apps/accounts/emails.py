@@ -2,8 +2,18 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 
+import threading
+
+def _send_email_thread(email_obj):
+    """Execution logic for background thread"""
+    try:
+        email_obj.send(fail_silently=False)
+        print(f"✅ Email sent to {email_obj.to}")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
 def send_welcome_email(user):
-    """Send welcome email to new user"""
+    """Send welcome email to new user (Async)"""
     try:
         # Check preference
         if not user.email_notifications:
@@ -23,19 +33,19 @@ def send_welcome_email(user):
             subject=subject,
             body='Welcome to FarmBasket!',  # Plain text fallback
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]  # ✅ Use user.email, not user
+            to=[user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        email.send(fail_silently=False)
         
-        print(f"✅ Welcome email sent to {user.email}")
+        # Send in background thread to avoid 502/Timeout
+        threading.Thread(target=_send_email_thread, args=(email,)).start()
         
     except Exception as e:
-        print(f"❌ Failed to send welcome email to {user.email}: {e}")
-        raise
+        print(f"❌ Failed to initiate welcome email: {e}")
+
 
 def send_order_confirmation_email(order):
-    """Send order confirmation email"""
+    """Send order confirmation email (Async)"""
     try:
         # Check preference
         if not order.user.email_notifications:
@@ -53,18 +63,16 @@ def send_order_confirmation_email(order):
             subject=subject,
             body=f'Your order #{order.order_number} has been confirmed!',
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[order.user.email]  # ✅ Use order.user.email
+            to=[order.user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        email.send(fail_silently=False)
-        
-        print(f"✅ Order confirmation sent to {order.user.email}")
+        threading.Thread(target=_send_email_thread, args=(email,)).start()
         
     except Exception as e:
-        print(f"❌ Failed to send order confirmation: {e}")
+        print(f"❌ Failed to initiate order confirmation: {e}")
 
 def send_password_reset_email(user, reset_url):
-    """Send password reset email"""
+    """Send password reset email (Async)"""
     try:
         subject = '🔐 FarmBasket Password Reset'
         
@@ -77,18 +85,16 @@ def send_password_reset_email(user, reset_url):
             subject=subject,
             body=f'Reset your password: {reset_url}',
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email]  # ✅ Use user.email
+            to=[user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        email.send(fail_silently=False)
-        
-        print(f"✅ Password reset email sent to {user.email}")
+        threading.Thread(target=_send_email_thread, args=(email,)).start()
         
     except Exception as e:
-        print(f"❌ Failed to send password reset email: {e}")
+        print(f"❌ Failed to initiate password reset email: {e}")
 
 def send_order_status_email(order):
-    """Send order status update email"""
+    """Send order status update email (Async)"""
     try:
         # Check preference
         if not order.user.email_notifications:
@@ -113,23 +119,18 @@ def send_order_status_email(order):
             subject=subject,
             body=f'Your order #{order.order_number} status: {order.get_status_display()}',
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[order.user.email]  # ✅ Use order.user.email
+            to=[order.user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        email.send(fail_silently=False)
-        
-        print(f"✅ Status update email sent to {order.user.email}")
+        threading.Thread(target=_send_email_thread, args=(email,)).start()
         
     except Exception as e:
-        print(f"❌ Failed to send status update email: {e}")
+        print(f"❌ Failed to initiate status update email: {e}")
 
 def send_payment_status_email(order):
-    """Send payment status update email"""
+    """Send payment status update email (Async)"""
     try:
         subject = f'💳 Payment Update for Order #{order.order_number}'
-        
-        # Reuse confirmation template with custom message context if possible, 
-        # or just fallback to simple body since I don't want to create new template files right now.
         
         email = EmailMultiAlternatives(
             subject=subject,
@@ -137,8 +138,7 @@ def send_payment_status_email(order):
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[order.user.email]
         )
-        email.send(fail_silently=False)
-        print(f"✅ Payment status email sent to {order.user.email}")
+        threading.Thread(target=_send_email_thread, args=(email,)).start()
         
     except Exception as e:
-        print(f"❌ Failed to send payment status email: {e}")
+        print(f"❌ Failed to initiate payment status email: {e}")

@@ -42,6 +42,27 @@ class CartItemSchema(BaseModel):
             return str(v)
         return v
 
+    @validator('product_image', pre=True)
+    def get_image_url(cls, v):
+        # Handle field file or string
+        if hasattr(v, 'url'):
+            if v.url and v.url.startswith('http'):
+                return v.url
+            if hasattr(v, 'name') and v.name:
+                v = v.name
+        
+        if isinstance(v, str) and v:
+            if v.startswith('http'):
+                return v
+            
+            clean_id = v.replace('/media/', '').lstrip('/')
+            try:
+                import cloudinary.utils
+                return cloudinary.utils.cloudinary_url(clean_id, secure=True, format="jpg")[0]
+            except ImportError:
+                return v
+        return None
+
 
 class CartSchema(BaseModel):
     """Schema for cart output"""
