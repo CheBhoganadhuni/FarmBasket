@@ -434,22 +434,26 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
             message="File too large. Maximum size is 5MB."
         )
     
-    # Save avatar
-    import os
-    from django.core.files.storage import default_storage
-    from django.core.files.base import ContentFile
-    
     # Generate unique filename
     ext = avatar.name.split('.')[-1]
-    filename = f'avatars/{user.id}_{timezone.now().timestamp()}.{ext}'
+    filename = f'{user.id}_{int(timezone.now().timestamp())}.{ext}'
     
-    # Save file
-    path = default_storage.save(filename, ContentFile(avatar.read()))
-    avatar_url = default_storage.url(path)
+    # Save using the model field's save method
+    # This ensures it uses the configured Cloudinary storage backend correctly
+    user.avatar.save(filename, avatar, save=True)
     
-    # Update user
-    user.avatar = path
-    user.save()
+    # Get the full URL from the storage backend
+    avatar_url = user.avatar.url
+    
+    # Force https if needed (Cloudinary might return http)
+    if avatar_url and avatar_url.startswith('http:'):
+        avatar_url = avatar_url.replace('http:', 'https:')
+
+    return MessageSchema(
+        success=True,
+        message="Avatar uploaded successfully",
+        avatar_url=avatar_url
+    )
     
     return MessageSchema(
         success=True,

@@ -118,7 +118,11 @@ class UserSchema(BaseModel):
     is_staff: bool
     is_superuser: bool
     
-    is_social_user: bool
+    created_at: datetime
+    is_staff: bool
+    is_superuser: bool
+    
+    social_avatar_url: Optional[str]
     
     class Config:
         from_attributes = True
@@ -131,26 +135,33 @@ class UserSchema(BaseModel):
             return str(v)
         return v
 
+    from django.conf import settings
+
     @validator('avatar_url', pre=True, check_fields=False)
     def get_image_url(cls, v, values):
         """Ensure full Cloudinary URL for avatar"""
         if not v:
             return v
-        # If it's already a full URL (like social avatar), return it
+        
+        # If it's already a full URL, ensure HTTPS and return
         if v.startswith('http'):
-            return v
-        # If it's a relative path from clearbit/cloudinary, fix it
+            return v.replace('http:', 'https:')
+            
+        # If it's a relative path containing 'media/', strip it to get the clean path
         if 'media/' in v:
-            # Extract the actual path after media/
-            path = v.split('media/')[-1]
-            return f"https://res.cloudinary.com/dcbkjxh0r/image/upload/{path}"
-        # Fallback ensuring it has prefix
-        return f"https://res.cloudinary.com/dcbkjxh0r/image/upload/{v}"
-
-    @staticmethod
-    def resolve_is_social_user(obj):
-        """Check if user is a social user"""
-        return bool(obj.social_avatar_url)
+            v = v.split('media/')[-1]
+            
+        # Get cloud name from settings
+        cloud_name = 'dk75bbrar' # Fallback default observed from user
+        try:
+            if hasattr(settings, 'CLOUDINARY_STORAGE'):
+                cloud_name = settings.CLOUDINARY_STORAGE.get('CLOUD_NAME', cloud_name)
+            elif hasattr(settings, 'CLOUDINARY_CLOUD_NAME'):
+                cloud_name = settings.CLOUDINARY_CLOUD_NAME
+        except:
+            pass
+            
+        return f"https://res.cloudinary.com/{cloud_name}/image/upload/{v}"
 
 
 class AddressSchema(BaseModel):
