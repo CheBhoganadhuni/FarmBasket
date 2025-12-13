@@ -11,7 +11,6 @@ and view order history — while admins manage inventory, products, and orders.
 - Organic ecommerce platform with a clean UI
 - Built using Django REST + TailwindCSS frontend
 - Razorpay Payment Gateway integration (Test/Live Support)
-- User loyalty tier system (Seedling → Sprout → Tree…)
 - Fully responsive + Dark/Light mode switch
 
 ---
@@ -29,7 +28,7 @@ and view order history — while admins manage inventory, products, and orders.
 
 ### 🛠 Admin Features (Super User)
 - Custom Admin Dashboard (not Django default)
-- Add / Edit / Delete products with images
+- View Products (Inventory Is Managed By Seeding Code As Of Now)
 - Manage orders (Pending → Confirmed → Shipped → Delivered)
 - Manage users, view user orders, deactivate accounts
 - Role‑based access protection
@@ -38,10 +37,19 @@ and view order history — while admins manage inventory, products, and orders.
 - Supports UPI / Cards / Wallets / NetBanking
 - Works in Test Mode until deployed to production
 
-### UI/UX
-- Fully responsive (Mobile + Desktop)
-- Modern TailwindCSS + Alpine.js
-- Custom notification popup (`window.showNotification`)
+### 🔐 Authentication & Security
+- **Google / Social Auth** (OAuth2) — allow users to sign up / login using Google (future: Facebook / Apple).
+- Harden authentication flows and token rotation for smoother JWT + session handling.
+
+### ⚡ UX Improvements & Performance
+- **Skeleton loaders & page transition skeletons** while APIs load to improve perceived performance.
+- Add optimized lazy-loading for images and product lists.
+- Disable repeated clicks / navigation during critical flows (e.g., while payment or order confirmation is processing) to avoid duplicate orders.
+
+### 🧾 Orders & Wallets
+- **Order tracking UI** with timeline (Order placed → Confirmed → Shipped → Out for delivery → Delivered).
+- **Order cancellation / refund** flows with automatic credit to user wallet (where applicable).
+- Add backend endpoints to credit/debit user wallets and show wallet balance on profile.
 
 ---
 
@@ -145,20 +153,6 @@ MIT License - free to use, modify, and distribute.
 
 Planned improvements and features for upcoming development cycles:
 
-### 🔐 Authentication & Security
-- **Google / Social Auth** (OAuth2) — allow users to sign up / login using Google (future: Facebook / Apple).
-- Harden authentication flows and token rotation for smoother JWT + session handling.
-
-### ⚡ UX Improvements & Performance
-- **Skeleton loaders & page transition skeletons** while APIs load to improve perceived performance.
-- Add optimized lazy-loading for images and product lists.
-- Disable repeated clicks / navigation during critical flows (e.g., while payment or order confirmation is processing) to avoid duplicate orders.
-
-### 🧾 Orders & Wallets
-- **Order tracking UI** with timeline (Order placed → Confirmed → Shipped → Out for delivery → Delivered).
-- **Order cancellation / refund** flows with automatic credit to user wallet (where applicable).
-- Add backend endpoints to credit/debit user wallets and show wallet balance on profile.
-
 ### 🎟 Promotions & Loyalty
 - **Coupon system**: create, validate, and apply discount codes (percentage / fixed / min-order rules / expiry).
 - **Loyalty / XP system**: track user points for purchases, show tiers, and enable redeemable rewards.
@@ -166,7 +160,6 @@ Planned improvements and features for upcoming development cycles:
 ### 🧪 Payments & Deployment
 - Move Razorpay to **Live mode** after domain & SSL setup; implement webhook verification for payment success/failure.
 - Deployment guides: Render / Railway / Heroku / AWS (CI/CD pipelines, environment management).
-- Add monitoring (Sentry) and uptime checks, admin charts (sales, revenue trends) and exportable CSV/PDF reports, invoices.
 
 ### Open to bug fixes, UI improvements, optimizations, etc.
 ---
