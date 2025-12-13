@@ -318,7 +318,11 @@ if not DEBUG:
 
 # ✅ Add Razorpay settings at the end of settings.py
 # Razorpay Configuration (add at the end of settings.py)
+# Razorpay Configuration (Test Mode)
 RAZORPAY_KEY_ID = 'rzp_test_RcjOzxYQKdALO4'
 RAZORPAY_KEY_SECRET = 'x3ZOmrDpsLRRvmNwaSCfrZnW'
 RAZORPAY_TEST_MODE = True
-ENABLE_TEST_PAYMENTS = True  # Allows ₹1 test orders
+ENABLE_TEST_PAYMENTS = True
+#RAZORPAY_WEBHOOK_SECRET = os.getenv('RAZORPAY_WEBHOOK_SECRET')
+
+

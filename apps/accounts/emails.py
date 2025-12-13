@@ -2,18 +2,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 
-import threading
-
-def _send_email_thread(email_obj):
-    """Execution logic for background thread"""
-    try:
-        email_obj.send(fail_silently=False)
-        print(f"✅ Email sent to {email_obj.to}")
-    except Exception as e:
-        print(f"❌ Failed to send email: {e}")
-
 def send_welcome_email(user):
-    """Send welcome email to new user (Async)"""
+    """Send welcome email to new user (Synchronous)"""
     try:
         # Check preference
         if not user.email_notifications:
@@ -36,16 +26,15 @@ def send_welcome_email(user):
             to=[user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        
-        # Send in background thread to avoid 502/Timeout
-        threading.Thread(target=_send_email_thread, args=(email,)).start()
+        email.send(fail_silently=False)
+        print(f"✅ Welcome email sent to {user.email}")
         
     except Exception as e:
-        print(f"❌ Failed to initiate welcome email: {e}")
+        print(f"❌ Failed to send welcome email: {e}")
 
 
 def send_order_confirmation_email(order):
-    """Send order confirmation email (Async)"""
+    """Send order confirmation email (Synchronous)"""
     try:
         # Check preference
         if not order.user.email_notifications:
@@ -66,13 +55,14 @@ def send_order_confirmation_email(order):
             to=[order.user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        threading.Thread(target=_send_email_thread, args=(email,)).start()
+        email.send(fail_silently=False)
+        print(f"✅ Order confirmation email sent to {order.user.email}")
         
     except Exception as e:
-        print(f"❌ Failed to initiate order confirmation: {e}")
+        print(f"❌ Failed to send order confirmation: {e}")
 
 def send_password_reset_email(user, reset_url):
-    """Send password reset email (Async)"""
+    """Send password reset email (Synchronous)"""
     try:
         subject = '🔐 FarmBasket Password Reset'
         
@@ -88,13 +78,14 @@ def send_password_reset_email(user, reset_url):
             to=[user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        threading.Thread(target=_send_email_thread, args=(email,)).start()
+        email.send(fail_silently=False)
+        print(f"✅ Password reset email sent to {user.email}")
         
     except Exception as e:
-        print(f"❌ Failed to initiate password reset email: {e}")
+        print(f"❌ Failed to send password reset email: {e}")
 
 def send_order_status_email(order):
-    """Send order status update email (Async)"""
+    """Send order status update email (Synchronous)"""
     try:
         # Check preference
         if not order.user.email_notifications:
@@ -122,13 +113,14 @@ def send_order_status_email(order):
             to=[order.user.email]
         )
         email.attach_alternative(html_message, "text/html")
-        threading.Thread(target=_send_email_thread, args=(email,)).start()
+        email.send(fail_silently=False)
+        print(f"✅ Order status email sent to {order.user.email}")
         
     except Exception as e:
-        print(f"❌ Failed to initiate status update email: {e}")
+        print(f"❌ Failed to send status update email: {e}")
 
 def send_payment_status_email(order):
-    """Send payment status update email (Async)"""
+    """Send payment status update email (Synchronous)"""
     try:
         subject = f'💳 Payment Update for Order #{order.order_number}'
         
@@ -138,7 +130,8 @@ def send_payment_status_email(order):
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[order.user.email]
         )
-        threading.Thread(target=_send_email_thread, args=(email,)).start()
+        email.send(fail_silently=False)
+        print(f"✅ Payment status email sent to {order.user.email}")
         
     except Exception as e:
-        print(f"❌ Failed to initiate payment status email: {e}")
+        print(f"❌ Failed to send payment status email: {e}")
