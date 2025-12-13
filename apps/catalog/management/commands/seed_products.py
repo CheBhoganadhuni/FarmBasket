@@ -43,6 +43,7 @@ class Command(BaseCommand):
                 'category': 'vegetables',
                 'price': 40,
                 'unit': 'KG',
+                'is_featured': True,
                 'description': 'Our organic tomatoes are vine-ripened to perfection, offering a burst of tangy sweetness in every bite. Grown using sustainable farming practices, these tomatoes are free from harmful chemicals and are hand-picked at peak maturity to ensure the highest nutrient density. Perfect for fresh salads, rich curries, or homemade sauces.',
                 'farm_story': 'Harvested from the sunny fields of Lakshmi Farms in Nellore. The farmers use traditional composting methods and crop rotation to enrich the soil naturally, ensuring the tomatoes are robust and flavorful.',
                 'image': 'products/tomato.jpg'
@@ -135,6 +136,7 @@ class Command(BaseCommand):
                 'category': 'fruits',
                 'price': 140,
                 'unit': 'KG',
+                'is_featured': True,
                 'description': 'Jewel-like ruby arils bursting with sweet-tart juice. A superfood loaded with antioxidants. Our pomegranates are thin-skinned and heavy with juice.',
                 'farm_story': 'From the arid lands of Solapur. The stress-water irrigation technique used here concentrates the sugars in the fruit, making them intensely sweet.',
                 'image': 'products/pomegranate.jpg'
@@ -173,6 +175,7 @@ class Command(BaseCommand):
                 'category': 'dairy',
                 'price': 500,
                 'unit': 'KG',
+                'is_featured': True,
                 'description': 'Unsalted, cultured white butter churned from fresh cream. Pure taste without any preservatives or added colors. Melts perfectly on hot parathas.',
                 'farm_story': 'Churned daily at the Krishna Dairy farm in Gujarat. The buffaloes are fed a diet of cotton seeds and fresh grass, resulting in high-fat rich milk.',
                 'image': 'products/butter.jpg'
@@ -227,26 +230,40 @@ class Command(BaseCommand):
                 }
             )
 
+            # Always update fields
+            if not created:
+                product.category = cat
+                product.description = p_data['description']
+                product.farm_story = p_data['farm_story']
+                product.price = Decimal(str(p_data['price']))
+                product.unit = p_data['unit']
+                
+            # Handle is_featured manually if present in data
+            if 'is_featured' in p_data:
+                product.is_featured = p_data['is_featured']
+            
+            product.save()
+
             if created:
                 self.stdout.write(f"Created Product: {product.name}")
-                
-                # Handle Image Upload
-                image_rel_path = p_data['image'] # e.g. "products/tomato.jpg"
-                # We assume the source images are in the LOCAL media folder for seeding
-                local_image_path = os.path.join(settings.BASE_DIR, 'media', image_rel_path)
-                
-                if os.path.exists(local_image_path):
-                    try:
-                        with open(local_image_path, 'rb') as f:
-                            # This .save() triggers the upload to Cloudinary (or whatever storage is set)
-                            product.featured_image.save(os.path.basename(image_rel_path), File(f), save=True)
-                        self.stdout.write(f"  -> Uploaded image for {product.name}")
-                    except Exception as e:
-                        self.stdout.write(self.style.WARNING(f"  -> Failed to upload image: {e}"))
-                else:
-                    self.stdout.write(self.style.WARNING(f"  -> Source image not found at {local_image_path}"))
-
             else:
-                self.stdout.write(f"Product already exists: {product.name}")
+                 self.stdout.write(f"Updated Product: {product.name}")
+                
+            # Always Attempt Image Upload (Fixes missing cloud images)
+            image_rel_path = p_data['image'] # e.g. "products/tomato.jpg"
+            local_image_path = os.path.join(settings.BASE_DIR, 'media', image_rel_path)
+            
+            if os.path.exists(local_image_path):
+                # Optional: Check if we want to overwrite even if it has an image?
+                # User wants to "Redo", so let's overwrite.
+                try:
+                    with open(local_image_path, 'rb') as f:
+                        # save=True triggers Cloudinary upload
+                        product.featured_image.save(os.path.basename(image_rel_path), File(f), save=True)
+                    self.stdout.write(f"  -> Uploaded/Updated image for {product.name}")
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"  -> Failed to upload image: {e}"))
+            else:
+                self.stdout.write(self.style.WARNING(f"  -> Source image not found at {local_image_path}"))
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded products!'))
