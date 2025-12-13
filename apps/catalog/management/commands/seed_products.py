@@ -259,7 +259,8 @@ class Command(BaseCommand):
                 try:
                     with open(local_image_path, 'rb') as f:
                         # save=True triggers Cloudinary upload
-                        product.featured_image.save(os.path.basename(image_rel_path), File(f), save=True)
+                        # Use image_rel_path to preserve folder structure (e.g. products/tomato.jpg)
+                        product.featured_image.save(image_rel_path, File(f), save=True)
                     self.stdout.write(f"  -> Uploaded/Updated image for {product.name}")
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"  -> Failed to upload image: {e}"))

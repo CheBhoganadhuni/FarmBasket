@@ -1,6 +1,11 @@
 
 import os
 import django
+from dotenv import load_dotenv
+
+# Load env vars first
+load_dotenv()
+
 from django.conf import settings
 import cloudinary
 import cloudinary.api
@@ -23,8 +28,8 @@ def check_images():
     try:
         # List resources (images)
         # We look for resources in the root or usual folders
-        print("\n📸 Fetching 10 recent images from Cloudinary...")
-        result = cloudinary.api.resources(max_results=10, type="upload")
+        print("\n📸 Fetching 50 recent images from Cloudinary...")
+        result = cloudinary.api.resources(max_results=50, type="upload")
         
         resources = result.get('resources', [])
         

@@ -89,13 +89,8 @@ class ProductListSchema(BaseModel):
     def get_image_url(cls, v):
         if v and hasattr(v, 'url'):
             return v.url
-        if isinstance(v, str) and v:
-            if v.startswith('http'):
-                return v
-            cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
-            if cloud_name:
-                return f"https://res.cloudinary.com/{cloud_name}/image/upload/{v}"
-            return f"/media/{v}"
+        if isinstance(v, str):
+            return v
         return None
 
 
@@ -138,24 +133,10 @@ class ProductDetailSchema(BaseModel):
     
     @validator('featured_image', pre=True)
     def get_image_url(cls, v):
-        # Case 1: It's a FieldFile object (Standard Django behavior)
         if v and hasattr(v, 'url'):
             return v.url
-            
-        # Case 2: It's a string (Path from DB)
-        if isinstance(v, str) and v:
-            if v.startswith('http'):
-                return v
-                
-            # If we are using Cloudinary, construct the URL manually
-            # This handles the case where Pydantic receives the raw path string
-            cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
-            if cloud_name:
-                return f"https://res.cloudinary.com/{cloud_name}/image/upload/{v}"
-                
-            # Fallback for local development if not using Cloudinary
-            return f"/media/{v}"
-            
+        if isinstance(v, str):
+            return v
         return None
 
 
