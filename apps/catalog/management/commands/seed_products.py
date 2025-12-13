@@ -3,6 +3,9 @@ from apps.catalog.models import Category, Product
 from django.utils.text import slugify
 from decimal import Decimal
 import random
+import os
+from django.conf import settings
+from django.core.files import File
 
 class Command(BaseCommand):
     help = 'Seeds the database with initial products'
@@ -207,31 +210,43 @@ class Command(BaseCommand):
         
         for p_data in products:
             cat = cat_objs[p_data['category']]
-            # Only create if not exists
-            if not Product.objects.filter(name=p_data['name']).exists():
-                Product.objects.create(
-                    category=cat,
-                    name=p_data['name'],
-                    slug=slugify(p_data['name']),
-                    description=p_data['description'],
-                    farm_story=p_data['farm_story'],
-                    price=p_data['price'],
-                    unit=p_data['unit'],
-                    stock_quantity=random.randint(20, 100),
-                    is_active=True,
-                    in_stock=True,
-                    featured_image=p_data['image']
-                )
-                self.stdout.write(f"Created Product: {p_data['name']}")
+            
+            # Check if product exists
+            product, created = Product.objects.get_or_create(
+                name=p_data['name'],
+                defaults={
+                    'category': cat,
+                    'slug': slugify(p_data['name']),
+                    'description': p_data['description'],
+                    'farm_story': p_data['farm_story'],
+                    'price': Decimal(str(p_data['price'])),
+                    'unit': p_data['unit'],
+                    'stock_quantity': random.randint(20, 100),
+                    'is_active': True,
+                    'in_stock': True,
+                }
+            )
+
+            if created:
+                self.stdout.write(f"Created Product: {product.name}")
+                
+                # Handle Image Upload
+                image_rel_path = p_data['image'] # e.g. "products/tomato.jpg"
+                # We assume the source images are in the LOCAL media folder for seeding
+                local_image_path = os.path.join(settings.BASE_DIR, 'media', image_rel_path)
+                
+                if os.path.exists(local_image_path):
+                    try:
+                        with open(local_image_path, 'rb') as f:
+                            # This .save() triggers the upload to Cloudinary (or whatever storage is set)
+                            product.featured_image.save(os.path.basename(image_rel_path), File(f), save=True)
+                        self.stdout.write(f"  -> Uploaded image for {product.name}")
+                    except Exception as e:
+                        self.stdout.write(self.style.WARNING(f"  -> Failed to upload image: {e}"))
+                else:
+                    self.stdout.write(self.style.WARNING(f"  -> Source image not found at {local_image_path}"))
+
             else:
-                # Update existing for rich text
-                p = Product.objects.get(name=p_data['name'])
-                p.description = p_data['description']
-                p.farm_story = p_data['farm_story']
-                p.featured_image = p_data['image']
-                p.save()
-                p.refresh_from_db()
-                self.stdout.write(f"DEBUG: Saved {p.name} with image: '{p.featured_image}' (URL: {p.featured_image.url if p.featured_image else 'None'})")
-                self.stdout.write(f"Updated Product: {p_data['name']}")
-        
+                self.stdout.write(f"Product already exists: {product.name}")
+
         self.stdout.write(self.style.SUCCESS('Successfully seeded products!'))
