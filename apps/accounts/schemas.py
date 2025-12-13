@@ -2,7 +2,8 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, validator
 from datetime import datetime
 import re
-from uuid import UUID 
+from uuid import UUID
+from django.conf import settings
 
 # ===== INPUT SCHEMAS =====
 
@@ -134,8 +135,6 @@ class UserSchema(BaseModel):
         if isinstance(v, UUID):
             return str(v)
         return v
-
-    from django.conf import settings
 
     @validator('avatar_url', pre=True, check_fields=False)
     def get_image_url(cls, v, values):

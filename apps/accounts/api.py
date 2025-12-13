@@ -415,6 +415,9 @@ def delete_account(request):
     )
 
 
+import cloudinary
+import cloudinary.uploader
+
 @router.post("/upload-avatar", response=MessageSchema, auth=auth)
 def upload_avatar(request, avatar: UploadedFile = File(...)):
     """Upload user avatar"""
@@ -434,32 +437,39 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
             message="File too large. Maximum size is 5MB."
         )
     
-    # Generate unique filename
-    ext = avatar.name.split('.')[-1]
-    filename = f'{user.id}_{int(timezone.now().timestamp())}.{ext}'
+    try:
+        # Generate unique filename (public_id)
+        ext = avatar.name.split('.')[-1]
+        public_id_name = f"{user.id}_{int(timezone.now().timestamp())}"
+        
+        # Direct upload to Cloudinary (like seed_products.py)
+        upload_result = cloudinary.uploader.upload(
+            avatar.file,
+            folder="avatars",
+            public_id=public_id_name,
+            overwrite=True,
+            resource_type="image"
+        )
+        
+        # Save the public_id to the model field
+        # The ImageField (with CloudinaryStorage) knows how to handle this
+        user.avatar = upload_result['public_id']
+        user.save()
+        
+        return MessageSchema(
+            success=True,
+            message="Avatar uploaded successfully",
+            avatar_url=upload_result['secure_url']
+        )
+        
+    except Exception as e:
+        print(f"Avatar upload failed: {e}")
+        return MessageSchema(
+            success=False, 
+            message="Failed to upload avatar. Please try again."
+        )
     
-    # Save using the model field's save method
-    # This ensures it uses the configured Cloudinary storage backend correctly
-    user.avatar.save(filename, avatar, save=True)
-    
-    # Get the full URL from the storage backend
-    avatar_url = user.avatar.url
-    
-    # Force https if needed (Cloudinary might return http)
-    if avatar_url and avatar_url.startswith('http:'):
-        avatar_url = avatar_url.replace('http:', 'https:')
 
-    return MessageSchema(
-        success=True,
-        message="Avatar uploaded successfully",
-        avatar_url=avatar_url
-    )
-    
-    return MessageSchema(
-        success=True,
-        message="Avatar uploaded successfully",
-        avatar_url=avatar_url
-    )
 
 
 
