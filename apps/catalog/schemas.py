@@ -87,15 +87,26 @@ class ProductListSchema(BaseModel):
 
     @validator('featured_image', pre=True)
     def get_image_url(cls, v):
-        if v and hasattr(v, 'url'):
-            return v.url
+        # Handle FieldFile (Django Model Field)
+        if hasattr(v, 'url'):
+            if v.url and v.url.startswith('http'):
+                return v.url
+            # If valid FieldFile but url is relative (e.g. /media/...), use name (public_id)
+            if hasattr(v, 'name') and v.name:
+                v = v.name
+
+        # Handle String (DB value or extracted name)
         if isinstance(v, str) and v:
             if v.startswith('http'):
                 return v
-            # Generate absolute Cloudinary URL from public_id
+            
+            # Clean path artifacts
+            clean_id = v.replace('/media/', '').lstrip('/')
+            
+            # Generate absolute Cloudinary URL
             try:
                 import cloudinary.utils
-                return cloudinary.utils.cloudinary_url(v, secure=True)[0]
+                return cloudinary.utils.cloudinary_url(clean_id, secure=True, format="jpg")[0]
             except ImportError:
                 return v
         return None
@@ -140,15 +151,26 @@ class ProductDetailSchema(BaseModel):
     
     @validator('featured_image', pre=True)
     def get_image_url(cls, v):
-        if v and hasattr(v, 'url'):
-            return v.url
+        # Handle FieldFile (Django Model Field)
+        if hasattr(v, 'url'):
+            if v.url and v.url.startswith('http'):
+                return v.url
+            # If valid FieldFile but url is relative (e.g. /media/...), use name (public_id)
+            if hasattr(v, 'name') and v.name:
+                v = v.name
+
+        # Handle String (DB value or extracted name)
         if isinstance(v, str) and v:
             if v.startswith('http'):
                 return v
-            # Generate absolute Cloudinary URL from public_id
+            
+            # Clean path artifacts
+            clean_id = v.replace('/media/', '').lstrip('/')
+            
+            # Generate absolute Cloudinary URL
             try:
                 import cloudinary.utils
-                return cloudinary.utils.cloudinary_url(v, secure=True)[0]
+                return cloudinary.utils.cloudinary_url(clean_id, secure=True, format="jpg")[0]
             except ImportError:
                 return v
         return None
