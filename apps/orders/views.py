@@ -36,9 +36,23 @@ def track_order_view(request):
             # Serialize for AlpineJS
             items = []
             for item in order.items.all():
+                # Robust Image URL Logic
+                image_url = None
+                if item.product.featured_image:
+                    try:
+                        if hasattr(item.product.featured_image, 'url') and item.product.featured_image.url.startswith('http'):
+                             image_url = item.product.featured_image.url
+                        else:
+                            raw_id = item.product.featured_image.name if hasattr(item.product.featured_image, 'name') else str(item.product.featured_image)
+                            clean_id = raw_id.replace('/media/', '').lstrip('/')
+                            import cloudinary.utils
+                            image_url = cloudinary.utils.cloudinary_url(clean_id, secure=True, format="jpg")[0]
+                    except Exception:
+                        image_url = ''
+
                 items.append({
                     'product_name': item.product.name,
-                    'product_image': item.product.featured_image.url if item.product.featured_image else None,
+                    'product_image': image_url,
                     'quantity': item.quantity,
                     'unit_price': str(item.unit_price),
                     'total_price': str(item.total_price),
