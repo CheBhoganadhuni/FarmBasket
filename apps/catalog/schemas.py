@@ -89,8 +89,15 @@ class ProductListSchema(BaseModel):
     def get_image_url(cls, v):
         if v and hasattr(v, 'url'):
             return v.url
-        if isinstance(v, str):
-            return v
+        if isinstance(v, str) and v:
+            if v.startswith('http'):
+                return v
+            # Generate absolute Cloudinary URL from public_id
+            try:
+                import cloudinary.utils
+                return cloudinary.utils.cloudinary_url(v, secure=True)[0]
+            except ImportError:
+                return v
         return None
 
 
@@ -135,8 +142,15 @@ class ProductDetailSchema(BaseModel):
     def get_image_url(cls, v):
         if v and hasattr(v, 'url'):
             return v.url
-        if isinstance(v, str):
-            return v
+        if isinstance(v, str) and v:
+            if v.startswith('http'):
+                return v
+            # Generate absolute Cloudinary URL from public_id
+            try:
+                import cloudinary.utils
+                return cloudinary.utils.cloudinary_url(v, secure=True)[0]
+            except ImportError:
+                return v
         return None
 
 

@@ -5,6 +5,8 @@ from decimal import Decimal
 import random
 import os
 from django.conf import settings
+import cloudinary
+import cloudinary.uploader
 from django.core.files import File
 
 class Command(BaseCommand):
@@ -254,14 +256,23 @@ class Command(BaseCommand):
             local_image_path = os.path.join(settings.BASE_DIR, 'media', image_rel_path)
             
             if os.path.exists(local_image_path):
-                # Optional: Check if we want to overwrite even if it has an image?
-                # User wants to "Redo", so let's overwrite.
                 try:
-                    with open(local_image_path, 'rb') as f:
-                        # save=True triggers Cloudinary upload
-                        # Use image_rel_path to preserve folder structure (e.g. products/tomato.jpg)
-                        product.featured_image.save(image_rel_path, File(f), save=True)
-                    self.stdout.write(f"  -> Uploaded/Updated image for {product.name}")
+                    # Direct upload to Cloudinary to control folder structure precisely
+                    self.stdout.write(f"  -> Uploading to Cloudinary: {os.path.basename(image_rel_path)}...")
+                    upload_result = cloudinary.uploader.upload(
+                        local_image_path,
+                        folder="products",
+                        public_id=os.path.splitext(os.path.basename(image_rel_path))[0],
+                        overwrite=True,
+                        resource_type="image"
+                    )
+                    
+                    # Save the public_id (e.g. "products/tomato") to the field
+                    # This ensures DB path matches Cloudinary path exactly
+                    product.featured_image = upload_result['public_id']
+                    product.save()
+                    
+                    self.stdout.write(f"  -> Success! Saved as: {product.featured_image}")
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"  -> Failed to upload image: {e}"))
             else:
