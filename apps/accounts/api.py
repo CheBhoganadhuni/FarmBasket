@@ -239,17 +239,27 @@ def request_password_reset(request, data: PasswordResetRequestSchema):
     try:
         user = User.objects.get(email=data.email, is_active=True)
         
-        # Create reset token
-        reset_token = PasswordResetToken.objects.create(
-            user=user,
-            expires_at=timezone.now() + timedelta(hours=1)
-        )
-        
-        # Generate reset URL
-        reset_url = f"http://127.0.0.1:8000/password-reset/{reset_token.token}/"
-        
-        # Send reset email
-        send_password_reset_email(user, reset_url)
+        # Check if social user (don't send reset email)
+        if user.social_avatar_url:
+            raise HttpError(400, "You are logged in via Google. You do not need to reset your password.")
+        else:
+            # Create reset token
+            reset_token = PasswordResetToken.objects.create(
+                user=user,
+                expires_at=timezone.now() + timedelta(hours=1)
+            )
+            
+            # Generate reset URL (Dynamic)
+            # Remove trailing slash from SITE_URL if present to avoid double slash
+            site_url = settings.SITE_URL.rstrip('/')
+            
+            # Construct the FULL frontend URL that handles the reset
+            # Matching urls.py: path('auth/password-reset/confirm/', ...)
+            # Matching views.py: token = request.GET.get('token')
+            reset_url = f"{site_url}/auth/password-reset/confirm/?token={reset_token.token}"
+            
+            # Send reset email
+            send_password_reset_email(user, reset_url)
         
     except User.DoesNotExist:
         pass  # Don't reveal if email exists

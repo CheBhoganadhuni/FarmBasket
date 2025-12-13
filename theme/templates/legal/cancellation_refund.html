@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancellation & Refund Policy - FarmBasket{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <div class="glass rounded-2xl p-8">
+            <h1 class="font-display text-4xl font-bold mb-6 text-neon">❌ Cancellation & Refund Policy</h1>
+            <p class="text-gray-600 mb-8">Last updated: December 14, 2025</p>
+
+            <div class="prose max-w-none">
+
+                <ul class="list-disc pl-6 mb-6 space-y-2">
+                    <li>Orders can be cancelled before they are shipped.</li>
+                    <li>Once an order is shipped, it cannot be cancelled.</li>
+                    <li>If a product is damaged or incorrect, customers may request a refund or replacement.</li>
+                    <li>Refunds will be processed within 5–7 working days to the original payment method.</li>
+                </ul>
+            </div>
+
+            <div class="mt-8">
+                <a href="{% url 'accounts:home' %}"
+                    class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

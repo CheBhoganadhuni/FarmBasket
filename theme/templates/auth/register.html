@@ -141,10 +141,23 @@
     window.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('access_token');
         if (token) {
-            // Already logged in, redirect to profile
-            window.location.href = '/profile/';
+            // Show notification
+            if (window.showNotification) {
+                window.showNotification({
+                    type: 'info',
+                    title: 'Already Logged In',
+                    message: 'You are already logged in. Redirecting to your profile...',
+                    icon: '👤'
+                });
+            }
+
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = '/profile/';
+            }, 1000);
         }
     });
+
     function registerForm() {
         return {
             formData: {
@@ -177,99 +190,59 @@
                 const pass = this.formData.password;
                 this.passwordStrength = 0;
 
-                if (pass.length < 8) {
-                    this.passwordError = 'Password must be at least 8 characters';
-                    return;
-                }
-
-                if (!/[A-Z]/.test(pass)) {
-                    this.passwordError = 'Include at least one uppercase letter';
-                    this.passwordStrength = 1;
-                    return;
-                }
-                this.passwordStrength = 1;
-
-                if (!/[a-z]/.test(pass)) {
+                if (pass.length < 8) { this.passwordError = 'Password must be at least 8 characters'; return; } if (!/[A-Z]/.test(pass)) { this.passwordError = 'Include at least one uppercase letter'; this.passwordStrength = 1; return; }
+                this.passwordStrength = 1; if (!/[a-z]/.test(pass)) {
                     this.passwordError = 'Include at least one lowercase letter';
                     return;
-                }
-                this.passwordStrength = 2;
-
-                if (!/[0-9]/.test(pass)) {
+                } this.passwordStrength = 2; if (!/[0-9]/.test(pass)) {
                     this.passwordError = 'Include at least one number';
                     return;
-                }
-                this.passwordStrength = 3;
-
-                this.passwordError = '';
-            },
-
-            validatePasswordMatch() {
-                if (this.formData.password !== this.formData.password_confirm) {
-                    this.confirmError = 'Passwords do not match';
-                } else {
-                    this.confirmError = '';
-                }
-            },
-
-            async submitRegister() {
-                this.error = '';
-                this.loading = true;
-
-                // Validate all fields
-                this.validateEmail();
-                this.validatePassword();
-                this.validatePasswordMatch();
-
-                if (this.emailError || this.passwordError || this.confirmError) {
-                    this.loading = false;
-                    return;
-                }
-
-                try {
-                    const response = await fetch('/api/auth/register', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(this.formData)
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-
-
-                        // ✅ SAVE TOKENS FIRST
-                        localStorage.setItem('access_token', data.access_token);
-                        localStorage.setItem('refresh_token', data.refresh_token);
-
-
-
-
-                        // ✅ THEN animate and redirect
-                        gsap.to('.glass', {
-                            scale: 1.05,
-                            duration: 0.3,
-                            yoyo: true,
-                            repeat: 1,
-                            onComplete: () => {
-
-                                window.location.href = '/profile/';
+                } this.passwordStrength = 3; this.passwordError = '';
+            }, validatePasswordMatch() {
+                if (this.formData.password
+                    !== this.formData.password_confirm) { this.confirmError = 'Passwords do not match'; } else { this.confirmError = ''; }
+            }, async submitRegister() {
+                this.error = ''; this.loading = true; // Validate all fields this.validateEmail();
+                this.validatePassword(); this.validatePasswordMatch(); if (this.emailError || this.passwordError ||
+                    this.confirmError) { this.loading = false; return; } try {
+                        const response = await fetch('/api/auth/register', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json', }, body: JSON.stringify(this.formData)
+                        }); const
+                            data = await response.json(); if (response.ok) { // ✅ animate and redirect (DO NOT SAVE TOKEN - Force manual login)
+                                gsap.to('.glass', {
+                                    scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, onComplete: () => {
+                                        // Redirect to login page as requested
+                                        window.location.href = '{% url "accounts:login" %}';
+                                    }
+                                });
+                            } else {
+                            // Handle Pydantic/Ninja validation errors (Array)
+                            if (Array.isArray(data.detail)) {
+                                // Check if there is specific info about which field
+                                const firstError = data.detail[0];
+                                if (firstError.loc && firstError.loc.length > 0) {
+                                    // e.g. "last_name: String should have at least 2 characters"
+                                    // Clean up field name: remove 'body', underscores -> spaces
+                                    const field = firstError.loc[firstError.loc.length - 1].replace(/_/g, ' ');
+                                    const msg = firstError.msg;
+                                    this.error = `${field.charAt(0).toUpperCase() + field.slice(1)}: ${msg}`;
+                                } else {
+                                    this.error = firstError.msg || 'Invalid input data';
+                                }
+                            } else {
+                                this.error = data.detail || 'Registration failed. Please try again.';
                             }
-                        });
-                    } else {
-                        this.error = data.detail || 'Registration failed. Please try again.';
-                        console.error('Registration failed:', data);
-                        gsap.fromTo('.glass',
-                            { x: -10 },
-                            { x: 10, duration: 0.1, repeat: 5, yoyo: true }
-                        );
-                    }
-                } catch (err) {
-                    console.error('Registration error:', err);
-                    this.error = 'Something went wrong. Please try again.';
-                } finally {
+
+                            console.error('Registration failed:', data);
+                            gsap.fromTo('.glass',
+                                { x: -10 },
+                                { x: 10, duration: 0.1, repeat: 5, yoyo: true }
+                            );
+                        }
+                    } catch (err) {
+                        console.error('Registration error:', err);
+                        this.error = 'Something went wrong. Please try again.';
+                    } finally {
                     this.loading = false;
                 }
             }

@@ -118,6 +118,8 @@ class UserSchema(BaseModel):
     is_staff: bool
     is_superuser: bool
     
+    is_social_user: bool
+    
     class Config:
         from_attributes = True
         orm_mode = True
@@ -128,6 +130,27 @@ class UserSchema(BaseModel):
         if isinstance(v, UUID):
             return str(v)
         return v
+
+    @validator('avatar_url', pre=True, check_fields=False)
+    def get_image_url(cls, v, values):
+        """Ensure full Cloudinary URL for avatar"""
+        if not v:
+            return v
+        # If it's already a full URL (like social avatar), return it
+        if v.startswith('http'):
+            return v
+        # If it's a relative path from clearbit/cloudinary, fix it
+        if 'media/' in v:
+            # Extract the actual path after media/
+            path = v.split('media/')[-1]
+            return f"https://res.cloudinary.com/dcbkjxh0r/image/upload/{path}"
+        # Fallback ensuring it has prefix
+        return f"https://res.cloudinary.com/dcbkjxh0r/image/upload/{v}"
+
+    @staticmethod
+    def resolve_is_social_user(obj):
+        """Check if user is a social user"""
+        return bool(obj.social_avatar_url)
 
 
 class AddressSchema(BaseModel):

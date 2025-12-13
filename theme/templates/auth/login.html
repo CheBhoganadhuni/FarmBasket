@@ -100,10 +100,23 @@
     window.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('access_token');
         if (token) {
-            // Already logged in, redirect to profile
-            window.location.href = '/profile/';
+            // Show notification
+            if (window.showNotification) {
+                window.showNotification({
+                    type: 'info',
+                    title: 'Already Logged In',
+                    message: 'You are already logged in. Redirecting to your profile...',
+                    icon: '👤'
+                });
+            }
+
+            // Redirect after a short delay to let them read
+            setTimeout(() => {
+                window.location.href = '/profile/';
+            }, 1000);
         }
     });
+
 
 
 

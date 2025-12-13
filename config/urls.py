@@ -21,6 +21,10 @@ urlpatterns = [
     path('', include('apps.cart.urls')),
     path('', include('apps.orders.urls')),
     path('contact/', TemplateView.as_view(template_name='legal/contact.html'), name='contact'),
+    path('privacy-policy/', TemplateView.as_view(template_name='legal/privacy.html'), name='privacy_policy'),
+    path('terms-conditions/', TemplateView.as_view(template_name='legal/terms.html'), name='terms_conditions'),
+    path('shipping-policy/', TemplateView.as_view(template_name='legal/shipping_policy.html'), name='shipping_policy'),
+    path('cancellation-refund/', TemplateView.as_view(template_name='legal/cancellation_refund.html'), name='cancellation_refund'),
 ]
 
 if settings.DEBUG:
