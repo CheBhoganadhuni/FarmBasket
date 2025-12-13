@@ -2,7 +2,9 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from uuid import UUID
+from uuid import UUID
 from decimal import Decimal
+import os
 
 
 # ===== INPUT SCHEMAS =====
@@ -83,6 +85,19 @@ class ProductListSchema(BaseModel):
     class Config:
         from_attributes = True
 
+    @validator('featured_image', pre=True)
+    def get_image_url(cls, v):
+        if v and hasattr(v, 'url'):
+            return v.url
+        if isinstance(v, str) and v:
+            if v.startswith('http'):
+                return v
+            cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
+            if cloud_name:
+                return f"https://res.cloudinary.com/{cloud_name}/image/upload/{v}"
+            return f"/media/{v}"
+        return None
+
 
 class ProductDetailSchema(BaseModel):
     """Schema for product detail (full info)"""
@@ -123,11 +138,24 @@ class ProductDetailSchema(BaseModel):
     
     @validator('featured_image', pre=True)
     def get_image_url(cls, v):
+        # Case 1: It's a FieldFile object (Standard Django behavior)
         if v and hasattr(v, 'url'):
             return v.url
-        if isinstance(v, str):
-            # If already a string (processed URL), return as is
-            return v
+            
+        # Case 2: It's a string (Path from DB)
+        if isinstance(v, str) and v:
+            if v.startswith('http'):
+                return v
+                
+            # If we are using Cloudinary, construct the URL manually
+            # This handles the case where Pydantic receives the raw path string
+            cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
+            if cloud_name:
+                return f"https://res.cloudinary.com/{cloud_name}/image/upload/{v}"
+                
+            # Fallback for local development if not using Cloudinary
+            return f"/media/{v}"
+            
         return None
 
 
