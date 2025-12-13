@@ -123,6 +123,14 @@
                     <!-- Right Column: Summary -->
                     <div class="space-y-6">
 
+                        <!-- Order Notes (New!) -->
+                        <div x-show="order.order_notes"
+                            class="glass rounded-xl p-6 bg-yellow-50 border border-yellow-100">
+                            <h3 class="font-display text-lg font-bold text-yellow-800 mb-2">📝 Order Notes</h3>
+                            <p class="text-gray-700 text-sm italic" x-text="'&quot;' + order.order_notes + '&quot;'">
+                            </p>
+                        </div>
+
                         <!-- Pricing Summary -->
                         <div class="glass rounded-xl p-6">
                             <h2 class="font-display text-2xl font-bold mb-4">Order Summary</h2>

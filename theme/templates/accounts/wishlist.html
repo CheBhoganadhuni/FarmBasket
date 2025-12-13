@@ -5,59 +5,59 @@
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4" x-data="wishlistPage()">
     <div class="container mx-auto max-w-7xl">
-        
+
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="font-display text-4xl font-bold mb-2">💚 My Wishlist</h1>
                 <p class="text-gray-600">Your favorite organic products</p>
             </div>
-			<a href="/products/" class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
+            <a href="/products/"
+                class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
                 🛍️ Continue Shopping
             </a>
         </div>
-        
+
         <!-- Loading -->
         <template x-if="loading">
-			<template x-for="i in [1,2,3,4]" :key="i">
-				<div class="skeleton h-80 rounded-xl"></div>
-			</template>
+            <template x-for="i in [1,2,3,4]" :key="i">
+                <div class="skeleton h-80 rounded-xl"></div>
+            </template>
         </template>
-        
+
         <!-- Wishlist Items -->
         <template x-if="!loading && items.length > 0">
             <div class="grid md:grid-cols-4 gap-6">
                 <template x-for="product in items" :key="product.id">
                     <div class="glass rounded-xl overflow-hidden hover:shadow-2xl transition group">
-                        
+
                         <!-- Product Image -->
                         <div class="relative h-48 overflow-hidden bg-gray-100">
                             <a :href="`/products/${product.slug}/`">
-                                <img 
-                                    :src="product.featured_image || 'https://via.placeholder.com/400x300?text=No+Image'" 
+                                <img :src="product.featured_image || 'https://via.placeholder.com/400x300?text=No+Image'"
                                     :alt="product.name"
-                                    class="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                                >
+                                    class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                             </a>
-                            
+
                             <!-- Badges -->
                             <div class="absolute top-2 left-2 flex flex-col gap-2">
-                                <span x-show="product.discount_percentage > 0" class="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-bold">
+                                <span x-show="product.discount_percentage > 0"
+                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-bold">
                                     <span x-text="product.discount_percentage + '% OFF'"></span>
                                 </span>
-                                <span x-show="product.is_organic_certified" class="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold">
+                                <span x-show="product.is_organic_certified"
+                                    class="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold">
                                     🌿 Organic
                                 </span>
                             </div>
-                            
+
                             <!-- Remove Button -->
-                            <button 
-                                @click="removeFromWishlist(product.id)"
+                            <button @click="removeFromWishlist(product.id)"
                                 class="absolute top-2 right-2 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition shadow-lg font-bold">
                                 ✕
                             </button>
                         </div>
-                        
+
                         <!-- Product Info -->
                         <div class="p-4">
                             <div class="text-sm text-gray-500 mb-1">
@@ -65,29 +65,32 @@
                                 <span x-text="product.category_name"></span>
                             </div>
                             <h3 class="font-bold text-lg mb-2 line-clamp-2" x-text="product.name"></h3>
-                            
+
                             <!-- Rating -->
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="text-yellow-500" x-text="'⭐'.repeat(Math.round(product.average_rating))"></span>
+                                <span class="text-yellow-500"
+                                    x-text="'⭐'.repeat(Math.round(product.average_rating))"></span>
                                 <span class="text-sm text-gray-600" x-text="`(${product.review_count})`"></span>
                             </div>
-                            
+
                             <!-- Price -->
                             <div class="flex items-center gap-2 mb-4">
                                 <span class="text-2xl font-bold text-neon" x-text="`₹${product.display_price}`"></span>
-                                <span x-show="product.discount_percentage > 0" class="text-sm text-gray-500 line-through" x-text="`₹${product.price}`"></span>
+                                <span x-show="product.discount_percentage > 0"
+                                    class="text-sm text-gray-500 line-through" x-text="`₹${product.price}`"></span>
                             </div>
-                            
+
                             <!-- Stock Status -->
                             <div class="mb-4">
-                                <span x-show="product.in_stock" class="text-green-600 text-sm font-semibold">✓ In Stock</span>
-                                <span x-show="!product.in_stock" class="text-red-600 text-sm font-semibold">✕ Out of Stock</span>
+                                <span x-show="product.in_stock" class="text-green-600 text-sm font-semibold">✓ In
+                                    Stock</span>
+                                <span x-show="!product.in_stock" class="text-red-600 text-sm font-semibold">✕ Out of
+                                    Stock</span>
                             </div>
-                            
+
                             <!-- Actions -->
                             <div class="flex gap-2">
-                                <a 
-                                    :href="`/products/${product.slug}/`"
+                                <a :href="`/products/${product.slug}/`"
                                     class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition text-center font-semibold">
                                     View Details
                                 </a>
@@ -97,14 +100,15 @@
                 </template>
             </div>
         </template>
-        
+
         <!-- Empty State -->
         <template x-if="!loading && items.length === 0">
             <div class="text-center py-20">
                 <div class="text-6xl mb-4">💔</div>
                 <h3 class="text-2xl font-bold mb-2">Your wishlist is empty</h3>
                 <p class="text-gray-600 mb-6">Start adding products you love!</p>
-                <a href="/products/" class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                <a href="/products/"
+                    class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
                     Browse Products 🛒
                 </a>
             </div>
@@ -117,51 +121,51 @@
         return {
             items: [],
             loading: true,
-            
+
             async init() {
                 const token = localStorage.getItem('access_token');
                 if (!token) {
                     window.location.href = '/auth/login/?next=/wishlist/';
                     return;
                 }
-                
+
                 await this.fetchWishlist();
             },
-            
-			async fetchWishlist() {
-				const token = localStorage.getItem('access_token');
-				
-				try {
-					console.log('Fetching wishlist...');  // ✅ Debug log
-					
-					const response = await fetch('/api/catalog/wishlist', {
-						headers: {
-							'Authorization': `Bearer ${token}`
-						}
-					});
-					
-					console.log('Wishlist response status:', response.status);  // ✅ Debug log
-					
-					if (response.ok) {
-						this.items = await response.json();
-						console.log('Wishlist items:', this.items);  // ✅ Debug log
-					} else if (response.status === 401) {
-						localStorage.removeItem('access_token');
-						window.location.href = '/auth/login/?next=/wishlist/';
-					} else {
-						const error = await response.json();
-						console.error('Wishlist error:', error);  // ✅ Debug log
-					}
-				} catch (err) {
-					console.error('Failed to fetch wishlist', err);
-				} finally {
-					this.loading = false;
-				}
-			},
-            
+
+            async fetchWishlist() {
+                const token = localStorage.getItem('access_token');
+
+                try {
+
+
+                    const response = await fetch('/api/catalog/wishlist', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+
+
+                    if (response.ok) {
+                        this.items = await response.json();
+
+                    } else if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        window.location.href = '/auth/login/?next=/wishlist/';
+                    } else {
+                        const error = await response.json();
+                        console.error('Wishlist error:', error);  // ✅ Debug log
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch wishlist', err);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
             async removeFromWishlist(productId) {
                 const token = localStorage.getItem('access_token');
-                
+
                 try {
                     const response = await fetch(`/api/catalog/wishlist/remove/${productId}`, {
                         method: 'DELETE',
@@ -169,10 +173,10 @@
                             'Authorization': `Bearer ${token}`
                         }
                     });
-                    
+
                     if (response.ok) {
                         this.items = this.items.filter(item => item.id !== productId);
-                        
+
                         // Animation
                         gsap.from('.glass', {
                             scale: 0.95,

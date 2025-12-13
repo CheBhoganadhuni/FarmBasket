@@ -347,16 +347,16 @@
 
             async loadWallet() {
                 const token = localStorage.getItem('access_token');
-                console.log(`wallettoken: ${token}`);
+
                 try {
                     const response = await fetch('/api/wallet/balance', {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.ok) {
-                        console.log()
+
                         const data = await response.json();
                         this.walletBalance = data.balance;
-                        console.log('Wallet balance fetched:', data.balance);
+
                     }
                 } catch (e) {
                     console.error('Failed to load wallet', e);
@@ -418,7 +418,7 @@
 
             async fetchStats() {
                 const token = localStorage.getItem('access_token');
-                console.log(`statstoken: ${token}`);
+
 
 
                 try {

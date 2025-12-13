@@ -143,14 +143,14 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        console.log('Login successful, tokens received');
+
 
                         // ✅ SAVE TOKENS FIRST (critical!)
                         localStorage.setItem('access_token', data.access_token);
                         localStorage.setItem('refresh_token', data.refresh_token);
 
-                        console.log('Tokens saved to localStorage');
-                        console.log('Access token:', localStorage.getItem('access_token'));
+
+
 
                         // ✅ THEN animate and redirect
                         gsap.to('.glass', {
@@ -159,7 +159,7 @@
                             yoyo: true,
                             repeat: 1,
                             onComplete: () => {
-                                console.log('Redirecting to profile...');
+
                                 if (data.is_superuser) {
                                     window.location.href = '/admin/';
                                 } else {

@@ -72,7 +72,11 @@ class OrderSchema(BaseModel):
     delivery_city: str
     delivery_state: str
     delivery_postal_code: str
+    delivery_postal_code: str
     delivery_landmark: str
+    
+    # Extra
+    order_notes: Optional[str] = ''
     
     # Pricing
     subtotal: Decimal

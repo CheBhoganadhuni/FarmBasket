@@ -135,22 +135,47 @@ def get_product(request, slug: str):
     product.views_count += 1
     product.save(update_fields=['views_count'])
     
+    # Get reviews
+    reviews = product.reviews.select_related('user').filter(is_approved=True).order_by('-created_at')
+
+    # Get similar products
+    similar_qs = Product.objects.filter(
+        category=product.category, 
+        is_active=True, 
+        in_stock=True
+    ).exclude(id=product.id).order_by('?')[:4]
+    
+    similar_products_data = []
+    for p in similar_qs:
+        similar_products_data.append({
+            'id': str(p.id),
+            'name': p.name,
+            'slug': p.slug,
+            'category_name': p.category.name,
+            'category_icon': p.category.icon,
+            'price': p.price,
+            'discount_price': p.discount_price,
+            'display_price': p.display_price,
+            'discount_percentage': p.discount_percentage,
+            'unit': p.unit,
+            'unit_value': p.unit_value,
+            'featured_image': p.featured_image.url.replace('/media/http', 'http') if p.featured_image else None,
+            'is_featured': p.is_featured,
+            'is_organic_certified': p.is_organic_certified,
+            'in_stock': p.in_stock,
+            'is_low_stock': p.is_low_stock,
+            'average_rating': p.average_rating,
+            'review_count': p.review_count,
+        })
+    
     # Build response as dictionary
     return {
         'id': str(product.id),
         'name': product.name,
         'slug': product.slug,
         'description': product.description,
-        'farm_story': product.farm_story or '',
-        'category': {
-            'id': str(product.category.id),
-            'name': product.category.name,
-            'slug': product.category.slug,
-            'description': product.category.description,
-            'icon': product.category.icon,
-            'is_active': product.category.is_active,
-            'product_count': 0,
-        },
+        'farm_story': getattr(product, 'farm_story', None),
+        'category': product.category,
         'price': product.price,
         'discount_price': product.discount_price,
         'display_price': product.display_price,
@@ -163,19 +188,14 @@ def get_product(request, slug: str):
         'is_organic_certified': product.is_organic_certified,
         'in_stock': product.in_stock,
         'is_low_stock': product.is_low_stock,
-        'featured_image': product.featured_image.url.replace('/media/http', 'http') if product.featured_image else None,
-        'images': [
-            {
-                'id': str(img.id),
-                'image': img.image.url.replace('/media/http', 'http') if img.image else '',
-                'alt_text': img.alt_text or product.name,
-            }
-            for img in product.images.all()
-        ],
+        'featured_image': product.featured_image,
+        'images': product.images.all(),
         'average_rating': product.average_rating,
         'review_count': product.review_count,
         'views_count': product.views_count,
         'created_at': product.created_at,
+        'reviews': list(reviews), # Ninja handles model -> schema conversion automatically for lists of models if config is set
+        'similar_products': similar_products_data
     }
 
 

@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order - FarmBasket</title>
+    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Clash+Display:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body
+    class="font-sans antialiased text-gray-900 bg-orange-50 dark:bg-orange-950 selection:bg-orange-500 selection:text-white transition-colors duration-300">
+
+    <!-- Visit Site Button -->
+    <a href="/"
+        class="fixed top-6 left-6 z-50 flex items-center gap-2 px-5 py-2.5 bg-white/90 dark:bg-orange-900/80 backdrop-blur text-orange-800 dark:text-orange-100 font-bold rounded-full shadow-lg border border-orange-100 dark:border-orange-700 hover:scale-105 transition-transform duration-200">
+        <span>🏠</span>
+        <span>Visit Site</span>
+    </a>
+
+    <div
+        class="min-h-screen bg-orange-50 from-orange-100 to-orange-50 dark:bg-orange-950 dark:from-orange-900 dark:to-orange-950 py-16 px-4 transition-colors duration-300 flex items-center justify-center">
+        <div class="container mx-auto max-w-3xl w-full">
+
+            <!-- Header -->
+            <div class="text-center mb-12 animate-fade-in-down">
+                <span
+                    class="text-orange-600 dark:text-orange-400 font-bold tracking-widest uppercase text-sm mb-4 block">Order
+                    Status</span>
+                <h1 class="font-display text-4xl md:text-5xl font-bold text-orange-900 dark:text-orange-50 mb-6">Track
+                    Your Order</h1>
+                <p class="text-orange-800 dark:text-orange-200 text-lg">Enter your Order ID to check the current status
+                    and details.</p>
+            </div>
+
+            <!-- Search Form -->
+            <div
+                class="bg-white/90 dark:bg-orange-900/40 backdrop-blur-md rounded-3xl shadow-xl shadow-orange-900/5 dark:shadow-orange-950/50 p-8 md:p-12 mb-12 border border-orange-100 dark:border-orange-800 relative overflow-hidden transition-all duration-300 animate-fade-in-up">
+                <!-- Decorative Blur -->
+                <div
+                    class="absolute -top-20 -right-20 w-64 h-64 bg-orange-200 dark:bg-orange-600 rounded-full blur-3xl opacity-20 pointer-events-none">
+                </div>
+
+                <form method="GET" action="{% url 'orders:track' %}" class="relative z-10">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label for="order_id" class="sr-only">Order ID</label>
+                            <input type="text" name="order_id" id="order_id" placeholder="ORD-2025-XXXXXX"
+                                value="{{ request.GET.order_id|default:'' }}"
+                                class="w-full h-14 px-6 rounded-xl border border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-100 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800 transition font-medium placeholder-orange-300 dark:placeholder-orange-700">
+                        </div>
+                        <button type="submit"
+                            class="h-14 px-8 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl transition shadow-lg hover:shadow-xl hover:shadow-orange-500/20 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            <span>🔍</span> Track
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Error Message -->
+                {% if error %}
+                <div
+                    class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 rounded-xl flex items-center gap-3 border border-red-100 dark:border-red-800">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="font-medium">{{ error }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Order Results -->
+            <div x-data="trackOrderResults()" class="transition-all duration-300">
+
+                <template x-if="order">
+                    <div class="space-y-6 animate-fade-in-up">
+
+                        <!-- Order Header -->
+                        <div
+                            class="bg-white/90 dark:bg-orange-900/40 backdrop-blur-md rounded-xl p-8 shadow-sm border border-orange-100 dark:border-orange-800">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                <div>
+                                    <h2
+                                        class="font-display text-3xl font-bold text-orange-900 dark:text-orange-50 mb-2">
+                                        Order #<span x-text="order.order_number"></span>
+                                    </h2>
+                                    <p class="text-orange-800 dark:text-orange-200">
+                                        Placed on <span x-text="formatDate(order.created_at)"></span>
+                                    </p>
+                                </div>
+                                <div class="flex gap-3">
+                                    <span class="px-4 py-2 rounded-full font-bold text-sm border" :class="{
+                                            'bg-yellow-50 text-yellow-700 border-yellow-200': order.status === 'PENDING',
+                                            'bg-blue-50 text-blue-700 border-blue-200': order.status === 'PROCESSING',
+                                            'bg-green-50 text-green-700 border-green-200': order.status === 'CONFIRMED',
+                                            'bg-purple-50 text-purple-700 border-purple-200': order.status === 'SHIPPED',
+                                            'bg-teal-50 text-teal-700 border-teal-200': order.status === 'OUT_FOR_DELIVERY',
+                                            'bg-green-100 text-green-800 border-green-300': order.status === 'DELIVERED',
+                                            'bg-red-50 text-red-700 border-red-200': order.status === 'CANCELLED'
+                                        }" x-text="order.status_display">
+                                    </span>
+                                    <span class="px-4 py-2 rounded-full font-bold text-sm border" :class="{
+                                            'bg-orange-50 text-orange-700 border-orange-200': order.payment_status === 'PENDING',
+                                            'bg-green-50 text-green-700 border-green-200': order.payment_status === 'PAID',
+                                            'bg-red-50 text-red-700 border-red-200': order.payment_status === 'FAILED'
+                                        }" x-text="order.payment_status_display">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-6">
+
+                            <!-- Left Column: Items -->
+                            <div class="md:col-span-2 space-y-6">
+                                <div
+                                    class="bg-white/90 dark:bg-orange-900/40 backdrop-blur-md rounded-xl p-6 shadow-sm border border-orange-100 dark:border-orange-800">
+                                    <h3
+                                        class="font-display text-2xl font-bold text-orange-900 dark:text-orange-50 mb-6">
+                                        Order Items</h3>
+                                    <div class="space-y-4">
+                                        <template x-for="item in order.items" :key="item.product_name">
+                                            <div
+                                                class="flex gap-4 p-4 bg-orange-50/30 dark:bg-orange-950/30 rounded-lg border border-orange-100 dark:border-orange-800">
+                                                <div
+                                                    class="w-20 h-20 bg-white dark:bg-orange-900 rounded-lg overflow-hidden flex-shrink-0 border border-orange-100 dark:border-orange-800">
+                                                    <img x-show="item.product_image" :src="item.product_image"
+                                                        :alt="item.product_name" class="w-full h-full object-cover">
+                                                    <div x-show="!item.product_image"
+                                                        class="w-full h-full flex items-center justify-center text-2xl">
+                                                        🥗</div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-bold text-lg text-orange-900 dark:text-orange-50 mb-1"
+                                                        x-text="item.product_name"></h4>
+                                                    <div class="text-sm text-orange-800 dark:text-orange-200 mb-2">
+                                                        Quantity: <span class="font-medium"
+                                                            x-text="item.quantity"></span> × ₹<span
+                                                            x-text="item.unit_price"></span>
+                                                    </div>
+                                                    <div class="font-bold text-orange-600 dark:text-orange-400 text-lg">
+                                                        ₹<span x-text="item.total_price"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Details -->
+                            <div class="space-y-6">
+
+                                <!-- Delivery Address -->
+                                <div
+                                    class="bg-white/90 dark:bg-orange-900/40 backdrop-blur-md rounded-xl p-6 shadow-sm border border-orange-100 dark:border-orange-800">
+                                    <h3 class="font-display text-xl font-bold text-orange-900 dark:text-orange-50 mb-4">
+                                        📍 Delivery Address</h3>
+                                    <div class="text-orange-800 dark:text-orange-200 space-y-2 text-sm leading-relaxed">
+                                        <p class="font-bold text-lg text-orange-900 dark:text-orange-50"
+                                            x-text="order.delivery_name"></p>
+                                        <p>Phone: <span x-text="order.delivery_phone"></span></p>
+                                        <div class="my-2 border-t border-orange-100 dark:border-orange-800"></div>
+                                        <p x-text="order.delivery_address"></p>
+                                        <p x-show="order.delivery_landmark"
+                                            class="text-orange-700 dark:text-orange-300">
+                                            Near <span x-text="order.delivery_landmark"></span>
+                                        </p>
+                                        <p
+                                            x-text="`${order.delivery_city}, ${order.delivery_state} - ${order.delivery_postal_code}`">
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Order Notes -->
+                                <div x-show="order.order_notes"
+                                    class="bg-yellow-50 dark:bg-yellow-900/30 rounded-xl p-6 border border-yellow-100 dark:border-yellow-800 shadow-sm">
+                                    <h3
+                                        class="font-display text-xl font-bold text-yellow-800 dark:text-yellow-500 mb-2">
+                                        📝 Order Notes</h3>
+                                    <p class="text-yellow-900 dark:text-yellow-200 text-sm italic"
+                                        x-text="`&quot;${order.order_notes}&quot;`"></p>
+                                </div>
+
+                                <!-- Summary -->
+                                <div
+                                    class="bg-white/90 dark:bg-orange-900/40 backdrop-blur-md rounded-xl p-6 shadow-sm border border-orange-100 dark:border-orange-800">
+                                    <h3 class="font-display text-xl font-bold text-orange-900 dark:text-orange-50 mb-4">
+                                        Order Summary</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between text-orange-700 dark:text-orange-200">
+                                            <span>Subtotal</span>
+                                            <span>₹<span x-text="order.subtotal"></span></span>
+                                        </div>
+                                        <div class="flex justify-between text-orange-700 dark:text-orange-200">
+                                            <span>Delivery</span>
+                                            <template x-if="parseFloat(order.delivery_charge) > 0">
+                                                <span>₹<span x-text="order.delivery_charge"></span></span>
+                                            </template>
+                                            <template x-if="parseFloat(order.delivery_charge) === 0">
+                                                <span class="text-green-600 dark:text-green-400 font-bold">FREE</span>
+                                            </template>
+                                        </div>
+                                        <div x-show="parseFloat(order.discount) > 0"
+                                            class="flex justify-between text-green-600 dark:text-green-400">
+                                            <span>Discount</span>
+                                            <span>-₹<span x-text="order.discount"></span></span>
+                                        </div>
+                                        <div
+                                            class="border-t border-orange-200 dark:border-orange-800 pt-3 flex justify-between font-bold text-lg text-orange-900 dark:text-orange-50">
+                                            <span>Total Paid</span>
+                                            <span class="text-orange-600 dark:text-orange-400">₹<span
+                                                    x-text="order.total"></span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                {% if order_json %}
+                {{ order_json|json_script:"order-data" }}
+                {% endif %}
+
+                <script>
+                    function trackOrderResults() {
+                        return {
+                            order: null,
+                            init() {
+                                const dataScript = document.getElementById('order-data');
+                                if (dataScript) {
+                                    this.order = JSON.parse(dataScript.textContent);
+                                }
+                            },
+                            formatDate(isoString) {
+                                if (!isoString) return '';
+                                return new Date(isoString).toLocaleDateString('en-IN', {
+                                    year: 'numeric', month: 'long', day: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                });
+                            }
+                        }
+                    }
+                </script>
+            </div>
+
+        </div>
+    </div>
+</body>
+
+</html>

@@ -70,13 +70,34 @@
                 </ul>
             </div>
 
-            <div class="mb-4">
-                <strong>Delivery Address:</strong>
-                <p
-                    x-text="selectedOrder.delivery_name + ', ' + selectedOrder.delivery_address + ', ' + selectedOrder.delivery_city + ', ' + selectedOrder.delivery_state + ', ' + selectedOrder.delivery_postal_code">
-                </p>
-                <p class="text-sm text-gray-600" x-text="'Phone: ' + selectedOrder.delivery_phone"></p>
+            <div class="mb-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <h4 class="font-bold mb-2">Delivery Details</h4>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Address</p>
+                        <p class="font-medium" x-text="selectedOrder.delivery_name"></p>
+                        <p x-text="selectedOrder.delivery_address"></p>
+                        <p
+                            x-text="selectedOrder.delivery_city + ', ' + selectedOrder.delivery_state + ' - ' + selectedOrder.delivery_postal_code">
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Landmark: <span
+                                x-text="selectedOrder.delivery_landmark || 'N/A'"></span></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Contact</p>
+                        <p class="font-medium" x-text="'📞 ' + selectedOrder.delivery_phone"></p>
+                        <p class="font-medium" x-text="'📧 ' + selectedOrder.user.email"></p>
+                    </div>
+                </div>
             </div>
+
+            <template x-if="selectedOrder.order_notes">
+                <div
+                    class="mb-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 p-4 rounded-lg">
+                    <h4 class="font-bold text-yellow-800 dark:text-yellow-200 mb-1">📝 Order Notes</h4>
+                    <p class="italic text-gray-700 dark:text-gray-300" x-text="selectedOrder.order_notes"></p>
+                </div>
+            </template>
 
             <div class="text-right">
                 <button @click="showOrderDetails = false" class="btn btn-secondary px-6">Close</button>

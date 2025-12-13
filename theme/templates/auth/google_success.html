@@ -18,7 +18,7 @@
         const isSuperuser = urlParams.get('superuser') === 'true';
 
         if (accessToken && refreshToken) {
-            console.log('Google Auth tokens received');
+
             localStorage.setItem('access_token', accessToken);
             localStorage.setItem('refresh_token', refreshToken);
 

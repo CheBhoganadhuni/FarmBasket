@@ -105,47 +105,51 @@
                             </div>
                         </div>
 
-                        <!-- Product Info -->
-                        <div class="text-sm text-gray-600 mb-1">
-                            <span x-text="product.category_icon"></span>
-                            <span x-text="' ' + product.category_name"></span>
-                        </div>
-
-                        <h3 class="font-bold text-lg mb-2 line-clamp-2" x-text="product.name"></h3>
-
-                        <!-- Rating -->
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="flex text-yellow-500">
-                                <template x-for="i in 5" :key="i">
-                                    <span x-text="i <= Math.round(product.average_rating) ? '⭐' : '☆'"></span>
-                                </template>
+                        <!-- Product Info (Wrapped with Padding) -->
+                        <div class="p-4">
+                            <div class="text-sm text-gray-600 mb-1">
+                                <span x-text="product.category_icon"></span>
+                                <span x-text="' ' + product.category_name"></span>
                             </div>
-                            <span class="text-sm text-gray-600">(<span x-text="product.review_count"></span>)</span>
-                        </div>
 
-                        <!-- Price -->
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-2xl font-bold text-neon">₹<span
-                                    x-text="product.display_price"></span></span>
-                            <span x-show="product.discount_percentage > 0" class="text-sm text-gray-500 line-through">
-                                ₹<span x-text="product.price"></span>
-                            </span>
-                        </div>
+                            <h3 class="font-bold text-lg mb-2 line-clamp-2" x-text="product.name"></h3>
 
-                        <!-- Unit -->
-                        <div class="text-sm text-gray-600 mb-4" x-text="`${product.unit_value}${product.unit}`"></div>
+                            <!-- Rating -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex text-yellow-500">
+                                    <template x-for="i in 5" :key="i">
+                                        <span x-text="i <= Math.round(product.average_rating) ? '⭐' : '☆'"></span>
+                                    </template>
+                                </div>
+                                <span class="text-sm text-gray-600">(<span x-text="product.review_count"></span>)</span>
+                            </div>
 
-                        <!-- Actions -->
-                        <div class="flex gap-2">
-                            <button @click="toggleWishlist(product.id)"
-                                class="flex-1 px-4 py-2 border-2 rounded-lg transition font-semibold text-sm"
-                                :class="wishlist.includes(product.id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-300 hover:border-neon hover:text-neon'">
-                                <span x-text="wishlist.includes(product.id) ? '❤️' : '🤍'"></span>
-                            </button>
-                            <a :href="`/products/${product.slug}/`"
-                                class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition text-center font-semibold text-sm">
-                                View Details
-                            </a>
+                            <!-- Price -->
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="text-2xl font-bold text-neon">₹<span
+                                        x-text="product.display_price"></span></span>
+                                <span x-show="product.discount_percentage > 0"
+                                    class="text-sm text-gray-500 line-through">
+                                    ₹<span x-text="product.price"></span>
+                                </span>
+                            </div>
+
+                            <!-- Unit -->
+                            <div class="text-sm text-gray-600 mb-4" x-text="`${product.unit_value}${product.unit}`">
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex gap-2">
+                                <button @click="toggleWishlist(product.id)"
+                                    class="flex-1 px-4 py-2 border-2 rounded-lg transition font-semibold text-sm"
+                                    :class="wishlist.includes(product.id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-300 hover:border-neon hover:text-neon'">
+                                    <span x-text="wishlist.includes(product.id) ? '❤️' : '🤍'"></span>
+                                </button>
+                                <a :href="`/products/${product.slug}/`"
+                                    class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition text-center font-semibold text-sm">
+                                    View Details
+                                </a>
+                            </div>
                         </div>
 
 

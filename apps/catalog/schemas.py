@@ -110,6 +110,7 @@ class ProductDetailSchema(BaseModel):
     review_count: int
     views_count: int
     created_at: datetime
+    similar_products: List[ProductListSchema] = []  # ✅ Added field
     
     class Config:
         from_attributes = True
