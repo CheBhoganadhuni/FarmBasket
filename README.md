@@ -4,6 +4,18 @@
 FarmBasket is a full‑featured ecommerce platform built using **Django + PostgreSQL**.
 It allows users to browse, wishlist, add to cart, checkout, track orders, manage addresses,
 and view order history — while admins manage inventory, products, and orders.
+  
+---
+  
+## 🚀 Live Demo
+  
+**The site is fully deployed and live!**
+  
+[![Deploy Status](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://farmbasket.onrender.com)
+  
+👉 **[Visit Live Site](https://farmbasket.onrender.com)**
+  
+*(Note: Initial load may take 30-50s as the free instance spins up)*
 
 ---
 
