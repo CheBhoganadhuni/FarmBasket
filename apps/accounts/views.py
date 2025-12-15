@@ -3,9 +3,26 @@ from django.contrib.auth import logout
 from django.contrib import messages
 
 
+from apps.catalog.models import Product
+from apps.accounts.models import User
+# Try importing Order, handle if missing
+try:
+    from apps.orders.models import Order
+except ImportError:
+    Order = None
+
 def home_view(request):
     """Homepage"""
-    return render(request, 'home.html')
+    product_count = Product.objects.filter(is_active=True).count()
+    user_count = User.objects.count()
+    order_count = Order.objects.count() if Order else 0
+    
+    context = {
+        'product_count': product_count,
+        'user_count': user_count,
+        'order_count': order_count
+    }
+    return render(request, 'home.html', context)
 
 def register_view(request):
     """User registration page"""

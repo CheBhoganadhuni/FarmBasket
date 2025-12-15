@@ -22,7 +22,7 @@
 
     <!-- Login Required Modal -->
     <div x-show="showLoginModal" x-cloak x-transition
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4"
         @click.self="showLoginModal = false">
         <div class="glass rounded-2xl p-8 max-w-md w-full text-center" @click.stop>
             <div class="text-6xl mb-4">🔒</div>
@@ -77,10 +77,11 @@
                             </div>
 
                             <!-- Wishlist Button -->
-                            <button @click="toggleWishlist()"
-                                class="absolute top-6 right-6 w-14 h-14 bg-white bg-opacity-90 backdrop-filter backdrop-blur rounded-full flex items-center justify-center hover:bg-red-50 transition shadow-xl text-2xl z-10">
-                                <span x-text="inWishlist ? '❤️' : '🤍'"
+                            <button @click="toggleWishlist()" :disabled="isLoadingWishlist"
+                                class="absolute top-6 right-6 w-14 h-14 bg-white bg-opacity-90 backdrop-filter backdrop-blur rounded-full flex items-center justify-center hover:bg-red-50 transition shadow-xl text-2xl z-10 disabled:opacity-75 disabled:cursor-not-allowed">
+                                <span x-show="!isLoadingWishlist" x-text="inWishlist ? '❤️' : '🤍'"
                                     class="transform transition hover:scale-110"></span>
+                                <span x-show="isLoadingWishlist" class="animate-spin text-xl">⏳</span>
                             </button>
                         </div>
 
@@ -165,13 +166,16 @@
                                 </div>
 
                                 <!-- Add to Cart -->
-                                <button @click="addToCart"
-                                    class="flex-1 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-3">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button @click="addToCart" :disabled="isLoadingCart"
+                                    class="flex-1 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed">
+                                    <svg x-show="!isLoadingCart" class="w-6 h-6" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                                     </svg>
-                                    Add to Cart
+                                    <span x-show="!isLoadingCart">Add to Cart</span>
+                                    <span x-show="isLoadingCart" class="animate-spin text-xl">⏳</span>
+                                    <span x-show="isLoadingCart">Processing...</span>
                                 </button>
                             </div>
                         </div>
@@ -346,8 +350,19 @@
             inWishlist: false,
             reviews: [],
             showLoginModal: false,
+            isLoadingCart: false,
+            isLoadingWishlist: false,
 
             async init() {
+                // Safe GSAP Animation
+                if (typeof gsap !== 'undefined') {
+                    gsap.from('.container', {
+                        y: 20,
+                        opacity: 0,
+                        duration: 0.5
+                    });
+                }
+
                 await this.fetchProduct();
                 await this.fetchReviews();
 
@@ -420,6 +435,8 @@
                     return;
                 }
 
+                this.isLoadingWishlist = true;
+
                 const url = this.inWishlist
                     ? `/api/catalog/wishlist/remove/${this.product.id}`
                     : `/api/catalog/wishlist/add/${this.product.id}`;
@@ -446,6 +463,8 @@
                     }
                 } catch (err) {
                     console.error('Failed to toggle wishlist', err);
+                } finally {
+                    this.isLoadingWishlist = false;
                 }
             },
 
@@ -455,6 +474,8 @@
                     this.showLoginModal = true;
                     return;
                 }
+
+                this.isLoadingCart = true;
 
                 try {
                     const response = await fetch('/api/cart/add', {
@@ -500,6 +521,8 @@
                         title: 'Error',
                         message: 'Failed to add to cart. Please try again.'
                     });
+                } finally {
+                    this.isLoadingCart = false;
                 }
             }
         }

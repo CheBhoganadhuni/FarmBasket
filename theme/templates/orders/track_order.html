@@ -128,14 +128,14 @@
                                         <template x-for="item in order.items" :key="item.product_name">
                                             <div
                                                 class="flex gap-4 p-4 bg-orange-50/30 dark:bg-orange-950/30 rounded-lg border border-orange-100 dark:border-orange-800">
-                                                <div
-                                                    class="w-20 h-20 bg-white dark:bg-orange-900 rounded-lg overflow-hidden flex-shrink-0 border border-orange-100 dark:border-orange-800">
+                                                <a :href="`/products/${item.product_slug}/`"
+                                                    class="w-20 h-20 bg-white dark:bg-orange-900 rounded-lg overflow-hidden flex-shrink-0 border border-orange-100 dark:border-orange-800 block hover:opacity-80 transition">
                                                     <img x-show="item.product_image" :src="item.product_image"
                                                         :alt="item.product_name" class="w-full h-full object-cover">
                                                     <div x-show="!item.product_image"
                                                         class="w-full h-full flex items-center justify-center text-2xl">
                                                         🥗</div>
-                                                </div>
+                                                </a>
                                                 <div class="flex-1">
                                                     <h4 class="font-bold text-lg text-orange-900 dark:text-orange-50 mb-1"
                                                         x-text="item.product_name"></h4>

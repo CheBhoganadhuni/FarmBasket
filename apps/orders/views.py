@@ -52,6 +52,7 @@ def track_order_view(request):
 
                 items.append({
                     'product_name': item.product.name,
+                    'product_slug': item.product.slug,
                     'product_image': image_url,
                     'quantity': item.quantity,
                     'unit_price': str(item.unit_price),

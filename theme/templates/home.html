@@ -110,59 +110,225 @@
                             </a>
                         </div>
 
-                        <!-- Stats -->
-                        <div class="grid grid-cols-3 gap-8 mt-20 max-w-3xl mx-auto">
-                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
-                                <div class="text-4xl font-bold text-neon mb-2">20*</div>
-                                <div class="text-gray-600">Products</div>
-                            </div>
-                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
-                                <div class="text-4xl font-bold text-neon mb-2">😊</div>
-                                <div class="text-gray-600">Happy Users</div>
-                            </div>
-                            <div class="glass rounded-xl p-6 transform hover:scale-105 transition">
-                                <div class="text-4xl font-bold text-neon mb-2">💯</div>
-                                <div class="text-gray-600">Organic</div>
+                        <!-- Info Slider (Replaces Header Stats) -->
+                        <div class="mt-20 w-full overflow-x-auto pb-8 snap-x snap-mandatory styled-scrollbar">
+                            <div class="flex gap-6 px-4 min-w-max mx-auto">
+                                <!-- Stat 1: Products -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">🥦</div>
+                                    <div class="text-3xl font-bold text-neon">{{ product_count|default:"20" }}+</div>
+                                    <div class="text-gray-600 font-medium">Fresh Products</div>
+                                </div>
+
+                                <!-- Stat 2: Users -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">😊</div>
+                                    <div class="text-3xl font-bold text-neon">{{ user_count|default:"500" }}+</div>
+                                    <div class="text-gray-600 font-medium">Happy Families</div>
+                                </div>
+
+                                <!-- Stat 3: Orders -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">📦</div>
+                                    <div class="text-3xl font-bold text-neon">{{ order_count|default:"1000" }}+</div>
+                                    <div class="text-gray-600 font-medium">Orders Delivered</div>
+                                </div>
+
+                                <!-- Stat 4: Delivery -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">⚡</div>
+                                    <div class="text-3xl font-bold text-neon">24h</div>
+                                    <div class="text-gray-600 font-medium">Farm to Door</div>
+                                </div>
+
+                                <!-- Stat 5: Chemicals -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">🛡️</div>
+                                    <div class="text-3xl font-bold text-neon">0%</div>
+                                    <div class="text-gray-600 font-medium">Pesticides</div>
+                                </div>
+
+                                <!-- Stat 6: Farmers -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">👨‍🌾</div>
+                                    <div class="text-3xl font-bold text-neon">50+</div>
+                                    <div class="text-gray-600 font-medium">Local Farmers</div>
+                                </div>
+
+                                <!-- Stat 7: Cities (NEW) -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">🏙️</div>
+                                    <div class="text-3xl font-bold text-neon">5+</div>
+                                    <div class="text-gray-600 font-medium">Cities Covered</div>
+                                </div>
+
+                                <!-- Stat 8: Support (NEW) -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">📞</div>
+                                    <div class="text-3xl font-bold text-neon">24/7</div>
+                                    <div class="text-gray-600 font-medium">Live Support</div>
+                                </div>
+
+                                <!-- Stat 9: Rating (NEW) -->
+                                <div
+                                    class="glass glass-dark rounded-2xl p-6 min-w-[200px] snap-center flex flex-col items-center justify-center hover:scale-105 transition duration-300 border border-white/40 shadow-lg">
+                                    <div class="text-5xl mb-3">⭐</div>
+                                    <div class="text-3xl font-bold text-neon">4.9</div>
+                                    <div class="text-gray-600 font-medium">User Rating</div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Custom Stylized Scrollbar -->
+                        <style>
+                            .styled-scrollbar::-webkit-scrollbar {
+                                height: 10px;
+                                background-color: rgba(0, 0, 0, 0.05);
+                                border-radius: 99px;
+                            }
+
+                            .dark .styled-scrollbar::-webkit-scrollbar {
+                                background-color: rgba(255, 255, 255, 0.1);
+                            }
+
+                            .styled-scrollbar::-webkit-scrollbar-track {
+                                margin-left: 1rem;
+                                margin-right: 1rem;
+                            }
+
+                            .styled-scrollbar::-webkit-scrollbar-thumb {
+                                background: linear-gradient(90deg, #32b848, #26903a);
+                                border-radius: 99px;
+                                border: 2px solid transparent;
+                                background-clip: content-box;
+                            }
+
+                            .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+                                background-color: #26903a;
+                            }
+                        </style>
+
                     </div>
                 </div>
             </section>
 
-            <!-- Features Section -->
-            <section class="py-20 bg-white" id="about">
+            <!-- Creative Features Section (Symmetric Grid) -->
+            <section
+                class="py-24 relative overflow-hidden bg-gray-50 dark:bg-gray-900/50 transition-colors duration-300"
+                id="about">
+
                 <div class="container mx-auto px-4">
-                    <h2 class="font-display text-4xl md:text-5xl font-bold text-center mb-16">
-                        Why Choose <span class="text-neon">FarmBasket</span>?
-                    </h2>
+                    <div class="text-center mb-12 max-w-2xl mx-auto">
+                        <span class="text-neon font-bold tracking-wider uppercase text-sm">Why Us?</span>
+                        <h2 class="font-display text-4xl md:text-5xl font-bold mt-2 text-gray-900 dark:text-white">
+                            The <span class="text-neon relative inline-block">
+                                FarmBasket
+                                <svg class="absolute w-full h-3 -bottom-1 left-0 text-neon opacity-40"
+                                    viewBox="0 0 200 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2.00025 6.99997C25.7501 2.49962 83.25 0.25 198 4" stroke="currentColor"
+                                        stroke-width="3"></path>
+                                </svg>
+                            </span> Standard
+                        </h2>
+                    </div>
 
-                    <div class="grid md:grid-cols-3 gap-8">
-                        <!-- Feature 1 -->
+                    <!-- Symmetric Grid Layout -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+
+                        <!-- Card 1: Organic -->
                         <div
-                            class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
-                            <div class="text-6xl mb-4">🌿</div>
-                            <h3 class="text-2xl font-bold mb-4">100% Organic</h3>
-                            <p class="text-gray-600">All our products are certified organic, grown without harmful
-                                pesticides or chemicals.</p>
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-neon/10 text-neon flex items-center justify-center mb-4 text-xl">
+                                🌿
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">100% Certified
+                                Organic</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                Verified chemical-free. No shortcuts, just pure nature delivered to you.
+                            </p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="px-2 py-1 rounded-full text-neon text-xs font-bold">✓ Chemical
+                                    Free</span>
+                            </div>
                         </div>
 
-                        <!-- Feature 2 -->
+                        <!-- Card 2: Fast -->
                         <div
-                            class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
-                            <div class="text-6xl mb-4">🚚</div>
-                            <h3 class="text-2xl font-bold mb-4">Fresh Delivery</h3>
-                            <p class="text-gray-600">Same-day delivery ensures you get the freshest products straight
-                                from the farm.</p>
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4 text-xl">
+                                🚛
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">Lightning Fast
+                            </h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Harvested at sunrise, at your door by
+                                sunset.</p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="px-2 py-1 rounded-full text-neon text-xs font-bold">✓ Fast Delivery</span>
+                            </div>
                         </div>
 
-                        <!-- Feature 3 -->
+                        <!-- Card 3: Community -->
                         <div
-                            class="text-center p-8 rounded-2xl hover:shadow-2xl transition transform hover:-translate-y-2">
-                            <div class="text-6xl mb-4">👨‍🌾</div>
-                            <h3 class="text-2xl font-bold mb-4">Support Local</h3>
-                            <p class="text-gray-600">Every purchase supports local farmers and sustainable farming
-                                practices.</p>
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 text-xl">
+                                🧑‍🌾
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">Community
+                                First</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Direct partnerships with 50+ local
+                                families.</p>
                         </div>
+
+                        <!-- Card 4: Eco Packaging -->
+                        <div
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4 text-xl">
+                                ♻️
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">Eco-Friendly
+                            </h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Zero-waste packaging solutions for a
+                                cleaner planet.</p>
+                        </div>
+
+                        <!-- Card 5: Seasonal Specials -->
+                        <div
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 text-xl">
+                                🌤️
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">Seasonal Picks
+                            </h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Best fruits & veggies curated for the
+                                current season.</p>
+                        </div>
+
+                        <!-- Card 6: Quality Check -->
+                        <div
+                            class="glass dark:glass-dark rounded-3xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-500 border border-gray-100 dark:border-white/10 bg-white dark:bg-transparent">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center mb-4 text-xl">
+                                🔍
+                            </div>
+                            <h3 class="text-xl font-bold font-display mb-2 text-gray-900 dark:text-white">Triple Checked
+                            </h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Every basket is manually inspected
+                                before dispatch.</p>
+                        </div>
+
                     </div>
                 </div>
             </section>
@@ -183,13 +349,13 @@
 <script>
     function homePage() {
         return {
-            loading: true, // ✅ Start loading immediately
+            loading: true, // Start loading immediately
             isLoggedIn: false,
             userName: '',
 
             async init() {
                 await this.checkAuth();
-                this.loading = false; // ✅ Stop loading only after check
+                this.loading = false; // Stop loading only after check
             },
 
             async checkAuth() {

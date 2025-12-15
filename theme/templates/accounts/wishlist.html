@@ -13,88 +13,86 @@
                 <p class="text-gray-600">Your favorite organic products</p>
             </div>
             <a href="/products/"
-                class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
-                🛍️ Continue Shopping
+                class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+                Continue Shopping
             </a>
         </div>
 
         <!-- Loading -->
         <template x-if="loading">
-            <template x-for="i in [1,2,3,4]" :key="i">
-                <div class="skeleton h-80 rounded-xl"></div>
-            </template>
+            <div class="grid md:grid-cols-4 gap-6">
+                <template x-for="i in 4">
+                    <div class="skeleton h-80 rounded-xl"></div>
+                </template>
+            </div>
         </template>
 
-        <!-- Wishlist Items -->
+        <!-- Wishlist Grid -->
         <template x-if="!loading && items.length > 0">
             <div class="grid md:grid-cols-4 gap-6">
                 <template x-for="product in items" :key="product.id">
-                    <div class="glass rounded-xl overflow-hidden hover:shadow-2xl transition group">
+                    <div
+                        class="glass rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-2 group relative">
 
-                        <!-- Product Image -->
-                        <div class="relative h-48 overflow-hidden bg-gray-100">
-                            <a :href="`/products/${product.slug}/`">
-                                <img :src="product.featured_image || 'https://via.placeholder.com/400x300?text=No+Image'"
-                                    :alt="product.name"
-                                    class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                            </a>
+                        <!-- Remove Button -->
+                        <button @click="removeFromWishlist(product.id)"
+                            :disabled="loadingRemoveIds.includes(product.id)"
+                            class="absolute top-2 right-2 z-10 p-2 bg-white rounded-full text-red-500 hover:bg-red-50 shadow-md transition disabled:opacity-50">
+                            <span x-show="!loadingRemoveIds.includes(product.id)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </span>
+                            <span x-show="loadingRemoveIds.includes(product.id)" class="animate-spin text-sm">⏳</span>
+                        </button>
+
+                        <!-- Image -->
+                        <a :href="`/products/${product.slug}/`" class="block h-48 overflow-hidden relative">
+                            <img :src="product.featured_image || 'https://via.placeholder.com/400'" :alt="product.name"
+                                class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
 
                             <!-- Badges -->
-                            <div class="absolute top-2 left-2 flex flex-col gap-2">
-                                <span x-show="product.discount_percentage > 0"
-                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-bold">
-                                    <span x-text="product.discount_percentage + '% OFF'"></span>
-                                </span>
+                            <div class="absolute top-2 left-2 flex gap-1">
                                 <span x-show="product.is_organic_certified"
-                                    class="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold">
-                                    🌿 Organic
-                                </span>
+                                    class="px-2 py-1 bg-green-500 text-white text-xs rounded-full font-bold">Organic</span>
                             </div>
+                        </a>
 
-                            <!-- Remove Button -->
-                            <button @click="removeFromWishlist(product.id)"
-                                class="absolute top-2 right-2 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition shadow-lg font-bold">
-                                ✕
-                            </button>
-                        </div>
-
-                        <!-- Product Info -->
+                        <!-- Content -->
                         <div class="p-4">
-                            <div class="text-sm text-gray-500 mb-1">
+                            <div class="text-sm text-gray-600 mb-1">
                                 <span x-text="product.category_icon"></span>
                                 <span x-text="product.category_name"></span>
                             </div>
-                            <h3 class="font-bold text-lg mb-2 line-clamp-2" x-text="product.name"></h3>
+
+                            <a :href="`/products/${product.slug}/`">
+                                <h3 class="font-bold text-lg mb-1 truncate" x-text="product.name"></h3>
+                            </a>
 
                             <!-- Rating -->
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-yellow-500"
-                                    x-text="'⭐'.repeat(Math.round(product.average_rating))"></span>
-                                <span class="text-sm text-gray-600" x-text="`(${product.review_count})`"></span>
+                            <div class="flex items-center gap-1 mb-2 text-yellow-500 text-sm">
+                                <template x-for="i in 5">
+                                    <span x-text="i <= Math.round(product.average_rating) ? '⭐' : '☆'"></span>
+                                </template>
+                                <span class="text-gray-400 ml-1">(<span x-text="product.review_count"></span>)</span>
                             </div>
 
-                            <!-- Price -->
-                            <div class="flex items-center gap-2 mb-4">
-                                <span class="text-2xl font-bold text-neon" x-text="`₹${product.display_price}`"></span>
-                                <span x-show="product.discount_percentage > 0"
-                                    class="text-sm text-gray-500 line-through" x-text="`₹${product.price}`"></span>
-                            </div>
-
-                            <!-- Stock Status -->
-                            <div class="mb-4">
-                                <span x-show="product.in_stock" class="text-green-600 text-sm font-semibold">✓ In
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-xl font-bold text-neon">₹<span x-text="product.price"></span></span>
+                                <span x-show="!product.in_stock" class="text-xs text-red-500 font-bold">Out of
                                     Stock</span>
-                                <span x-show="!product.in_stock" class="text-red-600 text-sm font-semibold">✕ Out of
+                                <span x-show="product.in_stock" class="text-xs text-green-600 font-bold">✓ In
                                     Stock</span>
                             </div>
 
-                            <!-- Actions -->
-                            <div class="flex gap-2">
-                                <a :href="`/products/${product.slug}/`"
-                                    class="flex-1 px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition text-center font-semibold">
-                                    View Details
-                                </a>
-                            </div>
+                            <!-- Add to Cart (Replaces View Details) -->
+                            <button @click="addToCart(product.id)"
+                                :disabled="!product.in_stock || loadingCartIds.includes(product.id)"
+                                class="w-full py-2 bg-neon/20 hover:bg-neon hover:text-white text-neon rounded-lg transition font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!loadingCartIds.includes(product.id)">🛒 Add to Cart</span>
+                                <span x-show="loadingCartIds.includes(product.id)" class="animate-spin">⏳</span>
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -106,13 +104,14 @@
             <div class="text-center py-20">
                 <div class="text-6xl mb-4">💔</div>
                 <h3 class="text-2xl font-bold mb-2">Your wishlist is empty</h3>
-                <p class="text-gray-600 mb-6">Start adding products you love!</p>
+                <p class="text-gray-600 mb-6">Find something you love and save it here!</p>
                 <a href="/products/"
                     class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
-                    Browse Products 🛒
+                    Browse Products
                 </a>
             </div>
         </template>
+
     </div>
 </div>
 
@@ -121,6 +120,9 @@
         return {
             items: [],
             loading: true,
+            // Array based loaders
+            loadingRemoveIds: [],
+            loadingCartIds: [],
 
             async init() {
                 const token = localStorage.getItem('access_token');
@@ -129,32 +131,28 @@
                     return;
                 }
 
+                // Animate entrance - Re-added as user liked it generally, just ensuring safeness
+                if (typeof gsap !== 'undefined') {
+                    gsap.from('.glass', {
+                        y: 20,
+                        opacity: 0,
+                        duration: 0.5,
+                        stagger: 0.1
+                    });
+                }
+
                 await this.fetchWishlist();
             },
 
             async fetchWishlist() {
                 const token = localStorage.getItem('access_token');
-
                 try {
-
-
                     const response = await fetch('/api/catalog/wishlist', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
-
-
 
                     if (response.ok) {
                         this.items = await response.json();
-
-                    } else if (response.status === 401) {
-                        localStorage.removeItem('access_token');
-                        window.location.href = '/auth/login/?next=/wishlist/';
-                    } else {
-                        const error = await response.json();
-                        console.error('Wishlist error:', error);  // ✅ Debug log
                     }
                 } catch (err) {
                     console.error('Failed to fetch wishlist', err);
@@ -163,29 +161,82 @@
                 }
             },
 
-            async removeFromWishlist(productId) {
+            removeFromWishlist(productId) {
+                window.showNotification({
+                    type: 'delete',
+                    title: 'Remove from Wishlist?',
+                    message: 'Are you sure you want to remove this item?',
+                    showCancel: true,
+                    confirmText: 'Remove',
+                    onConfirm: () => {
+                        this.doRemoveFromWishlist(productId);
+                    }
+                });
+            },
+
+            async doRemoveFromWishlist(productId) {
                 const token = localStorage.getItem('access_token');
+                if (this.loadingRemoveIds.includes(productId)) return;
+                this.loadingRemoveIds.push(productId);
 
                 try {
                     const response = await fetch(`/api/catalog/wishlist/remove/${productId}`, {
                         method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
 
                     if (response.ok) {
-                        this.items = this.items.filter(item => item.id !== productId);
-
-                        // Animation
-                        gsap.from('.glass', {
-                            scale: 0.95,
-                            duration: 0.3,
-                            stagger: 0.1
+                        // Remove locally
+                        this.items = this.items.filter(p => p.id !== productId);
+                        window.showNotification({
+                            type: 'success',
+                            message: 'Removed from wishlist'
                         });
                     }
                 } catch (err) {
-                    console.error('Failed to remove from wishlist', err);
+                    console.error('Failed to remove', err);
+                } finally {
+                    this.loadingRemoveIds = this.loadingRemoveIds.filter(id => id !== productId);
+                }
+            },
+
+            async addToCart(productId) {
+                const token = localStorage.getItem('access_token');
+                if (this.loadingCartIds.includes(productId)) return;
+                this.loadingCartIds.push(productId);
+
+                try {
+                    const response = await fetch('/api/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ product_id: productId, quantity: 1 })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: { count: data.cart_count }
+                            }));
+                            window.showNotification({
+                                type: 'cart',
+                                title: 'Added to Cart! 🎉',
+                                message: `${data.message}<br><br>Ready to checkout?`,
+                                confirmText: 'View Cart',
+                                showCancel: true,
+                                onConfirm: () => {
+                                    window.location.href = '/cart/';
+                                }
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to add to cart', err);
+                } finally {
+                    this.loadingCartIds = this.loadingCartIds.filter(id => id !== productId);
                 }
             }
         }

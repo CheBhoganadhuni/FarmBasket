@@ -74,12 +74,13 @@
                             <div class="space-y-4">
                                 <template x-for="item in order.items" :key="item.id">
                                     <div class="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                                        <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0">
+                                        <a :href="`/products/${item.product_slug}/`"
+                                            class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 block hover:opacity-80 transition">
                                             <img x-show="item.product_image" :src="item.product_image"
                                                 :alt="item.product_name" class="w-full h-full object-cover">
                                             <div x-show="!item.product_image"
                                                 class="w-full h-full flex items-center justify-center text-3xl">🧺</div>
-                                        </div>
+                                        </a>
                                         <div class="flex-1">
                                             <h3 class="font-bold text-lg mb-1" x-text="item.product_name"></h3>
                                             <div class="text-gray-600 text-sm mb-2">

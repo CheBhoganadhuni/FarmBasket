@@ -110,6 +110,44 @@
             right: 0;
         }
 
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        /* Marquee Animation */
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .animate-scroll {
+            animation: scroll 20s linear infinite;
+        }
+
+        .paused {
+            animation-play-state: paused;
+        }
+
         /* Loading skeleton */
         [x-cloak] {
             display: none !important;
@@ -395,12 +433,12 @@
                 <!-- Logo -->
                 <a href="/" class="flex items-center space-x-2">
                     <span class="text-3xl">🧺</span>
-                    <span class="font-display text-2xl font-bold text-neon">FarmBasket</span>
+                    <span class="font-display text-2xl font-bold text-neon truncate">FarmBasket</span>
                 </a>
 
 
 
-                <!-- Navigation Links -->
+                <!-- Navigation Links (Desktop) -->
                 <nav class="hidden md:flex items-center gap-8">
                     <a href="/" class="font-medium hover:text-neon transition relative group">
                         Home
@@ -420,16 +458,25 @@
                 </nav>
 
                 <!-- Right Menu -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 md:space-x-4">
+
+                    <!-- Loading Skeleton -->
+                    <template x-if="isLoading">
+                        <div class="flex items-center space-x-2 animate-pulse">
+                            <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                            <div class="hidden md:block w-20 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                    </template>
 
                     <!-- Logged In User Menu -->
-                    <template x-if="isLoggedIn">
+                    <template x-if="!isLoading && isLoggedIn">
                         <div x-data="{ userMenuOpen: false }" class="relative">
                             <button @click="userMenuOpen = !userMenuOpen"
                                 class="flex items-center space-x-2 hover:text-neon transition">
                                 <img :src="userAvatar" alt="Avatar"
                                     class="w-8 h-8 rounded-full border-2 border-neon object-cover">
-                                <span class="hidden md:block font-medium" x-text="userName"></span>
+                                <span class="hidden md:block font-medium max-w-[100px] truncate"
+                                    x-text="userName"></span>
                             </button>
 
                             <!-- Dropdown -->
@@ -464,9 +511,9 @@
                         </div>
                     </template>
 
-                    <!-- Not Logged In -->
-                    <template x-if="!isLoggedIn">
-                        <div class="flex items-center space-x-4">
+                    <!-- Not Logged In (Hidden on Mobile) -->
+                    <template x-if="!isLoading && !isLoggedIn">
+                        <div class="hidden md:flex items-center space-x-4">
                             <a href="{% url 'accounts:login' %}" class="hover:text-neon transition">Login</a>
                             <a href="{% url 'accounts:register' %}"
                                 class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">Sign
@@ -484,7 +531,7 @@
 
 
                     <!-- Mobile Menu Toggle -->
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round"
                                 stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -496,11 +543,21 @@
             </div>
 
             <!-- Mobile Menu -->
-            <div x-show="mobileMenuOpen" x-transition class="md:hidden pb-4">
-                <a href="/" class="block py-2 hover:text-neon transition">Home</a>
-                <a href="/products/" class="block py-2 hover:text-neon transition">Products</a>
-                <!-- <a href="#about" class="block py-2 hover:text-neon transition">About</a> -->
-                <a href="/contact" class="block py-2 hover:text-neon transition">Contact</a>
+            <div x-show="mobileMenuOpen" x-transition
+                class="md:hidden pb-4 border-t border-gray-200 dark:border-gray-700 mt-2">
+                <a href="/" class="block py-3 hover:text-neon transition font-medium">Home</a>
+                <a href="/products/" class="block py-3 hover:text-neon transition font-medium">Products</a>
+                <a href="/contact" class="block py-3 hover:text-neon transition font-medium">Contact</a>
+
+                <!-- Mobile Auth Options -->
+                <template x-if="!isLoading && !isLoggedIn">
+                    <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <a href="{% url 'accounts:login' %}"
+                            class="block py-2 text-center border border-neon text-neon rounded-lg">Login</a>
+                        <a href="{% url 'accounts:register' %}"
+                            class="block py-2 text-center bg-neon text-white rounded-lg">Sign Up</a>
+                    </div>
+                </template>
             </div>
         </div>
     </nav>
@@ -617,7 +674,7 @@
     <!-- Global Notification Modal - Add BEFORE closing </body> -->
     <div id="globalNotification" x-data="globalNotificationModal()" x-show="show" x-cloak
         @notification-open.window="open($event.detail)" style="display: none;"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div @click="close()" class="absolute inset-0 bg-black opacity-50"></div>
 
@@ -734,6 +791,7 @@
                 userName: '',
                 userAvatar: '',
                 mobileMenuOpen: false,
+                isLoading: true, // ✅ Add loading state
 
                 init() {
                     this.checkAuth();
@@ -744,6 +802,7 @@
 
                     if (!token) {
                         this.isLoggedIn = false;
+                        this.isLoading = false; // ✅ Done loading
                         return;
                     }
 
@@ -768,6 +827,9 @@
                             this.isLoggedIn = false;
                             localStorage.removeItem('access_token');
                             localStorage.removeItem('refresh_token');
+                        })
+                        .finally(() => {
+                            this.isLoading = false; // ✅ Done loading (success or fail)
                         });
                 },
 

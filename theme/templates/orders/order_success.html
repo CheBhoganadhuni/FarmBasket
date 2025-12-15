@@ -3,9 +3,10 @@
 {% block title %}Order Successful - FarmBasket{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4" x-data="orderSuccessPage('{{ order_id }}')">
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4"
+    x-data="orderSuccessPage('{{ order_id }}')">
     <div class="container mx-auto max-w-3xl">
-        
+
         <!-- Loading -->
         <template x-if="loading">
             <div class="text-center py-20">
@@ -13,7 +14,7 @@
                 <p class="text-xl">Loading order details...</p>
             </div>
         </template>
-        
+
         <!-- Success Message -->
         <template x-if="!loading && order">
             <div>
@@ -23,7 +24,7 @@
                     <h1 class="font-display text-4xl font-bold mb-2">Order Placed Successfully!</h1>
                     <p class="text-xl text-gray-600">Thank you for your order</p>
                 </div>
-                
+
                 <!-- Order Summary Card -->
                 <div class="glass rounded-xl p-8 mb-6">
                     <div class="flex items-center justify-between mb-6 pb-6 border-b">
@@ -36,26 +37,29 @@
                             <div class="text-sm text-gray-600" x-text="order.payment_status_display"></div>
                         </div>
                     </div>
-                    
+
                     <!-- Order Items -->
                     <div class="mb-6">
                         <h3 class="font-bold text-lg mb-4">Order Items</h3>
                         <div class="space-y-3">
                             <template x-for="item in order.items" :key="item.id">
                                 <div class="flex gap-4 items-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
-                                        <img x-show="item.product_image" :src="item.product_image" :alt="item.product_name" class="w-full h-full object-cover">
-                                    </div>
+                                    <a :href="`/products/${item.product_slug}/`"
+                                        class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden block hover:opacity-80 transition">
+                                        <img x-show="item.product_image" :src="item.product_image"
+                                            :alt="item.product_name" class="w-full h-full object-cover">
+                                    </a>
                                     <div class="flex-1">
                                         <div class="font-semibold" x-text="item.product_name"></div>
-                                        <div class="text-sm text-gray-600">Qty: <span x-text="item.quantity"></span> × ₹<span x-text="item.unit_price"></span></div>
+                                        <div class="text-sm text-gray-600">Qty: <span x-text="item.quantity"></span> ×
+                                            ₹<span x-text="item.unit_price"></span></div>
                                     </div>
                                     <div class="font-bold">₹<span x-text="item.total_price"></span></div>
                                 </div>
                             </template>
                         </div>
                     </div>
-                    
+
                     <!-- Delivery Address -->
                     <div>
                         <h3 class="font-bold text-lg mb-2">Delivery Address</h3>
@@ -63,17 +67,21 @@
                             <p x-text="order.delivery_name"></p>
                             <p x-text="order.delivery_phone"></p>
                             <p x-text="order.delivery_address"></p>
-                            <p x-text="`${order.delivery_city}, ${order.delivery_state} - ${order.delivery_postal_code}`"></p>
+                            <p
+                                x-text="`${order.delivery_city}, ${order.delivery_state} - ${order.delivery_postal_code}`">
+                            </p>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Action Buttons -->
                 <div class="flex gap-4">
-                    <a href="/orders/" class="flex-1 px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-center">
+                    <a href="/orders/"
+                        class="flex-1 px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-center">
                         View All Orders
                     </a>
-                    <a href="/products/" class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
+                    <a href="/products/"
+                        class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
                         Continue Shopping
                     </a>
                 </div>
@@ -83,43 +91,43 @@
 </div>
 
 <script>
-function orderSuccessPage(orderId) {
-    return {
-        order: null,
-        loading: true,
-        
-        async init() {
-            await this.fetchOrder();
-            
-            // Clear cart count in navbar
-            window.dispatchEvent(new CustomEvent('cart-updated', {
-                detail: { count: 0 }
-            }));
-        },
-        
-        async fetchOrder() {
-            const token = localStorage.getItem('access_token');
-            
-            try {
-                const response = await fetch(`/api/orders/${orderId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+    function orderSuccessPage(orderId) {
+        return {
+            order: null,
+            loading: true,
+
+            async init() {
+                await this.fetchOrder();
+
+                // Clear cart count in navbar
+                window.dispatchEvent(new CustomEvent('cart-updated', {
+                    detail: { count: 0 }
+                }));
+            },
+
+            async fetchOrder() {
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch(`/api/orders/${orderId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        this.order = await response.json();
+                    } else {
+                        window.location.href = '/orders/';
                     }
-                });
-                
-                if (response.ok) {
-                    this.order = await response.json();
-                } else {
+                } catch (err) {
+                    console.error('Failed to fetch order', err);
                     window.location.href = '/orders/';
+                } finally {
+                    this.loading = false;
                 }
-            } catch (err) {
-                console.error('Failed to fetch order', err);
-                window.location.href = '/orders/';
-            } finally {
-                this.loading = false;
             }
         }
     }
-}
 </script>
 {% endblock %}

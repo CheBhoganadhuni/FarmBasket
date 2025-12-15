@@ -173,10 +173,11 @@
                         <div class="space-y-3 mb-6 max-h-60 overflow-y-auto">
                             <template x-for="item in cart.items" :key="item.id">
                                 <div class="flex gap-3">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                    <a :href="`/products/${item.product_slug}/`"
+                                        class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 block hover:opacity-80 transition">
                                         <img x-show="item.product_image" :src="item.product_image"
                                             :alt="item.product_name" class="w-full h-full object-cover">
-                                    </div>
+                                    </a>
                                     <div class="flex-1">
                                         <div class="font-semibold text-sm line-clamp-1" x-text="item.product_name">
                                         </div>
