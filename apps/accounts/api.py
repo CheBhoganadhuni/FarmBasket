@@ -6,6 +6,7 @@ from datetime import timedelta
 from ninja import Router, File
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
+import requests  # Added for Nominatim proxy
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -239,8 +240,16 @@ def update_current_user(request, data: UserUpdateSchema):
     """Update current user profile"""
     
     user = request.auth
+    update_data = data.dict(exclude_unset=True)
     
-    for field, value in data.dict(exclude_unset=True).items():
+    # Restrict name changes for social users
+    if user.social_avatar_url:
+        if 'first_name' in update_data:
+            del update_data['first_name']
+        if 'last_name' in update_data:
+            del update_data['last_name']
+
+    for field, value in update_data.items():
         setattr(user, field, value)
     
     user.save()
@@ -499,3 +508,26 @@ def upload_avatar(request, avatar: UploadedFile = File(...)):
 def get_wallet_balance(request):
     """Get user wallet balance"""
     return {"balance": float(request.auth.wallet_balance)}
+
+
+@router.get("/reverse-geocode", auth=None)
+def reverse_geocode(request, lat: float, lon: float):
+    """Proxy for OpenStreetMap Nominatim Reverse Geocoding"""
+    try:
+        url = "https://nominatim.openstreetmap.org/reverse"
+        headers = {
+            'User-Agent': 'FarmBasket/1.0 (internal_proxy)'
+        }
+        params = {
+            'lat': lat,
+            'lon': lon,
+            'format': 'json',
+            'addressdetails': 1
+        }
+        
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        return {"error": "Nominatim service error", "status": response.status_code}
+    except Exception as e:
+        return {"error": str(e)}

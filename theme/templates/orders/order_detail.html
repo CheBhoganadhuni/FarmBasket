@@ -36,8 +36,16 @@
                                     x-text="new Date(order.created_at).toLocaleDateString('en-IN', {year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})"></span>
                             </p>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right flex flex-col items-end gap-2">
                             <div class="text-4xl font-bold text-neon">₹<span x-text="order.total"></span></div>
+
+                            <!-- Cancel Button -->
+                            <template x-if="['PENDING', 'PROCESSING', 'CONFIRMED'].includes(order.status)">
+                                <button @click="showCancelModal = true"
+                                    class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg text-sm font-bold transition flex items-center gap-2 border border-red-200">
+                                    <span>❌</span> Cancel Order
+                                </button>
+                            </template>
                         </div>
                     </div>
 
@@ -252,8 +260,41 @@
                 </form>
             </div>
         </div>
-
     </div>
+
+    <!-- Cancellation Confirmation Modal -->
+    <div x-show="showCancelModal" x-cloak x-transition
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        @click.self="showCancelModal = false">
+        <div class="glass rounded-2xl p-8 max-w-sm w-full text-center" @click.stop>
+            <div class="text-5xl mb-4">⚠️</div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">Cancel Order?</h3>
+            <p class="text-gray-600 mb-6 text-sm">
+                Are you sure you want to cancel this order?
+                <br><br>
+                <span class="font-semibold text-orange-600">Refund Policy:</span><br>
+                If paid, the amount will be refunded to your Wallet.
+                <span class="italic text-xs block mt-1">(Wallet money cannot be converted to real cash)</span>
+            </p>
+
+            <div class="flex flex-col gap-3">
+                <button @click="cancelOrder" :disabled="cancelling"
+                    class="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-bold shadow-lg shadow-red-500/20 disabled:opacity-50">
+                    <span x-show="!cancelling">Yes, Cancel Order</span>
+                    <span x-show="cancelling">Cancelling...</span>
+                </button>
+                <button @click="showCancelModal = false"
+                    class="w-full py-3 bg-white text-gray-700 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition font-semibold">
+                    No, Keep Order
+                </button>
+                <a href="/cancellation-refund/" target="_blank" class="text-xs text-gray-500 hover:underline mt-2">
+                    View Cancellation Policy
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
 </div>
 
 <script>
@@ -262,6 +303,8 @@
             order: null,
             loading: true,
             showReviewForm: false,
+            showCancelModal: false,
+            cancelling: false,
             reviewItem: null,
             submittingReview: false,
             reviewForm: {
@@ -371,6 +414,46 @@
                     });
                 } finally {
                     this.submittingReview = false;
+                }
+            },
+
+            async cancelOrder() {
+                const token = localStorage.getItem('access_token');
+                this.cancelling = true;
+
+                try {
+                    const response = await fetch(`/api/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        window.showNotification({
+                            type: 'success',
+                            title: 'Order Cancelled',
+                            message: data.message
+                        });
+                        this.showCancelModal = false;
+                        await this.fetchOrder(); // Reload status
+                    } else {
+                        window.showNotification({
+                            type: 'error',
+                            title: 'Failed',
+                            message: data.message || 'Could not cancel order.'
+                        });
+                    }
+                } catch (err) {
+                    console.error('Cancellation failed', err);
+                    window.showNotification({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'Something went wrong.'
+                    });
+                } finally {
+                    this.cancelling = false;
                 }
             }
         }

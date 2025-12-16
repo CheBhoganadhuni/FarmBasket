@@ -361,3 +361,33 @@ def get_order_detail(request, order_id: str):
         'created_at': order.created_at,
         'updated_at': order.updated_at
     }
+
+
+from apps.notifications.email import send_admin_cancellation_email
+
+@router.post("/orders/{order_id}/cancel", response=dict, auth=auth)
+def cancel_order(request, order_id: str):
+    """Cancel order if eligible"""
+    order = get_object_or_404(Order, id=order_id, user=request.auth)
+    
+    # Check eligibility
+    if order.status not in ['PENDING', 'PROCESSING', 'CONFIRMED']:
+        return {
+            "success": False,
+            "message": "Order cannot be cancelled at this stage."
+        }
+    
+    # Update Status
+    order.status = 'CANCELLED'
+    order.save()
+    
+    # Send Admin Email
+    try:
+        send_admin_cancellation_email(order, settings.SITE_URL)
+    except Exception as e:
+        print(f"Failed to send admin cancellation email: {e}")
+        
+    return {
+        "success": True,
+        "message": "Order cancelled successfully. If paid, refund will be processed to source/wallet."
+    }

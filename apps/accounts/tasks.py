@@ -1,5 +1,5 @@
 # Remove django_rq decorator
-from django.core.mail import send_mail
+from apps.notifications.email import send_sendgrid_email
 from django.template.loader import render_to_string
 from django.conf import settings
 from .models import User
@@ -17,14 +17,7 @@ def send_welcome_email(user_id):
             'site_url': settings.SITE_URL
         })
         
-        send_mail(
-            subject=subject,
-            message='',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            html_message=html_message,
-            fail_silently=False,
-        )
+        send_sendgrid_email(subject, user.email, html_message)
     except User.DoesNotExist:
         pass
 
@@ -43,13 +36,6 @@ def send_password_reset_email(user_id, token):
             'reset_url': reset_url
         })
         
-        send_mail(
-            subject=subject,
-            message='',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            html_message=html_message,
-            fail_silently=False,
-        )
+        send_sendgrid_email(subject, user.email, html_message)
     except User.DoesNotExist:
         pass

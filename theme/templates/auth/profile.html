@@ -25,7 +25,6 @@
                 <div class="relative" x-data="{ uploading: false }">
                     <img :src="user.avatar_url" alt="Profile Picture"
                         class="w-32 h-32 rounded-full border-4 border-neon shadow-lg object-cover">
-                    <!-- Upload Button -->
                     <!-- Upload Button (Only for Manual Users) -->
                     <label x-show="!user.social_avatar_url"
                         class="absolute bottom-0 right-0 bg-neon text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition transform hover:scale-110"
@@ -86,36 +85,100 @@
                                 class="mt-6 px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
                                 Edit Profile ✏️
                             </button>
+                            <!-- Phone Reminder -->
+                            <div x-show="!user.phone"
+                                class="mt-2 text-red-500 text-sm font-semibold flex items-center justify-center md:justify-start gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                                <span>Please set your mobile number</span>
+                            </div>
                         </div>
                     </template>
 
                     <!-- Edit Profile Form -->
                     <template x-if="editMode">
                         <form @submit.prevent="updateProfile" class="space-y-4 mt-4">
-                            <div>
-                                <label class="block text-sm font-semibold mb-1">Full Name</label>
-                                <input type="text" x-model="editData.full_name" required
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold mb-1">Email</label>
-                                <input type="email" x-model="editData.email" required
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold mb-1">Mobile Number</label>
-                                <input type="text" x-model="editData.phone" required
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none" />
+
+                            <!-- Name Fields -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Manual User: Split Name -->
+                                <template x-if="!user.social_avatar_url">
+                                    <div class="contents">
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1">First Name</label>
+                                            <input type="text" x-model="editData.first_name" @input="validateNames"
+                                                required
+                                                class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                                                :class="{'border-red-500': nameError, 'border-gray-300': !nameError}" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold mb-1">Last Name</label>
+                                            <input type="text" x-model="editData.last_name" @input="validateNames"
+                                                required
+                                                class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                                                :class="{'border-red-500': nameError, 'border-gray-300': !nameError}" />
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Social User: Read-only Full Name -->
+                                <template x-if="user.social_avatar_url">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-semibold mb-1">Full Name (Locked for Social
+                                            Login)</label>
+                                        <input type="text" x-model="editData.full_name" readonly disabled
+                                            class="w-full px-4 py-2 border-2 border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
+                                            title="Social login users cannot change their name here." />
+                                    </div>
+                                </template>
                             </div>
 
-                            <!-- Add more fields as necessary -->
-                            <div class="flex gap-4">
+                            <!-- Validation Error for Name -->
+                            <p x-show="nameError" x-text="nameError" class="text-red-500 text-sm mt-1"></p>
+
+                            <!-- Email (Always Read-only) -->
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Email (Cannot be changed)</label>
+                                <input type="email" x-model="editData.email" readonly disabled
+                                    class="w-full px-4 py-2 border-2 border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed" />
+                            </div>
+
+                            <!-- Phone (Always Editable, Numeric Only) -->
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Mobile Number</label>
+                                <input type="text" x-model="editData.phone"
+                                    x-on:input="editData.phone = $event.target.value.replace(/[^0-9]/g, '').slice(0, 20); validatePhone()"
+                                    required
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                                    :class="{'border-red-500': phoneError, 'border-gray-300': !phoneError}"
+                                    placeholder="e.g. 9876543210 (10-20 digits)" />
+                                <p x-show="phoneError" x-text="phoneError" class="text-red-500 text-sm mt-1"></p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-4 pt-2">
                                 <button type="submit"
-                                    class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">
-                                    Save Changes
+                                    :disabled="!!nameError || !!phoneError || !editData.phone || savingProfile"
+                                    class="px-6 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-green-500/30 flex items-center gap-2">
+                                    <span x-show="!savingProfile">Save Changes</span>
+                                    <span x-show="savingProfile" class="flex items-center gap-2">
+                                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        Saving...
+                                    </span>
                                 </button>
-                                <button type="button" @click="editMode = false"
-                                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
+                                <button type="button" @click="editMode = false; resetEditData()"
+                                    :disabled="savingProfile"
+                                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                     Cancel
                                 </button>
                             </div>
@@ -272,7 +335,7 @@
                     </div>
 
                     <!-- Change/Set Password Section -->
-                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                    <div class="border-2 border-gray-200 rounded-lg p-4 mt-6">
                         <h4 class="font-semibold mb-4">
                             <span
                                 x-text="user.social_avatar_url ? '🔐 Set Password for Manual Login' : '🔐 Change Password'"></span>
@@ -348,7 +411,7 @@
                     </div>
 
                     <!-- Deactivate Account (Accordion) -->
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6" x-data="{ open: false }">
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6" x-data="{ open: false }">
                         <button @click="open = !open" class="w-full flex items-center justify-between text-left group">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg">
@@ -421,6 +484,8 @@
             editMode: false,
             editData: {
                 full_name: '',
+                first_name: '',
+                last_name: '',
                 email: '',
                 phone: '',
             },
@@ -430,15 +495,58 @@
                 confirm_password: ''
             },
 
-            // Password Validation State
+            // Validation State
+            nameError: '',
+            phoneError: '',
             passwordError: '',
             confirmError: '',
             passwordStrength: 0,
             showPassword: false,
             loadingPassword: false,
+            savingProfile: false,
 
             walletBalance: 0,
             deletingAccount: false,
+
+            validateNames() {
+                if (!this.user.social_avatar_url) {
+                    const first = this.editData.first_name || '';
+                    const last = this.editData.last_name || '';
+
+                    // Check length
+                    if (first.length < 2 || last.length < 2) {
+                        this.nameError = 'First name and Last name must be at least 2 characters';
+                        return;
+                    }
+
+                    // Check if starts with a number (as requested)
+                    const startsWithNumber = /^\d/;
+                    if (startsWithNumber.test(first) || startsWithNumber.test(last)) {
+                        this.nameError = 'Names cannot start with a number';
+                        return;
+                    }
+
+                    this.nameError = '';
+                }
+            },
+
+            validatePhone() {
+                const phone = this.editData.phone || '';
+                // Constraint: Numeric (handled by input), Min 10, Max 20
+                if (phone.length < 10) {
+                    this.phoneError = 'Phone number must be at least 10 digits';
+                } else if (phone.length > 20) {
+                    this.phoneError = 'Phone number must be at most 20 digits';
+                } else {
+                    this.phoneError = '';
+                }
+            },
+
+            resetEditData() {
+                this.editData = { ...this.user };
+                this.nameError = '';
+                this.phoneError = '';
+            },
 
             async init() {
                 await this.fetchProfile();
@@ -583,6 +691,7 @@
             },
 
             async updateProfile() {
+                this.savingProfile = true;
                 const token = localStorage.getItem('access_token');
 
                 try {
@@ -631,6 +740,8 @@
                             message: 'Error updating profile ❌'
                         });
                     }
+                } finally {
+                    this.savingProfile = false;
                 }
             },
 
@@ -775,8 +886,6 @@
                 }
             },
 
-            // confirmDeleteAccount removed (Accordion handles confirmation visually)
-
             async deleteAccount() {
                 this.deletingAccount = true;
                 const token = localStorage.getItem('access_token');
@@ -799,7 +908,7 @@
                             window.showNotification({
                                 title: "Success",
                                 type: "success",
-                                message: 'Account deactivated successfully. Redirecting... 👋'
+                                message: 'Account deactivated successfully. Goodbye! 👋'
                             });
                         }
 
@@ -807,28 +916,28 @@
                             window.location.href = '/';
                         }, 2000);
                     } else {
+                        this.deletingAccount = false;
                         if (window.showNotification) {
                             window.showNotification({
                                 title: "Error",
                                 type: "error",
-                                message: data.message || 'Failed to delete account ❌'
+                                message: data.message || 'Failed to deactivate account ❌'
                             });
-                            this.deletingAccount = false;
                         }
                     }
-                    this.deletingAccount = false;
                 } catch (err) {
+                    this.deletingAccount = false;
                     console.error('Account deletion failed', err);
                     if (window.showNotification) {
                         window.showNotification({
                             title: "Error",
                             type: "error",
-                            message: 'Error deleting account ❌'
+                            message: 'Error deactivating account ❌'
                         });
                     }
-                    this.deletingAccount = false;
                 }
             }
+
         }
     }
 </script>

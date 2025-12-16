@@ -3,26 +3,97 @@
 {% block title %}Cancellation & Refund Policy - FarmBasket{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-white py-12 px-4">
+<div class="min-h-screen bg-white dark:bg-gray-950 py-12 px-4 transition-colors duration-300">
     <div class="container mx-auto max-w-4xl">
-        <div class="glass rounded-2xl p-8">
-            <h1 class="font-display text-4xl font-bold mb-6 text-neon">❌ Cancellation & Refund Policy</h1>
-            <p class="text-gray-600 mb-8">Last updated: December 14, 2025</p>
+        <div
+            class="glass rounded-2xl p-8 md:p-12 shadow-xl bg-white/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+            <h1 class="font-display text-4xl md:text-5xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+                Cancellation & Refund Policy
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 text-center mb-12">Last updated: December 16, 2025</p>
 
-            <div class="prose max-w-none">
+            <div class="space-y-10">
 
-                <ul class="list-disc pl-6 mb-6 space-y-2">
-                    <li>Orders can be cancelled before they are shipped.</li>
-                    <li>Once an order is shipped, it cannot be cancelled.</li>
-                    <li>If a product is damaged or incorrect, customers may request a refund or replacement.</li>
-                    <li>Refunds will be processed within 5–7 working days to the original payment method.</li>
-                </ul>
+                <!-- Section 1: Order Cancellation (RED) -->
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">❌</span>
+                        <h2 class="text-2xl font-bold text-red-600 dark:text-red-500">Order Cancellation</h2>
+                    </div>
+                    <!-- Red background, Red Text -->
+                    <div
+                        class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-100 dark:border-red-800/30 text-red-700 dark:text-red-400 leading-relaxed space-y-3 transition-colors duration-300">
+                        <p class="font-semibold">We understand that plans change! Here is how our cancellation works:
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 marker:text-red-500">
+                            <li>You can cancel your order directly from the <strong>Order Details</strong> page at any
+                                time before it is marked as <span
+                                    class="font-bold border-b-2 border-red-300">Shipped</span>.</li>
+                            <li>Once the order status changes to <strong>Shipped</strong> or <strong>Out for
+                                    Delivery</strong>, cancellation is no longer possible.</li>
+                            <li>If you missed the cancellation window, please contact our support team immediately.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Section 2: Refund Policy (GREEN - kept as is/fine) -->
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">💸</span>
+                        <h2 class="text-2xl font-bold text-green-600 dark:text-green-500">Refund Policy</h2>
+                    </div>
+                    <div
+                        class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-100 dark:border-green-800/30 text-green-700 dark:text-green-400 leading-relaxed space-y-3 transition-colors duration-300">
+                        <p class="font-bold text-lg">All refunds are processed to your FarmBasket Wallet.</p>
+                        <ul class="list-disc pl-5 space-y-2 marker:text-green-500">
+                            <li><strong>Timeline:</strong> Refunds are typically processed within <strong>5-7 business
+                                    days</strong> after the cancellation is approved.</li>
+                            <li><strong>Wallet Usage:</strong> The refunded amount will be added to your FarmBasket
+                                Wallet balance, which can be used for 100% of the value of your future purchases.</li>
+                            <li><strong>Non-Transferable:</strong> Please note that Wallet balance <span
+                                    class="font-bold text-red-600 dark:text-red-400">cannot</span> be transferred to a
+                                bank account.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Section 3: Returns & Damaged Items (RED - changed from orange) -->
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">📦</span>
+                        <h2 class="text-2xl font-bold text-red-600 dark:text-red-500">Returns & Damaged Items</h2>
+                    </div>
+                    <!-- Red theme for returns as requested -->
+                    <div
+                        class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-100 dark:border-red-800/30 text-red-700 dark:text-red-400 leading-relaxed transition-colors duration-300">
+                        <p class="mb-3 font-semibold">We take great care in packing your organic produce. However, if
+                            something goes wrong:</p>
+                        <ul class="list-disc pl-5 space-y-2 marker:text-red-500">
+                            <li>If you receive a damaged, defective, or incorrect product, please report it within
+                                <strong>24 hours</strong> of delivery.</li>
+                            <li>Email us at <a href="mailto:support@farmbasket.com"
+                                    class="font-bold underline hover:text-red-800">support@farmbasket.com</a> with
+                                photos of the affected item.</li>
+                            <li>Upon verification, we will issue a full refund to your wallet or arrange a replacement.
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Footer Note -->
+                <div class="pt-8 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-center text-gray-600 dark:text-gray-400">
+                        Have more questions? Visit our <a href="/contact"
+                            class="text-green-600 dark:text-green-400 font-bold hover:underline">Contact Us</a> page.
+                    </p>
+                </div>
+
             </div>
 
-            <div class="mt-8">
-                <a href="{% url 'accounts:home' %}"
-                    class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition">
-                    ← Back to Home
+            <div class="mt-12 text-center">
+                <a href="/"
+                    class="px-8 py-4 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-1">
+                    ← Continue Shopping
                 </a>
             </div>
         </div>
