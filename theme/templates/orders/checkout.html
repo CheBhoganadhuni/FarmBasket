@@ -76,17 +76,19 @@
                                     <p x-show="touched.name && errors.name" x-text="errors.name"
                                         class="text-red-500 text-xs mt-1 font-semibold"></p>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label class="block text-sm font-semibold mb-2">Postal Code *</label>
-                                    <input type="text" x-model="address.postal_code"
-                                        @input="address.postal_code = address.postal_code.replace(/[^0-9]/g, ''); validateField('postal_code')"
-                                        required pattern="[0-9]{6}"
-                                        :class="{'border-red-500 bg-red-50': touched.postal_code && errors.postal_code, 'border-gray-300': !touched.postal_code || !errors.postal_code}"
-                                        class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
-                                        placeholder="6-digit pincode">
-                                    <div x-show="fetchingPincode"
-                                        class="absolute right-4 top-[2.4rem] animate-spin text-neon">
-                                        ⏳
+                                    <div class="relative">
+                                        <input type="text" x-model="address.postal_code"
+                                            @input="address.postal_code = address.postal_code.replace(/[^0-9]/g, ''); validateField('postal_code')"
+                                            required pattern="[0-9]{6}"
+                                            :class="{'border-red-500 bg-red-50': touched.postal_code && errors.postal_code, 'border-gray-300': !touched.postal_code || !errors.postal_code}"
+                                            class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                            placeholder="6-digit pincode">
+                                        <div x-show="fetchingPincode"
+                                            class="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-neon">
+                                            ⏳
+                                        </div>
                                     </div>
                                     <p x-show="touched.postal_code && errors.postal_code" x-text="errors.postal_code"
                                         class="text-red-500 text-xs mt-1 font-semibold"></p>

@@ -61,6 +61,24 @@
                                 </div>
                             </div>
 
+                            <!-- Loading Overlay: Wishlist -->
+                            <div x-show="loadingWishlistIds.includes(item.id)"
+                                class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-2xl backdrop-blur-sm transition-all">
+                                <div class="relative mb-2">
+                                    <div class="text-4xl animate-bounce">💚</div>
+                                    <div class="absolute -right-2 -bottom-2 animate-spin text-neon">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white">Saving...</span>
+                            </div>
+
                             <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
 
                                 <!-- CHECKBOX (Mobile: Absolute Top-Left, Desktop: Static Left) -->
@@ -104,7 +122,7 @@
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
                                                 <span
                                                     class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                                In Stock
+                                                ✔ Verified
                                             </span>
                                             <span x-show="!item.in_stock"
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
@@ -293,10 +311,7 @@
                         </div>
                     </div>
                 </div>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>Same-day delivery</span>
+
             </div>
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,6 +337,35 @@
         </a>
     </div>
 </template>
+
+<!-- Wishlist Confirmation Modal -->
+<div x-show="wishlistModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;">
+    <div class="glass rounded-2xl p-8 max-w-sm w-full mx-4 text-center transform shadow-2xl transition-all"
+        @click.away="wishlistModalOpen = false">
+        <div class="text-4xl mb-4">💚</div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Save to Wishlist?</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">Do you want to move this item to your wishlist before removing
+            it from the cart?</p>
+
+        <div class="flex flex-col gap-3">
+            <button @click="confirmRemove(true)"
+                class="w-full py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-bold shadow-lg shadow-neon/20">
+                Yes, Move to Wishlist
+            </button>
+            <button @click="confirmRemove(false)"
+                class="w-full py-3 bg-white text-gray-700 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition font-semibold">
+                No, Just Remove
+            </button>
+            <button @click="wishlistModalOpen = false" class="text-sm text-gray-500 hover:underline mt-2">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
 </div>
 </div>
 <script>
@@ -333,8 +377,13 @@
             loadingUpdateIds: [],
             loadingRemoveIds: [],
             loadingSelectionIds: [], // Stores IDs of items being toggled
+            loadingWishlistIds: [], // Stores IDs of items being moved to wishlist
             isClearing: false,
             loadingSelection: false,
+
+            // Wishlist Logic
+            wishlistModalOpen: false,
+            itemToRemove: null,
 
             get allSelected() {
                 // If cart has items, check if all are selected
@@ -496,16 +545,47 @@
             },
 
             removeItem(itemId) {
-                window.showNotification({
-                    type: 'delete',
-                    title: 'Remove Item?',
-                    message: 'Are you sure you want to remove this item from your cart?',
-                    showCancel: true,
-                    confirmText: 'Remove',
-                    onConfirm: () => {
-                        this.doRemoveItem(itemId);
-                    }
-                });
+                // Find item to get details
+                this.itemToRemove = this.cart.items.find(i => i.id === itemId);
+                if (this.itemToRemove) {
+                    this.wishlistModalOpen = true;
+                }
+            },
+
+            async confirmRemove(moveToWishlist) {
+                this.wishlistModalOpen = false;
+                if (!this.itemToRemove) return;
+
+                if (moveToWishlist) {
+                    // Pass item ID for Loader, Product ID for API
+                    await this.addToWishlist(this.itemToRemove.id, this.itemToRemove.product_id);
+                }
+
+                await this.doRemoveItem(this.itemToRemove.id);
+                this.itemToRemove = null;
+            },
+
+            async addToWishlist(itemId, productId) {
+                this.loadingWishlistIds.push(itemId);
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch(`/api/catalog/wishlist/add/${productId}`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+
+                    window.showNotification({
+                        type: data.success ? 'success' : 'info',
+                        title: 'Wishlist',
+                        message: data.message
+                    });
+                } catch (err) {
+                    console.error('Wishlist add failed', err);
+                } finally {
+                    this.loadingWishlistIds = this.loadingWishlistIds.filter(id => id !== itemId);
+                }
             },
 
             async doRemoveItem(itemId) {
@@ -585,7 +665,7 @@
 
             proceedToCheckout() {
                 // Pass selected IDs to checkout page
-                const selected = this.selectedItems.join(',');
+                const selected = this.cart.items.filter(i => i.is_selected).map(i => i.id).join(',');
                 window.location.href = `/checkout/?items=${selected}`;
             }
         }

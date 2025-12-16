@@ -137,12 +137,20 @@ def google_callback(request, code: str):
 
     # 3. Find or Create User
     try:
-        user = User.objects.get(email=email, is_active=True)
+        # First, try to find the user by email (regardless of active status)
+        user = User.objects.get(email=email)
+        
+        # Security Check: Prevent inactive users from logging in via Google
+        if not user.is_active:
+             print(f"Refusing GAuth login for inactive user: {email}")
+             return redirect('/auth/login/?error=Account is deactivated. Please contact support.')
+
         created = False
     except User.DoesNotExist:
+        # Create new user if not found
         user = User.objects.create_user(
             email=email,
-            password=None,
+            password=None, # Social users have no password initially
             first_name=given_name,
             last_name=family_name,
         )
@@ -181,10 +189,17 @@ def google_callback(request, code: str):
 def login(request, data: UserLoginSchema):
     """User login"""
 
-    user = authenticate_user(data.email, data.password)
-    
-    if not user:
-        raise HttpError(401, "Invalid email or password")
+    # Detailed Login Logic for specific error messages
+    try:
+        user = User.objects.get(email=data.email)
+    except User.DoesNotExist:
+        raise HttpError(404, "We couldn't find an account with that email. Want to join our journey?")
+
+    if not user.is_active:
+        raise HttpError(401, "This account is inactive.")
+
+    if not user.check_password(data.password):
+        raise HttpError(401, "Invalid password. Please try again.")
     
     # Update last login
     user.last_login = timezone.now()
@@ -379,12 +394,19 @@ def change_password(request, data: ChangePasswordSchema):
     """Change password for logged-in user"""
     user = request.auth
     
-    # Verify old password
-    if not user.check_password(data.old_password):
-        return MessageSchema(
-            success=False,
-            message="Current password is incorrect"
-        )
+    # Check if social user
+    is_social = bool(user.social_avatar_url)
+    
+    # If standard user, enforce old password check
+    if not is_social:
+        if not data.old_password:
+            return MessageSchema(success=False, message="Current password is required")
+            
+        if not user.check_password(data.old_password):
+            return MessageSchema(success=False, message="Current password is incorrect")
+    
+    # If it IS a social user, we skip the old_password check purely
+    # This allows them to "Set Password" for the first time
     
     # Set new password
     user.set_password(data.new_password)
@@ -392,26 +414,26 @@ def change_password(request, data: ChangePasswordSchema):
     
     return MessageSchema(
         success=True,
-        message="Password changed successfully"
+        message="Password set successfully" if is_social else "Password changed successfully"
     )
 
 
 @router.delete("/account", response=MessageSchema, auth=auth)
 def delete_account(request):
-    """Delete user account and all related data"""
+    """Soft delete user account"""
     user = request.auth
     
-    # This will cascade delete:
-    # - Orders, OrderItems
-    # - Cart, CartItems
-    # - Wishlist
-    # - Addresses
-    # - Reviews
-    user.delete()
+    # Soft delete: Deactivate account instead of wiping data
+    user.is_active = False
+    
+    # Expire all sessions/tokens logic handled by login check (is_active=False)
+    # We might want to blacklist tokens, but simple deactivation is sufficient for now
+    
+    user.save(update_fields=['is_active'])
     
     return MessageSchema(
         success=True,
-        message="Account deleted successfully"
+        message="Account deactivated successfully"
     )
 
 

@@ -131,6 +131,16 @@
             showPassword: false,
             loading: false,
 
+            init() {
+                // Check for error in URL (e.g., from GAuth redirect)
+                const params = new URLSearchParams(window.location.search);
+                if (params.has('error')) {
+                    this.error = params.get('error');
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            },
+
             validateEmail() {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(this.formData.email)) {

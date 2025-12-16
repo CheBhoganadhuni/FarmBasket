@@ -8,6 +8,8 @@ from .admin_views import (
     admin_order_update_status,
     admin_users_list,
     admin_categories_list,
+    admin_categories_list,
+    admin_toggle_user_active,
     admin_delete_user,
     admin_payment_update_status
 )
@@ -168,6 +170,10 @@ def categories_list(request):
     return admin_categories_list(request)
 
 from uuid import UUID
+
+@router.put('/users/{pk}/toggle-active')
+def toggle_user_active(request, pk: UUID):
+    return admin_toggle_user_active(request, pk)
 
 @router.delete('/users/{pk}')
 def delete_user(request, pk: UUID):

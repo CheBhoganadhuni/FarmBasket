@@ -65,7 +65,7 @@ class PasswordResetConfirmSchema(BaseModel):
 
 class ChangePasswordSchema(BaseModel):
     """Schema for changing password while logged in"""
-    old_password: str = Field(..., min_length=6)
+    old_password: Optional[str] = None
     new_password: str = Field(..., min_length=6)
     confirm_password: str = Field(..., min_length=6)
     

@@ -89,12 +89,14 @@
 
                     <!-- Password Strength -->
                     <div class="mt-2 flex gap-1">
-                        <div class="flex-1 h-2 rounded-full"
+                        <div class="flex-1 h-2 rounded-full transition-colors duration-300"
                             :class="passwordStrength >= 1 ? 'bg-red-500' : 'bg-gray-200'"></div>
-                        <div class="flex-1 h-2 rounded-full"
-                            :class="passwordStrength >= 2 ? 'bg-yellow-500' : 'bg-gray-200'"></div>
-                        <div class="flex-1 h-2 rounded-full"
-                            :class="passwordStrength >= 3 ? 'bg-green-500' : 'bg-gray-200'"></div>
+                        <div class="flex-1 h-2 rounded-full transition-colors duration-300"
+                            :class="passwordStrength >= 2 ? 'bg-orange-500' : 'bg-gray-200'"></div>
+                        <div class="flex-1 h-2 rounded-full transition-colors duration-300"
+                            :class="passwordStrength >= 3 ? 'bg-yellow-500' : 'bg-gray-200'"></div>
+                        <div class="flex-1 h-2 rounded-full transition-colors duration-300"
+                            :class="passwordStrength >= 4 ? 'bg-green-500' : 'bg-gray-200'"></div>
                     </div>
                 </div>
 
@@ -246,14 +248,21 @@
                 const pass = this.formData.password;
                 this.passwordStrength = 0;
 
-                if (pass.length < 8) { this.passwordError = 'Password must be at least 8 characters'; return; } if (!/[A-Z]/.test(pass)) { this.passwordError = 'Include at least one uppercase letter'; this.passwordStrength = 1; return; }
-                this.passwordStrength = 1; if (!/[a-z]/.test(pass)) {
-                    this.passwordError = 'Include at least one lowercase letter';
-                    return;
-                } this.passwordStrength = 2; if (!/[0-9]/.test(pass)) {
-                    this.passwordError = 'Include at least one number';
-                    return;
-                } this.passwordStrength = 3; this.passwordError = '';
+                let strength = 0;
+                let missing = [];
+
+                if (pass.length >= 8) strength++; else missing.push('8+ chars');
+                if (/[A-Z]/.test(pass)) strength++; else missing.push('Upper');
+                if (/[0-9]/.test(pass)) strength++; else missing.push('Number');
+                if (/[^A-Za-z0-9]/.test(pass)) strength++; else missing.push('Symbol');
+
+                this.passwordStrength = Math.min(strength, 4);
+
+                if (missing.length > 0) {
+                    this.passwordError = 'Missing: ' + missing.join(', ');
+                } else {
+                    this.passwordError = '';
+                }
             }, validatePasswordMatch() {
                 if (this.formData.password
                     !== this.formData.password_confirm) { this.confirmError = 'Passwords do not match'; } else { this.confirmError = ''; }

@@ -321,7 +321,7 @@ def admin_users_list(request):
             Q(last_name__icontains=search)
         )
     
-    users = users.order_by('-date_joined')
+    users = users.exclude(id=request.user.id).order_by('-date_joined')
     
     users_data = [{
         'id': str(user.id),
@@ -370,14 +370,37 @@ from apps.accounts.models import User
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
+@csrf_exempt
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def admin_delete_user(request, pk):
     try:
         print(f'User performing delete: {request.user.email}, is_staff: {request.user.is_staff}')
         user = User.objects.get(pk=pk)
+        if user.is_superuser:
+             return Response({'success': False, 'message': 'Cannot delete superuser'}, status=status.HTTP_403_FORBIDDEN)
         user.delete()
         return Response({'success': True, 'message': 'User deleted successfully'})
+    except User.DoesNotExist:
+        return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def admin_toggle_user_active(request, pk):
+    try:
+        user = User.objects.get(pk=pk)
+        
+        # Prevent modifying superusers
+        if user.is_superuser:
+            return Response({'success': False, 'message': 'Cannot modify superuser accounts'}, status=status.HTTP_403_FORBIDDEN)
+            
+        new_status = not user.is_active
+        user.is_active = new_status
+        user.save()
+        
+        status_text = "Active" if new_status else "Inactive"
+        return Response({'success': True, 'message': f'User marked as {status_text}'})
     except User.DoesNotExist:
         return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
