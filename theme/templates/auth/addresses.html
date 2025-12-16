@@ -119,23 +119,23 @@
             <div x-show="showAddForm" x-transition
                 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                 @click.self="closeForm()">
-
                 <div class="glass rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
                     <h2 class="font-display text-2xl font-bold mb-6"
                         x-text="editMode ? 'Edit Address' : 'Add New Address'"></h2>
 
                     <form @submit.prevent="saveAddress">
 
-                        <div class="grid md:grid-cols-2 gap-6 mb-6">
-                            <!-- Label -->
+                        <!-- Row 1: Label & Type -->
+                        <div class="grid md:grid-cols-2 gap-6 mb-4">
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Label *</label>
-                                <input type="text" x-model="formData.label"
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
+                                <input type="text" x-model="formData.label" @input="validateField('label')"
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                    :class="{'border-red-500 bg-red-50': touched.label && errors.label, 'border-gray-300': !touched.label || !errors.label}"
                                     placeholder="Home, Office, etc." required>
+                                <p x-show="touched.label && errors.label" x-text="errors.label"
+                                    class="text-red-500 text-xs mt-1 font-semibold"></p>
                             </div>
-
-                            <!-- Type -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Address Type</label>
                                 <select x-model="formData.address_type"
@@ -147,64 +147,98 @@
                             </div>
                         </div>
 
-                        <!-- Street Address -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-semibold mb-2">Street Address *</label>
-                            <input type="text" x-model="formData.street_address"
-                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                placeholder="House/Flat No., Street Name" required>
+                        <!-- Row 2: Postal Code & Phone (Priority Fields) -->
+                        <div class="grid md:grid-cols-2 gap-6 mb-4">
+                            <div class="relative">
+                                <label class="block text-sm font-semibold mb-2">Postal Code *</label>
+                                <input type="text" x-model="formData.postal_code"
+                                    @input="formData.postal_code = formData.postal_code.replace(/[^0-9]/g, ''); validateField('postal_code')"
+                                    required pattern="[0-9]{6}"
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                    :class="{'border-red-500 bg-red-50': touched.postal_code && errors.postal_code, 'border-gray-300': !touched.postal_code || !errors.postal_code}"
+                                    placeholder="6-digit pincode">
+                                <div x-show="fetchingPincode"
+                                    class="absolute right-4 top-[2.4rem] animate-spin text-neon">
+                                    ⏳
+                                </div>
+                                <p x-show="touched.postal_code && errors.postal_code" x-text="errors.postal_code"
+                                    class="text-red-500 text-xs mt-1 font-semibold"></p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Phone Number *</label>
+                                <input type="tel" x-model="formData.phone"
+                                    @input="formData.phone = formData.phone.replace(/[^0-9]/g, ''); validateField('phone')"
+                                    required pattern="[0-9]{10}"
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                    :class="{'border-red-500 bg-red-50': touched.phone && errors.phone, 'border-gray-300': !touched.phone || !errors.phone}"
+                                    placeholder="10-digit mobile number">
+                                <p x-show="touched.phone && errors.phone" x-text="errors.phone"
+                                    class="text-red-500 text-xs mt-1 font-semibold"></p>
+                            </div>
                         </div>
 
+                        <!-- Row 3: Street Address -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold mb-2">Street Address *</label>
+                            <input type="text" x-model="formData.street_address"
+                                @input="validateField('street_address')"
+                                class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                :class="{'border-red-500 bg-red-50': touched.street_address && errors.street_address, 'border-gray-300': !touched.street_address || !errors.street_address}"
+                                placeholder="House/Flat No., Street Name" required>
+                            <p x-show="touched.street_address && errors.street_address" x-text="errors.street_address"
+                                class="text-red-500 text-xs mt-1 font-semibold"></p>
+                        </div>
+
+                        <!-- Row 4: City (Dropdown) & State -->
+                        <div class="grid md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Post Office / Area *</label>
+                                <!-- Dropdown -->
+                                <div x-show="cityOptions.length > 0">
+                                    <select x-model="formData.city" @change="validateField('city')"
+                                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition-colors bg-white appearance-auto text-black">
+                                        <template x-for="option in cityOptions" :key="option">
+                                            <option :value="option" x-text="option"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <!-- Manual Fallback -->
+                                <div x-show="cityOptions.length === 0">
+                                    <input type="text" x-model="formData.city" @input="validateField('city')" required
+                                        class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                        :class="{'border-red-500 bg-red-50': touched.city && errors.city, 'border-gray-300': !touched.city || !errors.city}"
+                                        :placeholder="fetchingPincode ? 'Loading...' : 'City Name'">
+                                </div>
+                                <p x-show="touched.city && errors.city" x-text="errors.city"
+                                    class="text-red-500 text-xs mt-1 font-semibold"></p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">State *</label>
+                                <input type="text" x-model="formData.state" @input="validateField('state')" required
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors bg-gray-50"
+                                    :class="{'border-red-500 bg-red-50': touched.state && errors.state, 'border-gray-300': !touched.state || !errors.state}"
+                                    readOnly>
+                                <p x-show="touched.state && errors.state" x-text="errors.state"
+                                    class="text-red-500 text-xs mt-1 font-semibold"></p>
+                            </div>
+                        </div>
+
+                        <!-- Row 5: Apartment & Landmark -->
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
-                            <!-- Apartment -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Apartment/Building</label>
                                 <input type="text" x-model="formData.apartment"
                                     class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
                                     placeholder="Optional">
                             </div>
-
-                            <!-- Landmark -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Landmark</label>
                                 <input type="text" x-model="formData.landmark"
                                     class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
                                     placeholder="Near...">
                             </div>
-                        </div>
-
-                        <div class="grid md:grid-cols-3 gap-6 mb-6">
-                            <!-- City -->
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">City *</label>
-                                <input type="text" x-model="formData.city"
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                    required>
-                            </div>
-
-                            <!-- State -->
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">State *</label>
-                                <input type="text" x-model="formData.state"
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                    required>
-                            </div>
-
-                            <!-- Postal Code -->
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">PIN Code *</label>
-                                <input type="text" x-model="formData.postal_code"
-                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                    pattern="[0-9]{6}" placeholder="500001" required>
-                            </div>
-                        </div>
-
-                        <!-- Phone -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-semibold mb-2">Phone Number *</label>
-                            <input type="tel" x-model="formData.phone"
-                                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                placeholder="+91 98765 43210" required>
                         </div>
 
                         <!-- Default Checkbox -->
@@ -244,6 +278,9 @@
             saving: false,
             updatingDefaultId: null,
             editingId: null,
+            fetchingPincode: false,
+            cityOptions: [],
+
             formData: {
                 label: '',
                 address_type: 'HOME',
@@ -257,8 +294,127 @@
                 is_default: false
             },
 
+            errors: {
+                label: null,
+                street_address: null,
+                city: null,
+                state: null,
+                postal_code: null,
+                phone: null
+            },
+
+            touched: {
+                label: false,
+                street_address: false,
+                city: false,
+                state: false,
+                postal_code: false,
+                phone: false
+            },
+
+            get isFormValid() {
+                const f = this.formData;
+                if (!f.label || !f.street_address || !f.city || !f.state || !f.postal_code || !f.phone) return false;
+
+                if (f.label.length < 2) return false;
+                if (f.street_address.length < 5) return false;
+                if (f.city.length < 2) return false;
+                if (f.state.length < 2) return false;
+                if (f.postal_code.length !== 6) return false;
+                if (f.phone.length < 10 || f.phone.length > 20) return false;
+
+                return true;
+            },
+
             async init() {
+                this.$watch('formData.postal_code', (val) => {
+                    if (val && val.length === 6) {
+                        this.fetchPincodeDetails(val);
+                    } else {
+                        this.cityOptions = [];
+                    }
+                });
+
+                // Deep watch to validate silently on changes (optional, but good for consistency)
+                this.$watch('formData', () => {
+                    // this.validateAll(false); 
+                }, { deep: true });
+
                 await this.fetchAddresses();
+            },
+
+            async fetchPincodeDetails(pincode) {
+                this.fetchingPincode = true;
+                this.errors.postal_code = null;
+
+                try {
+                    const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                    const data = await response.json();
+
+                    if (data && data[0].Status === "Success") {
+                        const postOffices = data[0].PostOffice;
+                        this.cityOptions = postOffices.map(po => po.Name).sort();
+                        this.formData.state = postOffices[0].State;
+
+                        if (this.cityOptions.length > 0) {
+                            this.formData.city = this.cityOptions[0];
+                        } else {
+                            this.formData.city = postOffices[0].District;
+                        }
+
+                        // Mark valid
+                        this.touched.city = true;
+                        this.touched.state = true;
+                        this.errors.city = null;
+                        this.errors.state = null;
+                    } else {
+                        this.errors.postal_code = "Invalid Pincode";
+                        this.cityOptions = [];
+                        this.formData.city = '';
+                        this.formData.state = '';
+                        this.touched.city = false;
+                        this.touched.state = false;
+                    }
+                } catch (err) {
+                    console.error("Pincode fetch failed", err);
+                } finally {
+                    this.fetchingPincode = false;
+                }
+            },
+
+            validateField(field, markTouched = true) {
+                if (markTouched) {
+                    this.touched[field] = true;
+                }
+                const val = this.formData[field];
+
+                switch (field) {
+                    case 'label':
+                        this.errors.label = (val.length < 2) ? 'Label too short' : null;
+                        break;
+                    case 'phone':
+                        this.errors.phone = (val.length < 10 || val.length > 20) ? 'Phone must be 10-20 digits' : null;
+                        break;
+                    case 'street_address':
+                        this.errors.street_address = (val.length < 5) ? 'Address too short' : null;
+                        break;
+                    case 'city':
+                        this.errors.city = (val.length < 2) ? 'Invalid city' : null;
+                        break;
+                    case 'state':
+                        this.errors.state = (val.length < 2) ? 'Invalid state' : null;
+                        break;
+                    case 'postal_code':
+                        this.errors.postal_code = (val.length !== 6) ? 'Pincode must be 6 digits' : null;
+                        break;
+                }
+            },
+
+            validateAll(markTouched = true) {
+                if (markTouched) {
+                    Object.keys(this.touched).forEach(k => this.touched[k] = true);
+                }
+                ['label', 'phone', 'street_address', 'city', 'state', 'postal_code'].forEach(f => this.validateField(f, markTouched));
             },
 
             async fetchAddresses() {
@@ -298,10 +454,27 @@
                 this.editMode = true;
                 this.editingId = address.id;
                 this.formData = { ...address };
+
+                // If editing, try to populate city options if pincode exists
+                if (this.formData.postal_code && this.formData.postal_code.length === 6) {
+                    this.fetchPincodeDetails(this.formData.postal_code).then(() => {
+                        // Restore original city selection if it exists in options
+                        if (this.cityOptions.includes(address.city)) {
+                            this.formData.city = address.city;
+                        }
+                    });
+                }
+
                 this.showAddForm = true;
             },
 
             async saveAddress() {
+                this.validateAll(true);
+
+                if (!this.isFormValid) {
+                    return;
+                }
+
                 this.saving = true;
                 const token = localStorage.getItem('access_token');
 
@@ -400,6 +573,23 @@
                 this.showAddForm = false;
                 this.editMode = false;
                 this.editingId = null;
+                this.cityOptions = [];
+                this.errors = {
+                    label: null,
+                    street_address: null,
+                    city: null,
+                    state: null,
+                    postal_code: null,
+                    phone: null
+                };
+                this.touched = {
+                    label: false,
+                    street_address: false,
+                    city: false,
+                    state: false,
+                    postal_code: false,
+                    phone: false
+                };
                 this.formData = {
                     label: '',
                     address_type: 'HOME',

@@ -32,6 +32,7 @@ class CartItemSchema(BaseModel):
     total_price: Decimal
     in_stock: bool
     available_quantity: int
+    is_selected: bool # ✅ Exposed Selection State
     
     class Config:
         from_attributes = True

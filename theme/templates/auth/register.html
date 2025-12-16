@@ -28,17 +28,21 @@
                     <!-- First Name -->
                     <div>
                         <label class="block text-sm font-semibold mb-2">First Name</label>
-                        <input type="text" x-model="formData.first_name"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                        <input type="text" x-model="formData.first_name" @input="validateFirstName"
+                            class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                            :class="{ 'border-red-500': firstNameError, 'border-gray-300': !firstNameError }"
                             placeholder="John" required>
+                        <p x-show="firstNameError" x-text="firstNameError" class="text-red-500 text-sm mt-1"></p>
                     </div>
 
                     <!-- Last Name -->
                     <div>
                         <label class="block text-sm font-semibold mb-2">Last Name</label>
-                        <input type="text" x-model="formData.last_name"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                        <input type="text" x-model="formData.last_name" @input="validateLastName"
+                            class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                            :class="{ 'border-red-500': lastNameError, 'border-gray-300': !lastNameError }"
                             placeholder="Doe" required>
+                        <p x-show="lastNameError" x-text="lastNameError" class="text-red-500 text-sm mt-1"></p>
                     </div>
                 </div>
 
@@ -52,13 +56,19 @@
                     <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
                 </div>
 
+                <!-- ... existing phone field ... -->
+
                 <!-- Phone -->
                 <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2">Phone (Optional)</label>
-                    <input type="tel" x-model="formData.phone"
-                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
-                        placeholder="+91 98765 43210">
+                    <label class="block text-sm font-semibold mb-2">Phone Number</label>
+                    <input type="tel" x-model="formData.phone" @input="validatePhone"
+                        class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                        :class="{ 'border-red-500': phoneError, 'border-gray-300': !phoneError }"
+                        placeholder="+91 98765 43210" required>
+                    <p x-show="phoneError" x-text="phoneError" class="text-red-500 text-sm mt-1"></p>
                 </div>
+
+                <!-- ... rest of form ... -->
 
                 <!-- Password -->
                 <div class="mb-6">
@@ -169,7 +179,10 @@
                 password_confirm: ''
             },
             error: '',
+            firstNameError: '',
+            lastNameError: '',
             emailError: '',
+            phoneError: '',
             passwordError: '',
             confirmError: '',
             showPassword: false,
@@ -177,12 +190,55 @@
             agreedToTerms: false,
             passwordStrength: 0,
 
+            validateFirstName() {
+                const name = this.formData.first_name;
+                if (!name) {
+                    this.firstNameError = '';
+                    return;
+                }
+                if (/^\d/.test(name)) {
+                    this.firstNameError = 'Name cannot start with a number';
+                } else if (name.length < 2) {
+                    this.firstNameError = 'First name must be at least 2 characters';
+                } else {
+                    this.firstNameError = '';
+                }
+            },
+
+            validateLastName() {
+                const name = this.formData.last_name;
+                if (!name) {
+                    this.lastNameError = '';
+                    return;
+                }
+                if (/^\d/.test(name)) {
+                    this.lastNameError = 'Name cannot start with a number';
+                } else if (name.length < 2) {
+                    this.lastNameError = 'Last name must be at least 2 characters';
+                } else {
+                    this.lastNameError = '';
+                }
+            },
+
             validateEmail() {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(this.formData.email)) {
                     this.emailError = 'Please enter a valid email';
                 } else {
                     this.emailError = '';
+                }
+            },
+
+            validatePhone() {
+                // Strip non-numeric
+                this.formData.phone = this.formData.phone.replace(/[^0-9]/g, '');
+
+                if (this.formData.phone.length < 10) {
+                    this.phoneError = 'Phone number must be at least 10 digits';
+                } else if (this.formData.phone.length > 20) {
+                    this.phoneError = 'Phone number must be less than 20 digits';
+                } else {
+                    this.phoneError = '';
                 }
             },
 
@@ -202,47 +258,55 @@
                 if (this.formData.password
                     !== this.formData.password_confirm) { this.confirmError = 'Passwords do not match'; } else { this.confirmError = ''; }
             }, async submitRegister() {
-                this.error = ''; this.loading = true; // Validate all fields this.validateEmail();
-                this.validatePassword(); this.validatePasswordMatch(); if (this.emailError || this.passwordError ||
-                    this.confirmError) { this.loading = false; return; } try {
-                        const response = await fetch('/api/auth/register', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json', }, body: JSON.stringify(this.formData)
-                        }); const
-                            data = await response.json(); if (response.ok) { // ✅ animate and redirect (DO NOT SAVE TOKEN - Force manual login)
-                                gsap.to('.glass', {
-                                    scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, onComplete: () => {
-                                        // Redirect to login page as requested
-                                        window.location.href = '{% url "accounts:login" %}';
-                                    }
-                                });
-                            } else {
-                            // Handle Pydantic/Ninja validation errors (Array)
-                            if (Array.isArray(data.detail)) {
-                                // Check if there is specific info about which field
-                                const firstError = data.detail[0];
-                                if (firstError.loc && firstError.loc.length > 0) {
-                                    // e.g. "last_name: String should have at least 2 characters"
-                                    // Clean up field name: remove 'body', underscores -> spaces
-                                    const field = firstError.loc[firstError.loc.length - 1].replace(/_/g, ' ');
-                                    const msg = firstError.msg;
-                                    this.error = `${field.charAt(0).toUpperCase() + field.slice(1)}: ${msg}`;
-                                } else {
-                                    this.error = firstError.msg || 'Invalid input data';
-                                }
-                            } else {
-                                this.error = data.detail || 'Registration failed. Please try again.';
-                            }
+                this.error = ''; this.loading = true; // Validate all fields 
+                this.validateEmail();
+                this.validatePhone();
+                this.validatePassword();
+                this.validatePasswordMatch();
 
-                            console.error('Registration failed:', data);
-                            gsap.fromTo('.glass',
-                                { x: -10 },
-                                { x: 10, duration: 0.1, repeat: 5, yoyo: true }
-                            );
+                if (this.emailError || this.phoneError || this.passwordError || this.confirmError) {
+                    this.loading = false; return;
+                }
+
+                try {
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', }, body: JSON.stringify(this.formData)
+                    }); const
+                        data = await response.json(); if (response.ok) { // ✅ animate and redirect (DO NOT SAVE TOKEN - Force manual login)
+                            gsap.to('.glass', {
+                                scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, onComplete: () => {
+                                    // Redirect to login page as requested
+                                    window.location.href = '{% url "accounts:login" %}';
+                                }
+                            });
+                        } else {
+                        // Handle Pydantic/Ninja validation errors (Array)
+                        if (Array.isArray(data.detail)) {
+                            // Check if there is specific info about which field
+                            const firstError = data.detail[0];
+                            if (firstError.loc && firstError.loc.length > 0) {
+                                // e.g. "last_name: String should have at least 2 characters"
+                                // Clean up field name: remove 'body', underscores -> spaces
+                                const field = firstError.loc[firstError.loc.length - 1].replace(/_/g, ' ');
+                                const msg = firstError.msg;
+                                this.error = `${field.charAt(0).toUpperCase() + field.slice(1)}: ${msg}`;
+                            } else {
+                                this.error = firstError.msg || 'Invalid input data';
+                            }
+                        } else {
+                            this.error = data.detail || 'Registration failed. Please try again.';
                         }
-                    } catch (err) {
-                        console.error('Registration error:', err);
-                        this.error = 'Something went wrong. Please try again.';
-                    } finally {
+
+                        console.error('Registration failed:', data);
+                        gsap.fromTo('.glass',
+                            { x: -10 },
+                            { x: 10, duration: 0.1, repeat: 5, yoyo: true }
+                        );
+                    }
+                } catch (err) {
+                    console.error('Registration error:', err);
+                    this.error = 'Something went wrong. Please try again.';
+                } finally {
                     this.loading = false;
                 }
             }

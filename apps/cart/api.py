@@ -28,7 +28,12 @@ def get_cart(request):
     
     # Build response
     items_data = []
+    subtotal = Decimal('0')
+    
     for item in cart.items.select_related('product').all():
+        if item.is_selected:
+            subtotal += item.total_price
+            
         items_data.append({
             'id': str(item.id),
             'product_id': str(item.product.id),
@@ -40,16 +45,43 @@ def get_cart(request):
             'total_price': item.total_price,
             'in_stock': item.product.in_stock,
             'available_quantity': item.product.stock_quantity,
+            'is_selected': item.is_selected
         })
     
     return {
         'id': str(cart.id),
         'items': items_data,
         'items_count': cart.items_count,
-        'subtotal': cart.subtotal,
-        'total': cart.total,
+        'subtotal': subtotal, # ✅ Only selected items
+        'total': subtotal,
         'updated_at': cart.updated_at,
     }
+
+@router.put("/select/{item_id}", response=MessageSchema, auth=auth)
+def toggle_selection(request, item_id: str):
+    """Toggle item selection"""
+    cart = get_or_create_cart(request.auth)
+    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    
+    cart_item.is_selected = not cart_item.is_selected
+    cart_item.save()
+    
+    # Recalculate subtotal for response context if needed, but client will likely refetch or calculate locally.
+    return MessageSchema(message="Selection updated", success=True)
+
+@router.put("/select-all", response=MessageSchema, auth=auth)
+def select_all(request):
+    """Select all items"""
+    cart = get_or_create_cart(request.auth)
+    cart.items.update(is_selected=True)
+    return MessageSchema(message="All items selected", success=True)
+
+@router.put("/deselect-all", response=MessageSchema, auth=auth)
+def deselect_all(request):
+    """Deselect all items"""
+    cart = get_or_create_cart(request.auth)
+    cart.items.update(is_selected=False)
+    return MessageSchema(message="All items deselected", success=True)
 
 
 @router.post("/add", response=MessageSchema, auth=auth)

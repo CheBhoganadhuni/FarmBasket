@@ -48,8 +48,14 @@ def create_order(request, data: CreateOrderSchema):
     if cart.items.count() == 0:
         return {"success": False, "message": "Cart is empty"}
     
+    # ✅ Filter items based on persistent selection
+    items = cart.items.filter(is_selected=True)
+    
+    if items.count() == 0:
+        return {"success": False, "message": "No items selected for checkout"}
+
     # Validate stock for all items
-    for cart_item in cart.items.all():
+    for cart_item in items:
         if not cart_item.product.in_stock:
             return {
                 "success": False,
@@ -61,8 +67,8 @@ def create_order(request, data: CreateOrderSchema):
                 "message": f"Only {cart_item.product.stock_quantity} units of {cart_item.product.name} available"
             }
     
-    # Calculate pricing
-    subtotal = cart.subtotal
+    # Calculate pricing manually for partial checkout
+    subtotal = sum(item.total_price for item in items)
     delivery_charge = 0 if subtotal >= 500 else 40  # Free delivery above ₹500
     grand_total = subtotal + delivery_charge
     
@@ -72,24 +78,19 @@ def create_order(request, data: CreateOrderSchema):
     # Wallet Logic
     if data.use_wallet and user.wallet_balance > 0:
         if user.wallet_balance >= grand_total:
-             # Full payment via wallet (if supported, else leave 1 rupee for verification??)
-             # Existing logic seemed to force 1 rupee for Razorpay testing. Keeping strictly to user feedback about "math working".
-             # Actually, best to just use available wallet balance.
-             wallet_amount = grand_total - 1 # Leave 1 for Razorpay test?
+             # Full payment via wallet
+             wallet_amount = grand_total - 1 
              if wallet_amount < 0: wallet_amount = 0
+             payable_amount = payload_adj = 1 # Keep 1 for razorpay tests if needed
+             # IF COD + Wallet -> payable might be 0. 
+             # Logic below handles payable_amount for Razorpay.
+             # For now, keeping logic consistent with existing block:
              payable_amount = 1
         else:
              wallet_amount = user.wallet_balance
              payable_amount = grand_total - wallet_amount
     
-    # Override for current "Test Mode" where everything is 1 rupee? 
-    # The existing code had `total = subtotal + ... + 1`. That implies REAL total is +1? 
-    # Let's clean it up to be REAL math if possible, or stick to the "User said math is good" constraint.
-    # User said: "order total is 150 i paid 100 using wallet ... then 50 total paid via razorpy".
-    # This implies the User IS seeing real numbers.
-    # So I will use real numbers.
-    
-    total = grand_total # Save the TRUE total (150)
+    total = grand_total # Save the TRUE total
     
     # Create order
     order = Order.objects.create(
@@ -104,15 +105,15 @@ def create_order(request, data: CreateOrderSchema):
         delivery_landmark=data.delivery_address.landmark,
         subtotal=subtotal,
         delivery_charge=delivery_charge,
-        discount=0, # No explicit discount, just partial payment
-        wallet_amount=wallet_amount, # ✅ Save wallet usage
-        total=total, # ✅ Save FULL total
+        discount=0, 
+        wallet_amount=wallet_amount, 
+        total=total, 
         payment_method=data.payment_method,
         order_notes=data.order_notes
     )
     
-    # Create order items from cart
-    for cart_item in cart.items.all():
+    # Create order items from filtered items
+    for cart_item in items:
         OrderItem.objects.create(
             order=order,
             product=cart_item.product,
@@ -184,8 +185,8 @@ def create_order(request, data: CreateOrderSchema):
             if wallet_deduction > 0:
                 user.debit_wallet(wallet_deduction)
         
-        # Clear cart
-        cart.items.all().delete()
+        # Clear selected items from cart
+        items.delete()
         
         # Reduce stock
         for item in order.items.all():
@@ -254,10 +255,13 @@ def verify_payment(request, data: VerifyPaymentSchema):
             if wallet_deduction > 0:
                 user.debit_wallet(wallet_deduction)
         
-        # Clear cart
+        # Remove purchased items from cart
         try:
             cart = Cart.objects.get(user=user)
-            cart.items.all().delete()
+            # Find and delete items that match the order items
+            for order_item in order.items.all():
+                if order_item.product:
+                    cart.items.filter(product=order_item.product).delete()
         except Cart.DoesNotExist:
             pass
         

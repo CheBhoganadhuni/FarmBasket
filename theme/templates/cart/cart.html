@@ -7,13 +7,13 @@
     <div class="container mx-auto max-w-7xl">
 
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <div class="text-center md:text-left">
                 <h1 class="font-display text-4xl font-bold mb-2">🛒 Shopping Cart</h1>
                 <p class="text-gray-600" x-text="cart ? `${cart.items_count} items in your cart` : 'Loading...'"></p>
             </div>
             <a href="/products/"
-                class="px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
+                class="w-full md:w-auto text-center px-6 py-3 bg-neon border-2 border-neon text-white rounded-lg hover:bg-green-600 hover:scale-105 transition font-semibold">
                 🛍️ Continue Shopping
             </a>
         </div>
@@ -35,83 +35,145 @@
 
                 <!-- Cart Items -->
                 <div class="md:col-span-2 space-y-4">
+                    <!-- Select All & Count -->
+                    <div class="flex items-center gap-3 px-2">
+                        <input type="checkbox" :checked="allSelected" @change="toggleAll"
+                            class="w-5 h-5 rounded border-gray-300 text-neon focus:ring-neon cursor-pointer">
+                        <span class="font-semibold text-gray-700">Select All (<span
+                                x-text="cart.items.filter(i => i.is_selected).length"></span>)</span>
+                    </div>
+
                     <template x-for="item in cart.items" :key="item.id">
-                        <div class="glass rounded-xl p-6 flex gap-6">
+                        <div class="glass relative p-4 md:p-6 rounded-2xl transition-all duration-300 group hover:shadow-lg border border-transparent hover:border-neon/30"
+                            :class="{'opacity-50 pointer-events-none': loadingSelectionIds.includes(item.id), 'ring-1 ring-neon bg-green-50/10': item.is_selected}">
 
-                            <!-- Product Image -->
-                            <a :href="`/products/${item.product_slug}/`" class="flex-shrink-0">
+                            <!-- Loading Overlay -->
+                            <div x-show="loadingSelectionIds.includes(item.id)"
+                                class="absolute inset-0 z-20 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded-2xl backdrop-blur-sm">
+                                <div class="animate-spin text-neon">
+                                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+
+                                <!-- CHECKBOX (Mobile: Absolute Top-Left, Desktop: Static Left) -->
+                                <div class="absolute top-4 left-4 md:static md:inset-auto z-10">
+                                    <div class="relative flex items-center justify-center w-8 h-8">
+                                        <input type="checkbox" :checked="item.is_selected" @change="toggleItem(item.id)"
+                                            class="peer appearance-none w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-lg checked:bg-neon checked:border-neon transition-colors cursor-pointer focus:ring-offset-0 focus:ring-0">
+                                        <svg class="absolute w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity duration-200"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- PRODUCT INFO (Image + Details) -->
+                                <div class="flex-1 flex gap-4 pl-10 md:pl-0">
+                                    <!-- Image -->
+                                    <a :href="`/products/${item.product_slug}/`"
+                                        class="block w-24 h-24 md:w-32 md:h-32 flex-shrink-0">
+                                        <div
+                                            class="w-full h-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                                            <img x-show="item.product_image" :src="item.product_image"
+                                                :alt="item.product_name"
+                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                            <div x-show="!item.product_image"
+                                                class="w-full h-full flex items-center justify-center text-3xl">🧺</div>
+                                        </div>
+                                    </a>
+
+                                    <!-- Details -->
+                                    <div class="flex flex-col justify-center flex-1 min-w-0 py-1">
+                                        <a :href="`/products/${item.product_slug}/`" class="group/title">
+                                            <h3 class="font-display font-bold text-gray-900 dark:text-white text-lg md:text-xl leading-tight mb-2 truncate group-hover/title:text-neon transition-colors"
+                                                x-text="item.product_name"></h3>
+                                        </a>
+
+                                        <!-- Stock Status -->
+                                        <div class="mb-2">
+                                            <span x-show="item.in_stock"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                                In Stock
+                                            </span>
+                                            <span x-show="!item.in_stock"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                Out of Stock
+                                            </span>
+                                        </div>
+
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                                            ₹<span x-text="item.unit_price"></span> <span class="text-xs opacity-75">/
+                                                unit</span>
+                                        </p>
+
+                                        <div x-show="item.quantity > item.available_quantity"
+                                            class="mt-1 text-xs font-bold text-orange-500">
+                                            Only <span x-text="item.available_quantity"></span> remaining!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ACTIONS (Price, Quantity, Remove) -->
                                 <div
-                                    class="w-24 h-24 bg-gradient-to-br from-green-100 to-green-50 rounded-lg overflow-hidden flex items-center justify-center">
-                                    <img x-show="item.product_image" :src="item.product_image" :alt="item.product_name"
-                                        class="w-full h-full object-cover">
-                                    <span x-show="!item.product_image" class="text-4xl">🧺</span>
-                                </div>
-                            </a>
+                                    class="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 pl-10 md:pl-0 w-full md:w-auto border-t md:border-t-0 border-gray-100 dark:border-gray-700 pt-4 md:pt-0 mt-2 md:mt-0">
 
-                            <!-- Product Info -->
-                            <div class="flex-1">
-                                <a :href="`/products/${item.product_slug}/`" class="hover:text-neon">
-                                    <h3 class="font-bold text-lg mb-1" x-text="item.product_name"></h3>
-                                </a>
-
-                                <!-- Stock Status -->
-                                <div class="mb-3">
-                                    <span x-show="item.in_stock" class="text-green-600 text-sm">✓ In Stock</span>
-                                    <span x-show="!item.in_stock" class="text-red-600 text-sm">✗ Out of Stock</span>
-                                    <span x-show="item.quantity > item.available_quantity"
-                                        class="text-orange-500 text-sm ml-2">
-                                        (Only <span x-text="item.available_quantity"></span> available)
-                                    </span>
-                                </div>
-
-                                <!-- Price & Quantity -->
-                                <div class="flex items-center justify-between">
-                                    <div class="text-2xl font-bold text-neon">
-                                        ₹<span x-text="item.total_price"></span>
+                                    <!-- Total Price -->
+                                    <div class="text-right">
+                                        <div
+                                            class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5 md:block hidden">
+                                            Total</div>
+                                        <div class="font-display font-bold text-xl md:text-2xl text-neon">
+                                            ₹<span x-text="item.total_price"></span>
+                                        </div>
                                     </div>
 
-                                    <!-- Quantity Controls -->
                                     <div class="flex items-center gap-3">
-                                        <button @click="updateQuantity(item.id, item.quantity - 1)"
-                                            :disabled="loadingUpdateIds.includes(item.id)"
-                                            class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50">
-                                            <span x-show="!loadingUpdateIds.includes(item.id)">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M20 12H4"></path>
-                                                </svg>
-                                            </span>
-                                            <span x-show="loadingUpdateIds.includes(item.id)"
-                                                class="animate-spin text-xs">⏳</span>
-                                        </button>
+                                        <!-- Quantity Control -->
+                                        <!-- Quantity Control -->
+                                        <!-- Quantity Control -->
+                                        <div
+                                            class="flex items-center p-1 gap-1 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                                            <button @click="updateQuantity(item.id, item.quantity - 1)"
+                                                :disabled="loadingUpdateIds.includes(item.id)"
+                                                class="w-8 h-8 flex items-center justify-center rounded-md bg-white hover:bg-gray-100 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 shadow-sm transition-all disabled:opacity-50">
+                                                <span x-show="!loadingUpdateIds.includes(item.id)">-</span>
+                                                <span x-show="loadingUpdateIds.includes(item.id)"
+                                                    class="animate-spin text-xs">⏳</span>
+                                            </button>
 
-                                        <input type="number" :value="item.quantity"
-                                            @change="updateQuantity(item.id, parseInt($event.target.value))" min="1"
-                                            :max="item.available_quantity"
-                                            class="w-16 text-center px-2 py-1 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none"
-                                            :disabled="loadingUpdateIds.includes(item.id)">
+                                            <input type="number" :value="item.quantity"
+                                                @change="updateQuantity(item.id, parseInt($event.target.value))"
+                                                class="w-10 text-center bg-transparent border-none p-0 text-sm font-bold text-gray-900 dark:text-white focus:ring-0"
+                                                :disabled="loadingUpdateIds.includes(item.id)">
 
-                                        <button @click="updateQuantity(item.id, item.quantity + 1)"
-                                            :disabled="item.quantity >= item.available_quantity || loadingUpdateIds.includes(item.id)"
-                                            class="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50">
-                                            <span x-show="!loadingUpdateIds.includes(item.id)">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                                </svg>
-                                            </span>
-                                            <span x-show="loadingUpdateIds.includes(item.id)"
-                                                class="animate-spin text-xs">⏳</span>
-                                        </button>
+                                            <button @click="updateQuantity(item.id, item.quantity + 1)"
+                                                :disabled="item.quantity >= item.available_quantity || loadingUpdateIds.includes(item.id)"
+                                                class="w-8 h-8 flex items-center justify-center rounded-md bg-white hover:bg-gray-100 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 shadow-sm transition-all disabled:opacity-50">
+                                                <span x-show="!loadingUpdateIds.includes(item.id)">+</span>
+                                                <span x-show="loadingUpdateIds.includes(item.id)"
+                                                    class="animate-spin text-xs">⏳</span>
+                                            </button>
+                                        </div>
 
+                                        <!-- Delete Button -->
                                         <button @click="removeItem(item.id)"
                                             :disabled="loadingRemoveIds.includes(item.id)"
-                                            class="ml-2 w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50">
+                                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white transition-all disabled:opacity-50 group/trash">
                                             <span x-show="!loadingRemoveIds.includes(item.id)">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
+                                                <svg class="w-5 h-5 transition-transform group-hover/trash:scale-110"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2"
                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
@@ -119,15 +181,11 @@
                                                 </svg>
                                             </span>
                                             <span x-show="loadingRemoveIds.includes(item.id)"
-                                                class="animate-spin text-sm">⏳</span>
+                                                class="animate-spin">⏳</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Price per unit -->
-                                <div class="text-sm text-gray-500 mt-2">
-                                    ₹<span x-text="item.unit_price"></span> per item
-                                </div>
                             </div>
                         </div>
                     </template>
@@ -142,71 +200,129 @@
                 </div>
 
                 <!-- Order Summary -->
-                <div class="glass rounded-xl p-6 h-fit sticky top-24">
-                    <h2 class="font-display text-2xl font-bold mb-6">Order Summary</h2>
+                <div
+                    class="glass relative p-4 md:p-6 rounded-2xl h-fit sticky top-24 overflow-hidden border border-transparent hover:border-neon/30 transition-colors">
+
+                    <!-- Selection Loader Overlay -->
+                    <div x-show="loadingSelection"
+                        class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm transition-opacity"
+                        x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-100"
+                        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                        <div class="animate-spin text-3xl mb-2">⏳</div>
+                        <span class="text-xs font-bold text-neon tracking-wider uppercase">Updating Total</span>
+                    </div>
+
+                    <h2 class="font-display text-2xl font-bold mb-6 text-gray-900 dark:text-white">Order Summary</h2>
 
                     <!-- Summary Details -->
-                    <div class="space-y-3 mb-6">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal (<span x-text="cart.items_count"></span> items)</span>
-                            <span>₹<span x-text="cart.subtotal"></span></span>
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Subtotal (<span x-text="cart.items.filter(i => i.is_selected).length"></span>
+                                items)</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-200">₹<span
+                                    x-text="selectedSubtotal"></span></span>
                         </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Delivery Charges May Be Included</span>
+
+                        <!-- Delivery Charge Indicator -->
+                        <div class="flex justify-between text-sm items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                            :class="selectedSubtotal >= 500 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    x-text="selectedSubtotal >= 500 ? '🚚 Free Delivery' : '🚚 Delivery Charge'"></span>
+                                <div x-show="selectedSubtotal < 500" class="group relative cursor-help">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <circle cx="12" cy="12" r="10" stroke-width="2" />
+                                        <path d="M12 16v-4m0-4h.01" stroke-width="2" stroke-linecap="round" />
+                                    </svg>
+                                    <span
+                                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Free
+                                        above ₹500</span>
+                                </div>
+                            </div>
+                            <span x-text="selectedSubtotal >= 500 ? '₹0' : '₹40'" class="font-bold"></span>
                         </div>
-                        <div class="border-t pt-3 flex justify-between font-bold text-xl">
-                            <span>Total</span>
-                            <span class="text-neon">₹<span x-text="cart.total"></span></span>
+
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between items-end">
+                            <span class="font-bold text-lg text-gray-800 dark:text-white">Total</span>
+                            <span class="font-display font-bold text-3xl text-neon leading-none">₹<span
+                                    x-text="selectedTotal"></span></span>
                         </div>
                     </div>
 
                     <!-- Checkout Button -->
-                    <button @click="proceedToCheckout()"
-                        class="w-full px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg transform hover:scale-105">
-                        Proceed to Checkout 🚀
+                    <button @click="proceedToCheckout()" :disabled="!someSelected"
+                        class="w-full group relative px-6 py-4 bg-neon text-white rounded-xl hover:bg-green-600 transition-all font-bold text-lg shadow-lg hover:shadow-neon/20 overflow-hidden disabled:opacity-50 disabled:shadow-none">
+                        <div
+                            class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer">
+                        </div>
+                        <span class="relative flex items-center justify-center gap-2">
+                            Proceed to Checkout
+                            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                        </span>
                     </button>
 
                     <!-- Trust Badges -->
-                    <div class="mt-6 pt-6 border-t space-y-2 text-sm text-gray-600">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span>100% Organic & Fresh</span>
+                    <div
+                        class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="p-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <span>100% Organic & Fresh Certified</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>Same-day delivery</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>Quality guaranteed</span>
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="p-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <span>Secure Payment (Razorpay / COD)</span>
                         </div>
                     </div>
                 </div>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Same-day delivery</span>
             </div>
-        </template>
-
-        <!-- Empty Cart -->
-        <template x-if="!loading && cart && cart.items.length === 0">
-            <div class="text-center py-20">
-                <div class="text-6xl mb-4">🛒</div>
-                <h3 class="text-2xl font-bold mb-2">Your cart is empty</h3>
-                <p class="text-gray-600 mb-6">Add some fresh organic products!</p>
-                <a href="/products/"
-                    class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
-                    Browse Products 🛍️
-                </a>
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Quality guaranteed</span>
             </div>
-        </template>
     </div>
+</div>
+</div>
+</template>
+
+<!-- Empty Cart -->
+<template x-if="!loading && cart && cart.items.length === 0">
+    <div class="text-center py-20">
+        <div class="text-6xl mb-4">🛒</div>
+        <h3 class="text-2xl font-bold mb-2">Your cart is empty</h3>
+        <p class="text-gray-600 mb-6">Add some fresh organic products!</p>
+        <a href="/products/"
+            class="inline-block px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold">
+            Browse Products 🛍️
+        </a>
+    </div>
+</template>
+</div>
 </div>
 <script>
     function cartPage() {
@@ -216,7 +332,79 @@
             // Array based loaders
             loadingUpdateIds: [],
             loadingRemoveIds: [],
+            loadingSelectionIds: [], // Stores IDs of items being toggled
             isClearing: false,
+            loadingSelection: false,
+
+            get allSelected() {
+                // If cart has items, check if all are selected
+                return this.cart && this.cart.items.length > 0 && this.cart.items.every(item => item.is_selected);
+            },
+
+            get someSelected() {
+                return this.cart && this.cart.items.some(item => item.is_selected);
+            },
+
+            async toggleAll() {
+                const action = this.allSelected ? 'deselect-all' : 'select-all';
+                const token = localStorage.getItem('access_token');
+                this.loadingSelection = true;
+
+                try {
+                    const response = await fetch(`/api/cart/${action}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        await this.fetchCart(); // Refetch to get updated totals/state
+                    }
+                } catch (err) {
+                    console.error('Toggle all failed', err);
+                } finally {
+                    this.loadingSelection = false;
+                }
+            },
+
+            async toggleItem(itemId) {
+                const token = localStorage.getItem('access_token');
+                this.loadingSelection = true;
+                this.loadingSelectionIds.push(itemId);
+
+                try {
+                    const response = await fetch(`/api/cart/select/${itemId}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        await this.fetchCart(); // Refetch to update totals
+                    }
+                } catch (err) {
+                    console.error('Toggle item failed', err);
+                } finally {
+                    this.loadingSelection = false;
+                    this.loadingSelectionIds = this.loadingSelectionIds.filter(id => id !== itemId);
+                }
+            },
+
+            // Backend now provides selected subtotal, but for display we might want to show selected count/total explicitly if different from full cart?
+            // API get_cart returns 'subtotal' as SUM of selected items. So we can just use cart.subtotal.
+
+            get selectedSubtotal() {
+                if (!this.cart) return '0.00';
+                return this.cart.subtotal;
+                // Note: The backend API modification reduced 'subtotal' to only include selected items.
+                // If we wanted to show "Cart Total" vs "Selected Total", we'd need two fields in API.
+                // For now, assuming standard flow where "Subtotal" implies "what I am buying".
+            },
+
+            get selectedTotal() {
+                // Approximate total with delivery logic (same as checkout)
+                const sub = parseFloat(this.selectedSubtotal);
+                const delivery = sub >= 500 ? 0 : 40;
+                return (sub + delivery).toFixed(2);
+            },
 
             async init() {
                 const token = localStorage.getItem('access_token');
@@ -236,6 +424,7 @@
                 }
 
                 await this.fetchCart();
+                this.updateNavbarCart();
             },
 
             async fetchCart() {
@@ -250,6 +439,8 @@
 
                     if (response.ok) {
                         this.cart = await response.json();
+                        // Initially Select All
+                        this.selectedItems = this.cart.items.map(item => item.id);
                         this.updateNavbarCart();
                     } else if (response.status === 401) {
                         localStorage.removeItem('access_token');
@@ -393,7 +584,9 @@
             },
 
             proceedToCheckout() {
-                window.location.href = '/checkout/';
+                // Pass selected IDs to checkout page
+                const selected = this.selectedItems.join(',');
+                window.location.href = `/checkout/?items=${selected}`;
             }
         }
     }
