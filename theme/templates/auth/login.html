@@ -193,7 +193,17 @@
                             }
                         });
                     } else {
-                        this.error = data.detail || 'Invalid email or password';
+                        // Handle Pydantic Error Format (Array of objects)
+                        if (Array.isArray(data.detail) && data.detail.length > 0) {
+                            const firstError = data.detail[0];
+                            // Prefer concise 'ctx.reason' if available, else 'msg'
+                            this.error = firstError.ctx?.reason || firstError.msg || 'Validation error';
+                        } else if (typeof data.detail === 'string') {
+                            this.error = data.detail;
+                        } else {
+                            this.error = data.message || 'Invalid email or password';
+                        }
+
                         console.error('Login failed:', data);
                         gsap.fromTo('.glass',
                             { x: -10 },

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(to right, #dd6b20, #c05621);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .content {
+            background: #fff5f5;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #fed7d7;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 12px;
+        }
+
+        .policy-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #dd6b20;
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Account Deletion Notification</h1>
+        </div>
+        <div class="content">
+            <h2>Hi {{ user.first_name }},</h2>
+
+            <p>We Team FarmBasket hence thereby deleting your entire data from our systems as per clause 2 of our
+                privacy policy.</p>
+
+            <div class="policy-box">
+                "Thanks for your stay with us, we hope you again get back for an organic life."
+            </div>
+
+            <p>FarmBasket Inc.</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 FarmBasket. All rights reserved.</p>
+            <p>This is an automated notification regarding the permanent deletion of your account.</p>
+        </div>
+    </div>
+</body>
+
+</html>

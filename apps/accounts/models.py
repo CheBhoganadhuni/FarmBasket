@@ -51,6 +51,7 @@ class User(AbstractUser):
     # Preferences
     email_notifications = models.BooleanField(default=True)
     sms_notifications = models.BooleanField(default=False)
+    welcome_status = models.BooleanField(default=True, help_text="True if new user needs welcome modal")
     
     # Gamification (for later)
     xp_points = models.IntegerField(default=0)

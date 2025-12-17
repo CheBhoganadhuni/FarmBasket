@@ -37,8 +37,18 @@
                 <div class="md:col-span-2 space-y-4">
                     <!-- Select All & Count -->
                     <div class="flex items-center gap-3 px-2">
-                        <input type="checkbox" :checked="allSelected" @change="toggleAll"
-                            class="w-5 h-5 rounded border-gray-300 text-neon focus:ring-neon cursor-pointer">
+                        <div class="relative flex items-center justify-center w-5 h-5">
+                            <input type="checkbox" :checked="allSelected" @change="toggleAll" x-show="!loadingSelection"
+                                class="w-5 h-5 rounded border-gray-300 text-neon focus:ring-neon cursor-pointer">
+                            <svg x-show="loadingSelection" class="animate-spin w-5 h-5 text-neon"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </div>
                         <span class="font-semibold text-gray-700">Select All (<span
                                 x-text="cart.items.filter(i => i.is_selected).length"></span>)</span>
                     </div>
@@ -248,15 +258,18 @@
                             <div class="flex items-center gap-2">
                                 <span
                                     x-text="selectedSubtotal >= 500 ? '🚚 Free Delivery' : '🚚 Delivery Charge'"></span>
-                                <div x-show="selectedSubtotal < 500" class="group relative cursor-help">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <circle cx="12" cy="12" r="10" stroke-width="2" />
-                                        <path d="M12 16v-4m0-4h.01" stroke-width="2" stroke-linecap="round" />
-                                    </svg>
-                                    <span
-                                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Free
-                                        above ₹500</span>
+                                <div x-show="selectedSubtotal < 500" class="flex items-center mt-0.5">
+                                    <button @click="window.showNotification({
+                                        type: 'info',
+                                        title: 'Delivery Charges',
+                                        message: 'Free delivery on orders above ₹500. Otherwise ₹40 charge applies.'
+                                    })" class="text-gray-400 hover:text-neon transition cursor-pointer"
+                                        title="Click for info">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="10" stroke-width="2" />
+                                            <path d="M12 16v-4m0-4h.01" stroke-width="2" stroke-linecap="round" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <span x-text="selectedSubtotal >= 500 ? '₹0' : '₹40'" class="font-bold"></span>

@@ -83,6 +83,7 @@ class UserUpdateSchema(BaseModel):
     phone: Optional[str] = None
     email_notifications: Optional[bool] = None
     sms_notifications: Optional[bool] = None
+    welcome_status: Optional[bool] = None
 
 
 class AddressCreateSchema(BaseModel):
@@ -117,7 +118,9 @@ class UserSchema(BaseModel):
     is_active: bool
     created_at: datetime
     is_staff: bool
+    is_staff: bool
     is_superuser: bool
+    welcome_status: bool = True
     
     created_at: datetime
     is_staff: bool

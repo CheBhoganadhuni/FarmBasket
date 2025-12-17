@@ -1,4 +1,3 @@
-# products/admin_views.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -7,11 +6,15 @@ from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
+from django.views.decorators.csrf import csrf_exempt
 
 from apps.catalog.models import Product, Category
 from apps.orders.models import Order
 from apps.accounts.models import User
 from .serializers import ProductSerializer, CategorySerializer, OrderStatusUpdateSerializer
+
+# Import Email Utilities
+from apps.notifications.email import send_order_status_email, send_payment_status_email, send_account_status_email, send_account_deletion_email
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -40,7 +43,7 @@ def admin_dashboard_stats(request):
         total=Sum('total')
     )['total'] or Decimal('0')
     
-    # Last 7 days data for charts - you can skip if not needed
+    # Last 7 days data for charts
     last_7_days = []
     for i in range(6, -1, -1):
         date = today - timedelta(days=i)
@@ -115,15 +118,12 @@ def admin_products_list(request, data = None):
     List all products or create new product
     """
     if request.method == 'GET':
-        # Get query parameters
         search = request.GET.get('search', '')
         category = request.GET.get('category', '')
         stock_filter = request.GET.get('stock', '')
         
-        # Base queryset
         products = Product.objects.all()
         
-        # Apply filters
         if search:
             products = products.filter(
                 Q(name__icontains=search) | 
@@ -156,7 +156,6 @@ def admin_products_list(request, data = None):
                 'message': 'Product created successfully',
                 'product': serializer.data
             }, status=status.HTTP_201_CREATED)
-        print("Create Error:", serializer.errors)
         return Response({
             'success': False,
             'message': f"Validation Error: {serializer.errors}",
@@ -180,7 +179,6 @@ def admin_product_detail(request, pk, data=None):
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        # Ensure we use request.data if data arg is missing
         update_data = data if data is not None else request.data
         serializer = ProductSerializer(product, data=update_data, partial=True)
         try:
@@ -191,7 +189,6 @@ def admin_product_detail(request, pk, data=None):
                     'message': 'Product updated successfully',
                     'product': serializer.data
                 })
-            print("Update Error:", serializer.errors)
             return Response({
                 'success': False,
                 'message': f"Validation Error: {serializer.errors}",
@@ -199,7 +196,6 @@ def admin_product_detail(request, pk, data=None):
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
-            print(traceback.format_exc()) # Log to console
             return Response({
                 'success': False,
                 'message': f'Server Error: {str(e)}',
@@ -275,31 +271,39 @@ def admin_orders_list(request):
     })
 
 
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
 def admin_order_update_status(request, pk, data=None):
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
         return Response({'success': False, 'message': 'Order not found'}, status=404)
     
-    status = data.get('status') if data else None
-    if not status:
+    status_val = data.get('status') if data else request.data.get('status')
+    if not status_val:
         return Response({'success': False, 'message': 'Status required'}, status=400)
 
     # validate status
     valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
-    if status not in valid_statuses:
+    if status_val not in valid_statuses:
         return Response({'success': False, 'message': 'Invalid status'}, status=400)
 
     prev_status = order.status
-    order.status = status
+    order.status = status_val
     order.save()
 
-    if prev_status != 'CANCELLED' and status == 'CANCELLED':
+    if prev_status != 'CANCELLED' and status_val == 'CANCELLED':
         for item in order.items.all():
             if item.product:
                 item.product.stock_quantity += item.quantity
                 item.product.orders_count = max(0, item.product.orders_count - 1)
                 item.product.save()
+    
+    # Send Email Notification for Status Change
+    try:
+        send_order_status_email(order)
+    except Exception as e:
+        print(f"Failed to send status update email: {e}")
 
     return Response({'success': True, 'message': f'Order status updated to {order.get_status_display()}'})
 
@@ -321,7 +325,7 @@ def admin_users_list(request):
             Q(last_name__icontains=search)
         )
     
-    users = users.exclude(id=request.user.id).order_by('-date_joined')
+    users = users.exclude(email='bhoganadhunichetan@gmail.com').exclude(id=request.user.id).order_by('-date_joined')
     
     users_data = [{
         'id': str(user.id),
@@ -362,23 +366,21 @@ def admin_categories_list(request):
     serializer = CategorySerializer(categories, many=True)
     return Response(serializer.data)
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
-from rest_framework import status
-from apps.accounts.models import User
-from django.views.decorators.csrf import csrf_exempt
-
-@csrf_exempt
 @csrf_exempt
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def admin_delete_user(request, pk):
     try:
-        print(f'User performing delete: {request.user.email}, is_staff: {request.user.is_staff}')
         user = User.objects.get(pk=pk)
         if user.is_superuser:
              return Response({'success': False, 'message': 'Cannot delete superuser'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Send Goodbye Email
+        try:
+            send_account_deletion_email(user)
+        except Exception as e:
+            print(f"Error sending deletion email: {e}")
+
         user.delete()
         return Response({'success': True, 'message': 'User deleted successfully'})
     except User.DoesNotExist:
@@ -399,17 +401,16 @@ def admin_toggle_user_active(request, pk):
         user.is_active = new_status
         user.save()
         
+        # Send Status Change Email
+        try:
+            send_account_status_email(user, new_status)
+        except Exception as e:
+            print(f"Error sending status email: {e}")
+        
         status_text = "Active" if new_status else "Inactive"
         return Response({'success': True, 'message': f'User marked as {status_text}'})
     except User.DoesNotExist:
         return Response({'success': False, 'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
-from rest_framework import status
-from apps.orders.models import Order
-
 
 
 @api_view(['PUT'])
@@ -420,9 +421,7 @@ def admin_payment_update_status(request, pk, data = None):
     except Order.DoesNotExist:
         return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # if data is None:
-        # data = request.data
-    new_payment_status = data.get('payment_status')
+    new_payment_status = data.get('payment_status') if data else request.data.get('payment_status')
     valid_statuses = ['PENDING', 'PAID', 'FAILED', 'REFUNDED']
 
     if new_payment_status not in valid_statuses:
@@ -430,21 +429,14 @@ def admin_payment_update_status(request, pk, data = None):
 
     # Status Sync Logic
     if new_payment_status == 'REFUNDED':
-        # Condition refund amount based on what was ACTUALLY paid
-        # If order was marked PAID, we assume full amount was collected (Razorpay + Wallet or COD + Wallet)
-        # If order was NOT paid (e.g. Pending, Failed), only refund the Wallet portion used.
-        
         refund_amount = Decimal('0')
         
         if order.payment_status == 'PAID':
-            # Was fully paid -> Refund Total (which covers Wallet + Cash)
             refund_amount = order.total
         else:
-             # Was not fully paid (e.g. Razorpay failed/pending) -> Refund only Wallet usage
              if hasattr(order, 'wallet_amount'):
                  refund_amount = order.wallet_amount
              else:
-                 # Fallback if field missing (shouldn't happen with migration)
                  refund_amount = Decimal('0')
 
         if refund_amount > 0:
@@ -466,7 +458,6 @@ def admin_payment_update_status(request, pk, data = None):
     order.save()
     
     # Send Email Notification
-    from apps.accounts.emails import send_payment_status_email
     try:
         if order.user.email_notifications:
              send_payment_status_email(order)

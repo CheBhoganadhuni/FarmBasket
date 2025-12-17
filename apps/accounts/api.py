@@ -29,7 +29,7 @@ from .auth import (
     authenticate_user, create_access_token, create_refresh_token,
     get_password_hash, AuthBearer
 )
-from .emails import send_welcome_email, send_password_reset_email  # ✅ Changed from tasks to emails
+from apps.notifications.email import send_welcome_email, send_password_reset_email
 from django.conf import settings
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -168,7 +168,6 @@ def google_callback(request, code: str):
     # Send welcome email if new user
     if created:
         try:
-            from apps.accounts.emails import send_welcome_email
             send_welcome_email(user)
         except Exception as e:
             print(f"Failed to send welcome email: {e}")

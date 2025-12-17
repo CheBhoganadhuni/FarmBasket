@@ -58,6 +58,16 @@
                         <div>
                             <h1 class="font-display text-4xl font-bold mb-2" x-text="user.full_name"></h1>
                             <p class="text-gray-600 mb-4" x-text="user.email"></p>
+
+                            <!-- Manual User: Link Google Account Tip -->
+                            <template x-if="!user.social_avatar_url && user.email && !loadingProfile">
+                                <div
+                                    class="mb-4 text-xs text-blue-600 bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-900/30 p-3 rounded-lg text-left">
+                                    ℹ️ <strong>Tip:</strong> If you have a Google account with same email id, you can
+                                    log in via Google
+                                    next time to link it automatically. Your data will be safe! 🛡️
+                                </div>
+                            </template>
                             <!-- Loyalty Badge -->
                             <div
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full font-semibold mb-4">
@@ -73,7 +83,7 @@
                                 </div>
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="'₹' + stats.total_spent"></div>
-                                    <div class="text-sm text-gray-600">Total Spent</div>
+                                    <div class="text-sm text-gray-600">Contribution*</div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-2xl font-bold text-neon" x-text="stats.addresses_count"></div>
@@ -86,7 +96,7 @@
                                 Edit Profile ✏️
                             </button>
                             <!-- Phone Reminder -->
-                            <div x-show="!user.phone"
+                            <div x-show="!loadingProfile && !user.phone"
                                 class="mt-2 text-red-500 text-sm font-semibold flex items-center justify-center md:justify-start gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -325,11 +335,15 @@
                     <div class="border-2 border-gray-200 rounded-lg p-4">
                         <h4 class="font-semibold mb-4">Notifications</h4>
                         <div class="space-y-3">
-                            <label class="flex items-center justify-between">
-                                <span>Email notifications</span>
-                                <input type="checkbox" x-model="user.email_notifications"
-                                    @change="updatePreferences('email')" class="toggle">
-                            </label>
+                            <div class="flex flex-col gap-1">
+                                <label class="flex items-center justify-between">
+                                    <span>Email notifications</span>
+                                    <input type="checkbox" x-model="user.email_notifications"
+                                        @change="updatePreferences('email')" class="toggle">
+                                </label>
+                                <p class="text-xs text-gray-500">Opt in or out for emails. Please check your spam folder
+                                    too!</p>
+                            </div>
 
                         </div>
                     </div>
@@ -481,6 +495,8 @@
                 addresses_count: 0
             },
 
+            loadingProfile: true, // ✅ New loading state
+
             editMode: false,
             editData: {
                 full_name: '',
@@ -549,9 +565,48 @@
             },
 
             async init() {
-                await this.fetchProfile();
+                try {
+                    await this.fetchProfile();
+
+                    // ✅ Persistent Welcome Modal
+                    if (this.user.welcome_status) {
+                        setTimeout(() => {
+                            if (window.showNotification) {
+                                window.showNotification({
+                                    title: "Welcome to FarmBasket! 🧺",
+                                    message: "Thanks for joining! A welcome email has been sent. Please check your inbox (and spam folder).",
+                                    type: "success",
+                                    duration: 6000
+                                });
+                            }
+                            // Disable welcome status for next time
+                            this.dismissWelcome();
+                        }, 800);
+                    }
+
+                } catch (e) { console.error(e); } finally {
+                    this.loadingProfile = false;
+                }
                 await this.fetchStats();
                 await this.loadWallet();
+            },
+
+            async dismissWelcome() {
+                const token = localStorage.getItem('access_token');
+                try {
+                    await fetch('/api/auth/me', {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ welcome_status: false })
+                    });
+                    // Update local user state so it doesnt run again on this session if refreshed without reload (rare)
+                    this.user.welcome_status = false;
+                } catch (e) {
+                    console.error("Failed to dismiss welcome status", e);
+                }
             },
 
             validatePassword() {
@@ -908,7 +963,7 @@
                             window.showNotification({
                                 title: "Success",
                                 type: "success",
-                                message: 'Account deactivated successfully. Goodbye! 👋'
+                                message: 'Account deactivated successfully. Confirmation email sent. Goodbye! 👋'
                             });
                         }
 

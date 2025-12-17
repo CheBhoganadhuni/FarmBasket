@@ -32,7 +32,7 @@ razorpay_client = razorpay.Client(
 )
 
 
-from apps.accounts.emails import send_order_confirmation_email
+from apps.notifications.email import send_order_confirmation_email
 
 @router.post("/checkout/create", response=dict, auth=auth)
 def create_order(request, data: CreateOrderSchema):
@@ -357,6 +357,7 @@ def get_order_detail(request, order_id: str):
         'payment_method': order.payment_method,
         'payment_status': order.payment_status,
         'payment_status_display': order.get_payment_status_display(),
+        'order_notes': order.order_notes,
         'items': items_data,
         'created_at': order.created_at,
         'updated_at': order.updated_at
@@ -384,8 +385,13 @@ def cancel_order(request, order_id: str):
     # Send Admin Email
     try:
         send_admin_cancellation_email(order, settings.SITE_URL)
+        
+        # ✅ Send Status Update Email to User
+        from apps.notifications.email import send_order_status_email
+        send_order_status_email(order)
+        
     except Exception as e:
-        print(f"Failed to send admin cancellation email: {e}")
+        print(f"Failed to send cancellation emails: {e}")
         
     return {
         "success": True,

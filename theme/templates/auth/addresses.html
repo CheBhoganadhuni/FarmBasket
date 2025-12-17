@@ -12,10 +12,7 @@
                 <h1 class="font-display text-4xl font-bold mb-2">📍 My Addresses</h1>
                 <p class="text-gray-600">Manage your delivery addresses</p>
             </div>
-            <button @click="showAddForm = true"
-                class="px-6 py-3 bg-neon text-white rounded-lg hover:bg-green-600 transition transform hover:scale-105 font-semibold">
-                Add Addresses Here
-            </button>
+
         </div>
 
         <!-- Addresses List -->
@@ -184,6 +181,8 @@
                                 </div>
                                 <p x-show="touched.postal_code && errors.postal_code" x-text="errors.postal_code"
                                     class="text-red-500 text-xs mt-1 font-semibold"></p>
+                                <p x-show="pincodeStatus" x-text="pincodeStatus"
+                                    class="text-orange-500 text-xs mt-1 font-semibold"></p>
                             </div>
 
                             <div>
@@ -238,9 +237,8 @@
                             <div>
                                 <label class="block text-sm font-semibold mb-2">State *</label>
                                 <input type="text" x-model="formData.state" @input="validateField('state')" required
-                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors bg-gray-50"
-                                    :class="{'border-red-500 bg-red-50': touched.state && errors.state, 'border-gray-300': !touched.state || !errors.state}"
-                                    readOnly>
+                                    class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors"
+                                    :class="{'border-red-500 bg-red-50': touched.state && errors.state, 'border-gray-300': !touched.state || !errors.state}">
                                 <p x-show="touched.state && errors.state" x-text="errors.state"
                                     class="text-red-500 text-xs mt-1 font-semibold"></p>
                             </div>
@@ -293,6 +291,7 @@
     function addressManager() {
         return {
             addresses: [],
+            userProfile: null, // Store user profile
             loading: true,
             showAddForm: false,
             editMode: false,
@@ -301,6 +300,8 @@
             editingId: null,
             editingId: null,
             fetchingPincode: false,
+            pincodeStatus: '',
+            isAutoFilling: false,
             fetchingLocation: false, // Location state
             cityOptions: [],
 
@@ -351,10 +352,12 @@
 
             async init() {
                 this.$watch('formData.postal_code', (val) => {
+                    if (this.isAutoFilling) return;
                     if (val && val.length === 6) {
                         this.fetchPincodeDetails(val);
                     } else {
                         this.cityOptions = [];
+                        this.pincodeStatus = '';
                     }
                 });
 
@@ -364,44 +367,85 @@
                 }, { deep: true });
 
                 await this.fetchAddresses();
+                await this.fetchUserProfile();
             },
 
-            async fetchPincodeDetails(pincode) {
-                this.fetchingPincode = true;
-                this.errors.postal_code = null;
+            async fetchUserProfile() {
+                const token = localStorage.getItem('access_token');
+                try {
+                    const response = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        this.userProfile = await response.json();
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch user profile', err);
+                }
+            },
+
+            async fetchPincodeDetails(pincode, retryCount = 0) {
+                if (retryCount === 0) {
+                    this.fetchingPincode = true;
+                    this.errors.postal_code = null;
+                    this.pincodeStatus = '';
+                }
 
                 try {
+                    // Try current pincode
                     const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
                     const data = await response.json();
 
                     if (data && data[0].Status === "Success") {
                         const postOffices = data[0].PostOffice;
                         this.cityOptions = postOffices.map(po => po.Name).sort();
+
+                        // If we retried, update the input value to the working pincode
+                        if (retryCount > 0) {
+                            this.formData.postal_code = pincode;
+                            this.pincodeStatus = `Nearest Hub Found: ${pincode}`;
+                        } else {
+                            this.pincodeStatus = '';
+                        }
+
                         this.formData.state = postOffices[0].State;
 
                         if (this.cityOptions.length > 0) {
-                            this.formData.city = this.cityOptions[0];
+                            // Don't overwrite city if we are editing and it matches
+                            if (!this.editMode || !this.cityOptions.includes(this.formData.city)) {
+                                this.formData.city = this.cityOptions[0];
+                            }
                         } else {
                             this.formData.city = postOffices[0].District;
                         }
 
-                        // Mark valid
                         this.touched.city = true;
                         this.touched.state = true;
                         this.errors.city = null;
                         this.errors.state = null;
+                        this.errors.postal_code = null;
+
                     } else {
-                        this.errors.postal_code = "Invalid Pincode";
-                        this.cityOptions = [];
-                        this.formData.city = '';
-                        this.formData.state = '';
-                        this.touched.city = false;
-                        this.touched.state = false;
+                        // Retry Logic
+                        if (retryCount < 5) {
+                            this.pincodeStatus = `Checking nearby hub... (${pincode})`;
+                            await new Promise(r => setTimeout(r, 800)); // Small delay for UX
+                            await this.fetchPincodeDetails(String(Number(pincode) + 1), retryCount + 1);
+                        } else {
+                            this.errors.postal_code = "Invalid Pincode";
+                            this.cityOptions = [];
+                            this.formData.city = '';
+                            this.formData.state = '';
+                            this.pincodeStatus = '';
+                        }
                     }
                 } catch (err) {
-                    console.error("Pincode fetch failed", err);
+                    // console.error("Pincode fetch failed", err);
+                    this.pincodeStatus = 'Error checking pincode';
                 } finally {
-                    this.fetchingPincode = false;
+                    if (retryCount === 0) { // Only stop loading on the main call completion
+                        this.fetchingPincode = false;
+                    }
                 }
             },
 
@@ -555,16 +599,25 @@
             editAddress(address) {
                 this.editMode = true;
                 this.editingId = address.id;
+                this.isAutoFilling = true;
                 this.formData = { ...address };
 
-                // If editing, try to populate city options if pincode exists
+                // If editing, force fetch options but suppress auto-fill logic in watcher
                 if (this.formData.postal_code && this.formData.postal_code.length === 6) {
                     this.fetchPincodeDetails(this.formData.postal_code).then(() => {
                         // Restore original city selection if it exists in options
                         if (this.cityOptions.includes(address.city)) {
                             this.formData.city = address.city;
                         }
+
+                        setTimeout(() => {
+                            this.isAutoFilling = false;
+                        }, 500);
                     });
+                } else {
+                    setTimeout(() => {
+                        this.isAutoFilling = false;
+                    }, 500);
                 }
 
                 this.showAddForm = true;
@@ -701,7 +754,7 @@
                     state: '',
                     postal_code: '',
                     landmark: '',
-                    phone: '',
+                    phone: this.userProfile?.phone || '',
                     is_default: false
                 };
             }

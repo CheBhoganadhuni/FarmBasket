@@ -81,6 +81,32 @@ class OrderAdmin(admin.ModelAdmin):
             obj.get_payment_status_display()
         )
     payment_status_badge.short_description = 'Payment'
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Override save_model to trigger emails on status changes.
+        """
+        if change:
+            # Fetch the old object from database to compare
+            old_obj = Order.objects.get(pk=obj.pk)
+            
+            # Check for Status Change
+            if obj.status != old_obj.status:
+                from apps.notifications.email import send_order_status_email
+                try:
+                    send_order_status_email(obj)
+                except Exception as e:
+                    print(f"Failed to send status email: {e}")
+            
+            # Check for Payment Status Change
+            if obj.payment_status != old_obj.payment_status:
+                from apps.notifications.email import send_payment_status_email
+                try:
+                    send_payment_status_email(obj)
+                except Exception as e:
+                    print(f"Failed to send payment status email: {e}")
+                    
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(OrderItem)

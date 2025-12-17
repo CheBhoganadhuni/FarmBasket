@@ -459,6 +459,15 @@
                         </div>
                     </template>
 
+                    <!-- Mobile Shop Icon (Logged In Only) -->
+                    <template x-if="!isLoading && isLoggedIn">
+                        <a href="/products/"
+                            class="md:hidden p-2 text-2xl hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                            title="Shop">
+                            🏪
+                        </a>
+                    </template>
+
                     <!-- Logged In User Menu -->
                     <template x-if="!isLoading && isLoggedIn">
                         <div x-data="{ userMenuOpen: false }" class="relative">
@@ -519,14 +528,7 @@
                         <span x-show="darkMode" class="text-xl">☀️</span>
                     </button>
 
-                    <!-- Mobile Shop Icon (Logged In Only) -->
-                    <template x-if="!isLoading && isLoggedIn">
-                        <a href="/products/"
-                            class="md:hidden p-2 text-2xl hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-                            title="Shop">
-                            🏪
-                        </a>
-                    </template>
+
 
 
 
@@ -598,6 +600,17 @@
                     </a>
                     <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-6">
                         Fresh from local farms to your doorstep. Organic, sustainable, and delicious.
+                    </p>
+                    <p class="text-gray-900 dark:text-white text-sm font-display font-medium mt-4">
+                        Rooted With Love -
+                        <span class="text-neon relative inline-block">
+                            Pericardium
+                            <svg class="absolute w-full h-2 -bottom-0.5 left-0 text-neon opacity-60" viewBox="0 0 200 9"
+                                fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.00025 6.99997C25.7501 2.49962 83.25 0.25 198 4" stroke="currentColor"
+                                    stroke-width="3"></path>
+                            </svg>
+                        </span>
                     </p>
                 </div>
 

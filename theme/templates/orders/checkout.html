@@ -112,6 +112,8 @@
                                     </div>
                                     <p x-show="touched.postal_code && errors.postal_code" x-text="errors.postal_code"
                                         class="text-red-500 text-xs mt-1 font-semibold"></p>
+                                    <p x-show="pincodeStatus" x-text="pincodeStatus"
+                                        class="text-orange-500 text-xs mt-1 font-medium animate-pulse"></p>
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -153,8 +155,7 @@
                                     <label class="block text-sm font-semibold mb-2">State *</label>
                                     <input type="text" x-model="address.state" @input="validateField('state')" required
                                         :class="{'border-red-500 bg-red-50': touched.state && errors.state, 'border-gray-300': !touched.state || !errors.state}"
-                                        class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors bg-gray-50"
-                                        readOnly>
+                                        class="w-full px-4 py-2 border-2 rounded-lg focus:border-neon focus:outline-none transition-colors">
                                     <p x-show="touched.state && errors.state" x-text="errors.state"
                                         class="text-red-500 text-xs mt-1 font-semibold"></p>
                                 </div>
@@ -195,6 +196,10 @@
                                     <div>
                                         <div class="font-semibold">💳 Pay Online (Razorpay)</div>
                                         <div class="text-sm text-gray-600">UPI, Cards, Wallets, NetBanking</div>
+                                        <div class="text-xs text-orange-500 mt-1" x-show="paymentMethod === 'RAZORPAY'">
+                                            Razorpay payments are auto successed, use any upi id if needed viz,
+                                            <b>success@razorpay</b>
+                                        </div>
                                     </div>
                                 </label>
 
@@ -313,6 +318,9 @@
                             <span x-show="!placing">Place Order 🚀</span>
                             <span x-show="placing">Processing, Do Not Click Anything...</span>
                         </button>
+                        <p class="text-xs text-center text-gray-500 mt-3 px-2">
+                            Confirmation email will be sent once order is confirmed. Please check your spam folder too!
+                        </p>
 
                         <!-- Trust Badges -->
                         <div class="mt-6 pt-6 border-t space-y-2 text-sm text-gray-600">
@@ -389,6 +397,8 @@
                 postal_code: null
             },
 
+            pincodeStatus: '',
+
             // Touched state to show errors only after interaction
             touched: {
                 name: false,
@@ -399,7 +409,9 @@
                 postal_code: false
             },
 
-            cityOptions: [], // New: For storing multiple post office names
+            cityOptions: [],
+
+            isAutoFilling: false, // Prevents API call when initializing addresses
 
             walletBalance: 0,
             useWallet: false,
@@ -422,9 +434,12 @@
             },
 
             get walletDeduction() {
-                // Deduct min of walletBalance or order subtotal + deliveryCharge - 1 (platform fee)
+                // Deduct min of walletBalance or order subtotal + deliveryCharge (leaving 1 for fee)
                 if (!this.useWallet) return 0;
-                const maxDeductable = Math.max(0, parseFloat(this.cart.subtotal) + this.deliveryCharge - 1);
+                // We want final payable to be 1 (Fee). 
+                // Payable = (Sub + Del + 1) - Deduction.
+                // If we want result 1, Deduction must be = (Sub + Del).
+                const maxDeductable = parseFloat(this.cart.subtotal) + this.deliveryCharge;
                 return Math.min(this.walletBalance, maxDeductable);
             },
             get payableAmount() {
@@ -458,10 +473,13 @@
 
                 // Watch for Pincode Changes for Auto-Fetch
                 this.$watch('address.postal_code', (val) => {
+                    if (this.isAutoFilling) return; // SKIP if auto-filling
+
                     if (val && val.length === 6) {
                         this.fetchPincodeDetails(val);
                     } else {
-                        this.cityOptions = []; // Reset if pincode changes/is incomplete
+                        // Only reset options if user is typing manually
+                        this.cityOptions = [];
                     }
                 });
 
@@ -472,9 +490,24 @@
             },
 
             // ... fetchPincodeDetails, handlePaymentAutoSelect, validateField, validateAll, loadWallet methods remain same ...
-            async fetchPincodeDetails(pincode) {
-                this.fetchingPincode = true;
-                this.errors.postal_code = null;
+            // Optimized Pincode Fetcher with Retry Logic
+            // Optimized Pincode Fetcher with Retry Logic
+            async fetchPincodeDetails(pincode, attempt = 0) {
+                if (this.isAutoFilling) return;
+
+                if (attempt === 0) {
+                    this.fetchingPincode = true;
+                    this.errors.postal_code = null;
+                    this.pincodeStatus = '';
+                }
+
+                // Stop recursive madness
+                if (attempt > 5) {
+                    this.fetchingPincode = false;
+                    this.errors.postal_code = "Could not verify pincode automatically. Please enter manually.";
+                    this.pincodeStatus = '';
+                    return;
+                }
 
                 try {
                     const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
@@ -483,47 +516,49 @@
                     if (data && data[0].Status === "Success") {
                         const postOffices = data[0].PostOffice;
 
-                        // Populate City Options with "Name" (Area)
+                        // Populate City Options
                         this.cityOptions = postOffices.map(po => po.Name).sort();
 
-                        // Set State from the first result (usually same for all)
-                        this.address.state = postOffices[0].State;
-
-                        // Auto-select the first city option
-                        if (this.cityOptions.length > 0) {
-                            this.address.city = this.cityOptions[0];
-                        } else {
-                            // Fallback if no names? Use District
-                            this.address.city = postOffices[0].District;
+                        // Set State
+                        if (postOffices[0].State) {
+                            this.address.state = postOffices[0].State;
+                            this.touched.state = true;
+                            this.errors.state = null;
                         }
 
-                        this.address.country = postOffices[0].Country;
+                        // Auto-select city
+                        if (this.cityOptions.length > 0) {
+                            this.address.city = this.cityOptions[0];
+                            this.touched.city = true;
+                            this.errors.city = null;
+                        }
 
-                        // Mark fields as valid/touched
-                        this.touched.city = true;
-                        this.touched.state = true;
-                        this.errors.city = null;
-                        this.errors.state = null;
-                    } else {
-                        // INVALID PINCODE CASE
-                        this.errors.postal_code = "Invalid Pincode";
-                        this.cityOptions = [];
+                        // If we had to increment/retry
+                        if (attempt > 0) {
+                            // UPDATE THE FIELD WITH SUCCESSFUL PIN
+                            this.address.postal_code = pincode;
+                            this.pincodeStatus = `Location found at nearby hub ${pincode}`;
 
-                        // Clear fields but suppress their error messages
-                        this.address.city = '';
-                        this.address.state = '';
+                            // Clear status after 3s
+                            setTimeout(() => { this.pincodeStatus = ''; }, 3000);
+                        } else {
+                            this.pincodeStatus = '';
+                        }
 
-                        // Reset touched so "Invalid City" doesn't show
-                        this.touched.city = false;
-                        this.touched.state = false;
-                        this.errors.city = null;
-                        this.errors.state = null;
+                        this.fetchingPincode = false;
+                        return;
                     }
+
+                    // If Failed -> RETRY with +1
+                    this.pincodeStatus = `Invalid location, checking nearby hub ${parseInt(pincode) + 1}...`;
+
+                    const nextPin = parseInt(pincode) + 1;
+                    this.fetchPincodeDetails(nextPin.toString(), attempt + 1);
+
                 } catch (err) {
-                    console.error("Pincode fetch failed", err);
-                    // Don't block user, let them type manually if API fails
-                } finally {
+                    // Fail silently in prod
                     this.fetchingPincode = false;
+                    this.pincodeStatus = '';
                 }
             },
 
@@ -550,7 +585,7 @@
                             }
 
                             const data = await response.json();
-                            console.log("Nominatim Checkout Response:", data);
+                            // console.log("Nominatim Checkout Response:", data);
 
                             if (data && data.address) {
                                 const addr = data.address;
@@ -579,14 +614,14 @@
                                 this.validateAll(true);
                             }
                         } catch (err) {
-                            console.error("Reverse geocoding failed", err);
+                            // console.error("Reverse geocoding failed", err);
                             alert('Failed to get address from location');
                         } finally {
                             this.fetchingLocation = false;
                         }
                     },
                     (error) => {
-                        console.error('Geolocation error', error);
+                        // console.error('Geolocation error', error);
                         alert('Unable to retrieve your location. Please check browser permissions.');
                         this.fetchingLocation = false;
                     }
@@ -651,7 +686,7 @@
                         this.walletBalance = data.balance;
                     }
                 } catch (err) {
-                    console.error('Failed to load wallet', err);
+                    // console.error('Failed to load wallet', err);
                 }
             },
 
@@ -678,7 +713,7 @@
                         }
                     }
                 } catch (err) {
-                    console.error('Failed to fetch cart', err);
+                    // console.error('Failed to fetch cart', err);
                 } finally {
                     this.loading = false;
                 }
@@ -698,7 +733,7 @@
                         this.addresses = await response.json();
                     }
                 } catch (err) {
-                    console.error('Failed to fetch addresses', err);
+                    // console.error('Failed to fetch addresses', err);
                 }
             },
 
@@ -714,7 +749,7 @@
 
                     if (response.ok) {
                         const user = await response.json();
-                        console.log('User Profile Fetched:', user); // Debugging phone issue
+                        // console.log('User Profile Fetched:', user); // Debugging phone issue
 
                         // Pre-fill name and phone if not already filled
                         if (!this.address.name) {
@@ -732,6 +767,8 @@
             fillAddressFromSaved() {
                 const selected = this.addresses.find(a => a.id === this.selectedAddressId);
 
+                this.isAutoFilling = true; // LOCK API
+
                 if (!selected) {
                     // KEEP name/phone, clear others
                     this.address.address = '';
@@ -748,7 +785,8 @@
                     if (selected.phone) this.address.phone = selected.phone;
                 }
 
-                // Trigger auto-logic handled by watcher
+                // Unlock after delay
+                setTimeout(() => { this.isAutoFilling = false; }, 500);
             },
 
             async placeOrder() {

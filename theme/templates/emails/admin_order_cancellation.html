@@ -4,199 +4,90 @@
 <head>
     <meta charset="UTF-8">
     <title>Order Cancellation Alert</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 20px;
+            color: #333;
+        }
+
+        .order-info {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 
-<body
-    style="margin: 0; padding: 0; background-color: #2a1810; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #fff5eb;">
+<body>
+    <div class="container">
+        <div class="header">
+            ⚠️ Order Cancelled
+        </div>
+        <div class="content">
+            <p><strong>Admin Alert:</strong> A user has cancelled their order.</p>
 
-    <!-- Main Container -->
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
-        style="background-color: #2a1810;">
-        <tr>
-            <td align="center" style="padding: 40px 10px;">
+            <div class="order-info">
+                <h3>Order #{{ order.order_number }}</h3>
+                <p><strong>Customer:</strong> {{ order.user.email }}</p>
+                <p><strong>Total Amount:</strong> ₹{{ order.total }}</p>
+                <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                <p><strong>Cancellation Reason:</strong> User Self-Cancellation</p>
+            </div>
 
-                <!-- Inner Width -->
-                <table role="presentation" width="100%" maxWidth="600" border="0" cellspacing="0" cellpadding="0"
-                    style="max-width: 600px; width: 100%;">
+            <p>Please check if a refund is required (especially if paid via Razorpay/Wallet).</p>
 
-                    <!-- Header -->
-                    <tr>
-                        <td style="text-align: center; padding-bottom: 30px;">
-                            <h1
-                                style="color: #ea580c; font-size: 28px; margin: 0; text-transform: uppercase; letter-spacing: 2px;">
-                                CANCELLATION ALERT</h1>
-                            <p style="color: #fdba74; font-size: 16px; margin-top: 10px;">A user has requested to cancel
-                                their order.</p>
-                        </td>
-                    </tr>
-
-                    <!-- Order Card -->
-                    <tr>
-                        <td
-                            style="background-color: #431407; border: 1px solid #7c2d12; border-radius: 16px; padding: 24px; margin-bottom: 20px;">
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td>
-                                        <p
-                                            style="color: #fdba74; font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 0 0 5px 0;">
-                                            Order Number</p>
-                                        <h2 style="color: #ffffff; font-size: 24px; margin: 0;">#{{ order.order_number
-                                            }}</h2>
-                                        <p style="color: #9ca3af; font-size: 14px; margin: 5px 0 0 0;">Placed on {{
-                                            order.created_at|date:"F j, Y, g:i a" }}</p>
-                                    </td>
-                                    <td align="right" style="vertical-align: top;">
-                                        <span
-                                            style="background-color: #ef4444; color: #ffffff; padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: bold; display: inline-block;">CANCELLED</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Spacer -->
-                    <tr>
-                        <td height="20"></td>
-                    </tr>
-
-                    <!-- Content Grid (Items & Details) -->
-                    <tr>
-                        <td>
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <!-- Items (Left/Top) -->
-                                    <td valign="top" style="padding-bottom: 20px;">
-                                        <table width="100%" border="0" cellspacing="0" cellpadding="0"
-                                            style="background-color: #431407; border: 1px solid #7c2d12; border-radius: 16px; padding: 20px;">
-                                            <tr>
-                                                <td style="padding-bottom: 15px; border-bottom: 1px solid #7c2d12;">
-                                                    <h3 style="color: #ffffff; margin: 0; font-size: 18px;">Order Items
-                                                    </h3>
-                                                </td>
-                                            </tr>
-                                            {% for item in order.items.all %}
-                                            <tr>
-                                                <td style="padding: 15px 0; border-bottom: 1px solid #5d2514;">
-                                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                                        <tr>
-                                                            <td width="60" style="vertical-align: top;">
-                                                                {% if item.product_image %}
-                                                                <div
-                                                                    style="width: 50px; height: 50px; background-color: #2a1810; border-radius: 8px; color: #fff; text-align: center; line-height: 50px; font-size: 20px;">
-                                                                    🥗</div>
-
-                                                                {% else %}
-                                                                <img src="{{ item.product_image }}" width="50"
-                                                                    height="50"
-                                                                    style="border-radius: 8px; display: block; object-fit: cover; background-color: #2a1810;"
-                                                                    alt="Prod">
-                                                                {% endif %}
-                                                            </td>
-                                                            <td style="padding-left: 15px;">
-                                                                <p
-                                                                    style="color: #fff; margin: 0 0 4px 0; font-weight: bold;">
-                                                                    {{ item.product_name }}</p>
-                                                                <p style="color: #d1d5db; margin: 0; font-size: 13px;">
-                                                                    Qty: {{ item.quantity }} x ₹{{ item.unit_price }}
-                                                                </p>
-                                                            </td>
-                                                            <td align="right" style="vertical-align: top;">
-                                                                <p
-                                                                    style="color: #fb923c; margin: 0; font-weight: bold;">
-                                                                    ₹{{ item.total_price }}</p>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </table>
-                                    </td>
-                                </tr>
-
-                                <!-- Details (Address & Sum) -->
-                                <tr>
-                                    <td>
-                                        <!-- Shipping -->
-                                        <table width="100%" border="0" cellspacing="0" cellpadding="0"
-                                            style="background-color: #431407; border: 1px solid #7c2d12; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
-                                            <tr>
-                                                <td style="padding-bottom: 10px;">
-                                                    <h3 style="color: #ffffff; margin: 0; font-size: 18px;">📍 Delivery
-                                                        Address</h3>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="color: #d1d5db; font-size: 14px; line-height: 1.5;">
-                                                    <strong style="color: #fff;">{{ order.delivery_name }}</strong><br>
-                                                    Phone: {{ order.delivery_phone }}<br>
-                                                    <div style="height: 1px; background-color: #7c2d12; margin: 8px 0;">
-                                                    </div>
-                                                    {{ order.delivery_address }}<br>
-                                                    {{ order.delivery_city }}, {{ order.delivery_state }} - {{
-                                                    order.delivery_postal_code }}
-                                                </td>
-                                            </tr>
-                                        </table>
-
-                                        <!-- Summary -->
-                                        <table width="100%" border="0" cellspacing="0" cellpadding="0"
-                                            style="background-color: #431407; border: 1px solid #7c2d12; border-radius: 16px; padding: 20px;">
-                                            <tr>
-                                                <td
-                                                    style="padding-bottom: 10px; border-bottom: 1px solid #7c2d12; margin-bottom: 10px;">
-                                                    <h3 style="color: #ffffff; margin: 0; font-size: 18px;">Refund
-                                                        Summary</h3>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding-top: 10px;">
-                                                    <table width="100%" border="0" cellspacing="0" cellpadding="0"
-                                                        style="color: #d1d5db; font-size: 14px;">
-                                                        <tr>
-                                                            <td style="padding-bottom: 5px;">Payment Method</td>
-                                                            <td align="right" style="color: #fff; font-weight: bold;">{{
-                                                                order.get_payment_method_display }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td style="padding-bottom: 5px;">Payment Status</td>
-                                                            <td align="right" style="color: #fff; font-weight: bold;">{{
-                                                                order.get_payment_status_display }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td
-                                                                style="padding-top: 10px; border-top: 1px solid #7c2d12; color: #fff; font-size: 16px; font-weight: bold;">
-                                                                Total Paid</td>
-                                                            <td align="right"
-                                                                style="padding-top: 10px; border-top: 1px solid #7c2d12; color: #ea580c; font-size: 16px; font-weight: bold;">
-                                                                ₹{{ order.total }}</td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Action Button -->
-                    <tr>
-                        <td align="center" style="padding-top: 30px;">
-                            <a href="{{ site_url }}/admin/orders/order/{{ order.id }}/change/"
-                                style="background-color: #ea580c; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">View
-                                in Admin Panel</a>
-                            <p style="color: #9ca3af; font-size: 13px; margin-top: 15px;">Please check if a refund needs
-                                to be processed manually.</p>
-                        </td>
-                    </tr>
-
-                </table>
-
-            </td>
-        </tr>
-    </table>
+            <center>
+                <a href="{{ site_url }}/admin/orders" class="btn">View Order in Admin</a>
+            </center>
+        </div>
+        <div class="footer">
+            FarmBasket Admin System
+        </div>
+    </div>
 </body>
 
 </html>
