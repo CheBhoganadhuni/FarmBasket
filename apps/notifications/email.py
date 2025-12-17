@@ -199,3 +199,21 @@ def send_account_deletion_email(user):
         
     except Exception as e:
         print(f"❌ Failed to initiate account deletion email: {e}")
+
+def send_otp_email(user, otp_code, otp_type="Forgot Password"):
+    """Send OTP email to user"""
+    try:
+        subject = f'🔑 Your {otp_type} OTP - FarmBasket'
+        
+        html_content = render_to_string('emails/otp_email.html', {
+            'user': user,
+            'otp_code': otp_code,
+            'otp_type': otp_type,
+            'site_url': settings.SITE_URL
+        })
+        
+        threading.Thread(target=_send_email_thread, args=(subject, user.email, html_content)).start()
+        
+    except Exception as e:
+        print(f"❌ Failed to initiate OTP email: {e}")
+

@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'apps.catalog',
     'apps.cart',
     'apps.checkout',
-    'apps.coupons',
+    'apps.otp',
     'apps.notifications',
     'apps.orders',
     'apps.products'
