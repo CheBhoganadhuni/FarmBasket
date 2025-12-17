@@ -6,14 +6,24 @@
 <div class="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-green-50 to-white">
     <div class="max-w-md w-full">
 
-        <!-- Card -->
-        <div class="glass rounded-2xl shadow-2xl p-8" x-data="loginForm()">
+        <!-- Card Container -->
+        <!-- Added overflow-hidden relative for the sliding mechanism -->
+        <div class="glass rounded-2xl shadow-2xl p-8 overflow-hidden relative" x-data="loginForm()">
 
-            <!-- Logo -->
+            <!-- Header -->
             <div class="text-center mb-8">
                 <div class="text-6xl mb-4">🧺</div>
-                <h2 class="font-display text-3xl font-bold mb-2">Welcome Back!</h2>
-                <p class="text-gray-600">Login to continue shopping organic</p>
+                <h2 class="font-display text-3xl font-bold mb-2 transition-opacity duration-300"
+                    x-text="showPinless ? 'Pinless Login' : 'Welcome Back!'"></h2>
+                <p class="text-gray-600 transition-opacity duration-300"
+                    x-text="showPinless ? 'Login instantly with a One-Time Password' : 'Login to continue shopping organic'">
+                </p>
+            </div>
+
+            <!-- Success Message -->
+            <div x-show="successMessage" x-transition
+                class="mb-6 p-4 bg-green-100 text-green-700 rounded-lg flex items-center gap-2">
+                <span>✅</span> <span x-text="successMessage"></span>
             </div>
 
             <!-- Error Alert -->
@@ -21,71 +31,127 @@
                 <span x-text="error"></span>
             </div>
 
-            <!-- Form -->
-            <form @submit.prevent="submitLogin">
+            <!-- SLIDER CONTAINER -->
+            <!-- 
+                 Robust Carousel Logic:
+                 - Wrapper: overflow-hidden w-full (Constrains view to 1 slide width)
+                 - Train: flex (Holds slides side-by-side)
+                 - Slides: w-full flex-shrink-0 (Forces each slide to take full Wrapper width)
+                 - Translate: -translate-x-full moves exactly one slide width (100%)
+            -->
+            <div class="overflow-hidden relative w-full">
+                <div class="flex transition-transform duration-500 ease-in-out"
+                    :class="showPinless ? '-translate-x-full' : 'translate-x-0'">
 
-                <!-- Email -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2">Email</label>
-                    <input type="email" x-model="formData.email" @input="validateEmail"
-                        class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
-                        :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
-                        placeholder="you@example.com" required>
-                    <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
-                </div>
+                    <!-- SECTION 1: PASSWORD LOGIN (Slide 1) -->
+                    <div class="w-full flex-shrink-0 px-1">
+                        <form @submit.prevent="submitPasswordLogin" novalidate>
+                            <!-- Email -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2">Email</label>
+                                <!-- Using top-level 'email' model -->
+                                <input type="email" x-model="email" @input="validateEmail(false)"
+                                    @change="validateEmail(false)"
+                                    class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                                    :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
+                                    placeholder="you@example.com">
+                                <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
+                            </div>
 
-                <!-- Password -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2">Password</label>
-                    <div class="relative">
-                        <input :type="showPassword ? 'text' : 'password'" x-model="formData.password"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
-                            placeholder="••••••••" required>
-                        <button type="button" @click="showPassword = !showPassword"
-                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                            <span x-show="!showPassword">👁️</span>
-                            <span x-show="showPassword">👁️‍🗨️</span>
-                        </button>
+                            <!-- Password -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2">Password</label>
+                                <div class="relative">
+                                    <input :type="showPassToggle ? 'text' : 'password'" x-model="password"
+                                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition"
+                                        placeholder="••••••••" required>
+                                    <button type="button" @click="showPassToggle = !showPassToggle"
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                        <span x-show="!showPassToggle">👁️</span>
+                                        <span x-show="showPassToggle">👁️‍🗨️</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Forgot -->
+                            <div class="flex items-center justify-end mb-6">
+                                <a href="{% url 'accounts:password_reset_request' %}"
+                                    class="text-sm text-neon hover:underline">Forgot password?</a>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" :disabled="loading"
+                                class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="!loading">Login 🚀</span>
+                                <span x-show="loading"
+                                    class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                            </button>
+                        </form>
                     </div>
-                </div>
 
-                <!-- Forgot -->
-                <div class="flex items-center justify-end mb-6">
-                    <a href="{% url 'accounts:password_reset_request' %}"
-                        class="text-sm text-neon hover:underline">Forgot password?</a>
-                </div>
+                    <!-- SECTION 2: PINLESS LOGIN (Slide 2) -->
+                    <div class="w-full flex-shrink-0 px-1">
+                        <form @submit.prevent="handlePinlessSubmit" novalidate>
+                            <!-- Email (Reused Model: 'email') -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2">Email Address</label>
+                                <input type="email" x-model="email" @input="validateEmail(false)"
+                                    @change="validateEmail(false)"
+                                    class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
+                                    :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
+                                    placeholder="you@example.com">
+                                <p x-show="emailError" x-text="emailError" class="text-red-500 text-sm mt-1"></p>
+                            </div>
 
-                <!-- Submit Button -->
-                <button type="submit" :disabled="loading"
-                    class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span x-show="!loading">Login 🚀</span>
-                    <span x-show="loading">
-                        <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                    </span>
+                            <!-- OTP Field -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold mb-2">One-Time Password (OTP)</label>
+                                <input type="text" x-model="otp"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-neon focus:outline-none transition "
+                                    placeholder="Have valid OTP?" maxlength="6">
+                                <p class="text-xs text-gray-500 mt-2">Enter email and click Send OTP to receive code.
+                                </p>
+                            </div>
+
+                            <!-- Submit Button (Replica of Forgot Password Logic) -->
+                            <button type="submit" :disabled="isPinlessDisabled"
+                                class="w-full py-3 text-white rounded-lg font-semibold transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                                :class="otp.length > 0 ? 'bg-neon hover:bg-green-700' : 'bg-neon hover:bg-green-600'">
+
+                                <span x-show="!loading" x-text="otp.length > 0 ? 'Login 🚀' : 'Send OTP 📧'"></span>
+                                <span x-show="loading"
+                                    class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Toggle Switch -->
+            <div class="mt-6 text-center">
+                <button @click="toggleMode" type="button"
+                    class="text-sm font-semibold text-gray-500 hover:text-neon transition flex items-center justify-center gap-2 w-full">
+                    <span x-text="showPinless ? '← Back to Password Login' : 'Try Pinless Login →'"></span>
                 </button>
-            </form>
+            </div>
+
             <!-- OR Divider -->
             <div class="flex items-center my-6">
                 <div class="flex-grow border-t border-gray-300"></div>
                 <span class="mx-2 text-gray-500 text-sm">OR</span>
                 <div class="flex-grow border-t border-gray-300"></div>
             </div>
-            <!-- Google Sign-In (Redirect) -->
+
+            <!-- Google Sign-In -->
             <div class="flex justify-center">
                 <a href="/api/auth/google/login"
-                    class="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm font-semibold text-gray-700">
+                    class="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm font-semibold text-gray-700 w-full justify-center">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
                     Continue with Google
                 </a>
             </div>
-            <!-- Register Link -->
+
             <p class="text-center mt-6 text-gray-600">
                 Don't have an account?
                 <a href="{% url 'accounts:register' %}" class="text-neon font-semibold hover:underline">Sign up</a>
@@ -96,11 +162,11 @@
 
 
 <script>
-    // Check if already logged in
+    // ✅ PRESERVED: Check if already logged in logic
     window.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('access_token');
         if (token) {
-            // Show notification
+            // Show notification if available
             if (window.showNotification) {
                 window.showNotification({
                     type: 'info',
@@ -110,114 +176,197 @@
                 });
             }
 
-            // Redirect after a short delay to let them read
+            // Redirect after a short delay
             setTimeout(() => {
                 window.location.href = '/profile/';
             }, 1000);
         }
     });
 
-
-
-
     function loginForm() {
         return {
-            formData: {
-                email: '',
-                password: ''
-            },
+            showPinless: false,
+
+            // Flattened models
+            email: '',
+            password: '',
+            otp: '',
+
             error: '',
             emailError: '',
-            showPassword: false,
+            successMessage: '',
+            showPassToggle: false,
             loading: false,
 
+            // Exact Replica of Password Reset Logic
+            get isPinlessDisabled() {
+                if (this.loading) return true;
+                if (!this.email) return true; // Block if empty
+                if (this.emailError) return true; // Block if error
+                return false;
+            },
+
             init() {
-                // Check for error in URL (e.g., from GAuth redirect)
+                // Check errors from URL
                 const params = new URLSearchParams(window.location.search);
                 if (params.has('error')) {
                     this.error = params.get('error');
-                    // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             },
 
-            validateEmail() {
+            toggleMode() {
+                this.error = '';
+                this.successMessage = '';
+                this.showPinless = !this.showPinless;
+            },
+
+            validateEmail(strict = false) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(this.formData.email)) {
+
+                if (strict && !this.email) {
+                    this.emailError = 'Please enter valid email';
+                    return;
+                }
+
+                if (!this.email) {
+                    this.emailError = '';
+                    return;
+                }
+
+                if (!emailRegex.test(this.email)) {
                     this.emailError = 'Please enter a valid email';
                 } else {
                     this.emailError = '';
                 }
             },
 
-            async submitLogin() {
+            async submitPasswordLogin() {
                 this.error = '';
+                this.successMessage = '';
                 this.loading = true;
 
                 try {
                     const response = await fetch('/api/auth/login', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(this.formData)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: this.email,
+                            password: this.password
+                        })
                     });
 
                     const data = await response.json();
+                    this.handleLoginResponse(response, data);
 
-                    if (response.ok) {
-
-
-                        // ✅ SAVE TOKENS FIRST (critical!)
-                        localStorage.setItem('access_token', data.access_token);
-                        localStorage.setItem('refresh_token', data.refresh_token);
-
-
-
-
-                        // ✅ THEN animate and redirect
-                        gsap.to('.glass', {
-                            scale: 1.05,
-                            duration: 0.3,
-                            yoyo: true,
-                            repeat: 1,
-                            onComplete: () => {
-
-                                if (data.is_superuser) {
-                                    window.location.href = '/admin/';
-                                } else {
-                                    <!-- window.confirm(Object.entries(data)); -->
-                                    window.location.href = '/profile/';
-                                }
-
-                            }
-                        });
-                    } else {
-                        // Handle Pydantic Error Format (Array of objects)
-                        if (Array.isArray(data.detail) && data.detail.length > 0) {
-                            const firstError = data.detail[0];
-                            // Prefer concise 'ctx.reason' if available, else 'msg'
-                            this.error = firstError.ctx?.reason || firstError.msg || 'Validation error';
-                        } else if (typeof data.detail === 'string') {
-                            this.error = data.detail;
-                        } else {
-                            this.error = data.message || 'Invalid email or password';
-                        }
-
-                        console.error('Login failed:', data);
-                        gsap.fromTo('.glass',
-                            { x: -10 },
-                            { x: 10, duration: 0.1, repeat: 5, yoyo: true }
-                        );
-                    }
                 } catch (err) {
                     console.error('Login error:', err);
                     this.error = 'Something went wrong. Please try again.';
+                    this.loading = false;
+                }
+            },
+
+            async handlePinlessSubmit() {
+                // Unified logic based on OTP input length
+                if (this.otp.length > 0) {
+                    await this.verifyPinlessLogin();
+                } else {
+                    await this.sendPinlessOtp();
+                }
+            },
+
+            async sendPinlessOtp() {
+                this.validateEmail(true); // Strict check
+                if (this.emailError || !this.email) {
+                    return;
+                }
+
+                this.loading = true;
+                this.error = '';
+                this.successMessage = '';
+
+                try {
+                    const res = await fetch('/api/otp/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: this.email, type: 'bypassPwd' })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        this.successMessage = data.message || 'OTP sent successfully! Check your inbox.';
+                        // Focus OTP field
+                        setTimeout(() => document.querySelector('input[placeholder="Enter Code"]')?.focus(), 100);
+                        this.error = '';
+                    } else {
+                        this.error = data.detail || 'Failed to send OTP.';
+                    }
+                } catch (e) {
+                    this.error = "Connection error.";
                 } finally {
                     this.loading = false;
                 }
-            }
+            },
 
+            async verifyPinlessLogin() {
+                this.validateEmail(true);
+                if (this.emailError) return;
+
+                this.loading = true;
+                this.error = '';
+
+                try {
+                    const res = await fetch('/api/otp/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: this.email,
+                            otp: this.otp,
+                            type: 'bypassPwd'
+                        })
+                    });
+                    const data = await res.json();
+                    this.handleLoginResponse(res, data);
+
+                } catch (e) {
+                    this.error = "Verification failed.";
+                    this.loading = false;
+                }
+            },
+
+            handleLoginResponse(response, data) {
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+
+                    gsap.to('.glass', {
+                        scale: 1.05,
+                        duration: 0.3,
+                        yoyo: true,
+                        repeat: 1,
+                        onComplete: () => {
+                            if (data.is_superuser) {
+                                window.location.href = '/admin/';
+                            } else {
+                                window.location.href = '/profile/';
+                            }
+                        }
+                    });
+                } else {
+                    // Normalize Error Handling
+                    if (Array.isArray(data.detail) && data.detail.length > 0) {
+                        this.error = data.detail[0].msg || 'Validation error';
+                    } else {
+                        this.error = data.detail || data.message || 'Login failed';
+                    }
+
+                    this.loading = false;
+                    gsap.fromTo('.glass',
+                        { x: -10 },
+                        { x: 10, duration: 0.1, repeat: 5, yoyo: true }
+                    );
+                }
+            }
         }
     }
 </script>
