@@ -7,7 +7,7 @@ from .models import Cart, CartItem
 from apps.catalog.models import Product
 from .schemas import (
     CartSchema, CartItemSchema, AddToCartSchema, 
-    UpdateCartItemSchema, MessageSchema
+    UpdateCartItemSchema, MessageSchema, SyncCartSchema
 )
 from apps.accounts.auth import AuthBearer
 
@@ -192,3 +192,38 @@ def get_cart_count(request):
     """Get cart items count"""
     cart = get_or_create_cart(request.auth)
     return {"count": cart.items_count}
+
+
+@router.post("/sync", response=MessageSchema, auth=auth)
+def sync_cart(request, data: SyncCartSchema):
+    """Sync guest cart with user cart"""
+    cart = get_or_create_cart(request.auth)
+    
+    for item in data.items:
+        try:
+            product = Product.objects.get(id=item.product_id, is_active=True)
+            if not product.in_stock:
+                continue
+                
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={'quantity': item.quantity, 'is_selected': item.is_selected}
+            )
+            
+            if not created:
+                # Add quantities
+                new_qty = cart_item.quantity + item.quantity
+                if new_qty > product.stock_quantity:
+                    new_qty = product.stock_quantity
+                
+                cart_item.quantity = new_qty
+                # Merge selection (guest state overrides if provided, otherwise OR)
+                # But since we fixed frontend to send explicit state, we can trust item.is_selected
+                cart_item.is_selected = item.is_selected
+                cart_item.save()
+                
+        except Product.DoesNotExist:
+            continue
+            
+    return MessageSchema(message="Cart synced", success=True, cart_count=cart.items_count)

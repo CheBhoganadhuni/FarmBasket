@@ -513,10 +513,24 @@
 
                     <!-- Not Logged In (Hidden on Mobile) -->
                     <template x-if="!isLoading && !isLoggedIn">
-                        <div class="hidden md:flex items-center space-x-4">
-                            <a href="{% url 'accounts:login' %}" class="hover:text-neon transition">Login</a>
+                        <div class="hidden md:flex items-center space-x-6">
+                            <!-- Guest Wishlist -->
+                            <a href="/wishlist/" class="relative text-2xl hover:text-neon transition group"
+                                title="Wishlist">
+                                ❤️
+                            </a>
+
+                            <!-- Guest Cart -->
+                            <a href="/cart/" class="relative text-2xl hover:text-neon transition group" title="Cart">
+                                🛒
+                            </a>
+
+                            <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
+
+                            <a href="{% url 'accounts:login' %}"
+                                class="hover:text-neon transition font-medium">Login</a>
                             <a href="{% url 'accounts:register' %}"
-                                class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition">Sign
+                                class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition font-medium shadow-lg shadow-neon/30">Sign
                                 Up</a>
                         </div>
                     </template>
@@ -554,6 +568,19 @@
                 <!-- Mobile Auth Options -->
                 <template x-if="!isLoading && !isLoggedIn">
                     <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <a href="/wishlist/"
+                            class="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition">
+                            <span class="text-xl">❤️</span>
+                            <span class="font-medium">Wishlist</span>
+                        </a>
+                        <a href="/cart/"
+                            class="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition">
+                            <span class="text-xl">🛒</span>
+                            <span class="font-medium">Cart</span>
+                            <span class="ml-auto bg-neon text-white text-xs font-bold px-2 py-1 rounded-full"
+                                x-data="navbarCart()" x-show="cartCount > 0" x-text="cartCount"></span>
+                        </a>
+                        <hr class="border-gray-200 dark:border-gray-700 my-1">
                         <a href="{% url 'accounts:login' %}"
                             class="block py-2 text-center border border-neon text-neon rounded-lg">Login</a>
                         <a href="{% url 'accounts:register' %}"
@@ -816,9 +843,12 @@
 
                     if (!token) {
                         this.isLoggedIn = false;
-                        this.isLoading = false; // ✅ Done loading
+                        this.isLoading = false;
                         return;
                     }
+
+                    // Start Sync immediately (optimistic)
+                    this.syncUserData();
 
                     fetch('/api/auth/me', {
                         headers: {
@@ -836,6 +866,7 @@
                             this.isLoggedIn = true;
                             this.userName = user.first_name;
                             this.userAvatar = user.avatar_url;
+                            // this.syncUserData(); // Moved earlier for performance
                         })
                         .catch(err => {
                             this.isLoggedIn = false;
@@ -851,6 +882,70 @@
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
                     window.location.href = '{% url "accounts:login" %}';
+                },
+
+                async syncUserData() {
+                    // "Magic Sync"
+                    const guestCart = localStorage.getItem('guest_cart');
+                    const guestWishlist = localStorage.getItem('guest_wishlist');
+                    const needCheckout = localStorage.getItem('need_checkout');
+
+                    const token = localStorage.getItem('access_token');
+
+                    if (guestCart || guestWishlist) {
+                        try {
+                            if (guestCart) {
+                                const items = JSON.parse(guestCart);
+                                // Map to Sync Schema: {product_id, quantity, is_selected}
+                                const syncItems = items.map(i => ({
+                                    product_id: i.product_id || i.id, // Handle both structures if needed
+                                    quantity: i.quantity,
+                                    is_selected: (i.is_selected !== undefined) ? i.is_selected : true
+                                }));
+
+                                if (syncItems.length > 0) {
+                                    await fetch('/api/cart/sync', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ items: syncItems })
+                                    });
+                                }
+                                localStorage.removeItem('guest_cart');
+                            }
+
+                            if (guestWishlist) {
+                                const list = JSON.parse(guestWishlist);
+                                // Extract IDs: list might be objects or strings
+                                const ids = list.map(i => (typeof i === 'object' ? i.id : i));
+
+                                if (ids.length > 0) {
+                                    await fetch('/api/catalog/wishlist/sync', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ product_ids: ids })
+                                    });
+                                }
+                                localStorage.removeItem('guest_wishlist');
+                            }
+
+                            // Re-fetch cart count to update UI
+                            window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: '...' } })); // Trigger reload
+                            // Maybe show toast? "Synced your guest items!"
+                        } catch (e) {
+                            console.error("Sync failed", e);
+                        }
+                    }
+
+                    if (needCheckout) {
+                        localStorage.removeItem('need_checkout');
+                        window.location.href = '/checkout/';
+                    }
                 }
             }
         }
@@ -879,7 +974,9 @@
                 async loadCartCount() {
                     const token = localStorage.getItem('access_token');
                     if (!token) {
-                        this.cartCount = 0;
+                        // Guest Logic
+                        const guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                        this.cartCount = guestCart.length;
                         return;
                     }
 

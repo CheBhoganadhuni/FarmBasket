@@ -17,6 +17,11 @@ class ReviewCreateSchema(BaseModel):
     comment: str = Field(..., min_length=10)
 
 
+class SyncWishlistSchema(BaseModel):
+    """Schema for syncing guest wishlist"""
+    product_ids: List[str]
+
+
 # ===== OUTPUT SCHEMAS =====
 
 class CategorySchema(BaseModel):

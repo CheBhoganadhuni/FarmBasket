@@ -127,25 +127,33 @@
             async init() {
                 const token = localStorage.getItem('access_token');
                 if (!token) {
-                    window.location.href = '/auth/login/?next=/wishlist/';
-                    return;
+                    await this.fetchWishlist();
                 }
 
-                // Animate entrance - Re-added as user liked it generally, just ensuring safeness
-                if (typeof gsap !== 'undefined') {
-                    gsap.from('.glass', {
-                        y: 20,
-                        opacity: 0,
-                        duration: 0.5,
-                        stagger: 0.1
-                    });
+                if (token) {
+                    // Normal auth flow
                 }
+
+                // Animate entrance - Removed for guest visibility safety
+                // if (typeof gsap !== 'undefined') { ... }
 
                 await this.fetchWishlist();
             },
 
             async fetchWishlist() {
                 const token = localStorage.getItem('access_token');
+                if (!token) {
+                    // Guest Logic
+                    const guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    this.items = guestWish.map(i => {
+                        return typeof i === 'object' ? i : { id: i, name: 'Unknown Product' };
+                    });
+                    // Filter out IDs if they don't have details? 
+                    // Ideally guest wishlist items should be objects.
+                    this.loading = false;
+                    return;
+                }
+
                 try {
                     const response = await fetch('/api/catalog/wishlist', {
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -179,23 +187,31 @@
                 if (this.loadingRemoveIds.includes(productId)) return;
                 this.loadingRemoveIds.push(productId);
 
-                try {
-                    const response = await fetch(`/api/catalog/wishlist/remove/${productId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-
-                    if (response.ok) {
-                        // Remove locally
-                        this.items = this.items.filter(p => p.id !== productId);
-                        window.showNotification({
-                            type: 'success',
-                            message: 'Removed from wishlist'
+                if (token) {
+                    try {
+                        const response = await fetch(`/api/catalog/wishlist/remove/${productId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
                         });
+
+                        if (response.ok) {
+                            // Remove locally
+                            this.items = this.items.filter(p => p.id !== productId);
+                            window.showNotification({ type: 'success', message: 'Removed from wishlist' });
+                        }
+                    } catch (err) {
+                        console.error('Failed to remove', err);
+                    } finally {
+                        this.loadingRemoveIds = this.loadingRemoveIds.filter(id => id !== productId);
                     }
-                } catch (err) {
-                    console.error('Failed to remove', err);
-                } finally {
+                } else {
+                    // Guest Logic
+                    let guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    guestWish = guestWish.filter(i => (typeof i === 'object' ? i.id : i) !== productId);
+                    localStorage.setItem('guest_wishlist', JSON.stringify(guestWish));
+
+                    this.items = this.items.filter(item => item.id !== productId);
+                    window.showNotification({ type: 'success', message: 'Removed from wishlist' });
                     this.loadingRemoveIds = this.loadingRemoveIds.filter(id => id !== productId);
                 }
             },
@@ -205,37 +221,72 @@
                 if (this.loadingCartIds.includes(productId)) return;
                 this.loadingCartIds.push(productId);
 
-                try {
-                    const response = await fetch('/api/cart/add', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ product_id: productId, quantity: 1 })
-                    });
+                if (token) {
+                    try {
+                        const response = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ product_id: productId, quantity: 1 })
+                        });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success) {
-                            window.dispatchEvent(new CustomEvent('cart-updated', {
-                                detail: { count: data.cart_count }
-                            }));
-                            window.showNotification({
-                                type: 'cart',
-                                title: 'Added to Cart! 🎉',
-                                message: `${data.message}<br><br>Ready to checkout?`,
-                                confirmText: 'View Cart',
-                                showCancel: true,
-                                onConfirm: () => {
-                                    window.location.href = '/cart/';
-                                }
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                window.dispatchEvent(new CustomEvent('cart-updated', {
+                                    detail: { count: data.cart_count }
+                                }));
+                                window.showNotification({
+                                    type: 'cart',
+                                    title: 'Added to Cart! 🎉',
+                                    message: `${data.message}<br><br>Ready to checkout?`,
+                                    confirmText: 'View Cart',
+                                    showCancel: true,
+                                    onConfirm: () => { window.location.href = '/cart/'; }
+                                });
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to add to cart', err);
+                    } finally {
+                        this.loadingCartIds = this.loadingCartIds.filter(id => id !== productId);
+                    }
+                } else {
+                    // Guest Logic
+                    try {
+                        const product = this.items.find(i => i.id === productId);
+                        if (!product) throw new Error("Product not found");
+
+                        let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                        const existing = guestCart.find(i => i.product_id === productId);
+
+                        if (existing) {
+                            existing.quantity += 1;
+                        } else {
+                            guestCart.push({
+                                product_id: product.id,
+                                quantity: 1,
+                                is_selected: true,
+                                product_name: product.name,
+                                product_slug: product.slug,
+                                product_image: product.featured_image, // Use correct field from wishlist item
+                                unit_price: product.price
                             });
                         }
-                    }
-                } catch (err) {
-                    console.error('Failed to add to cart', err);
-                } finally {
+                        localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: guestCart.length } }));
+
+                        window.showNotification({
+                            type: 'cart',
+                            title: 'Added to Cart',
+                            message: `Added to your cart.`,
+                            confirmText: 'View Cart',
+                            showCancel: true,
+                            onConfirm: () => { window.location.href = '/cart/'; }
+                        });
+                    } catch (e) { console.error(e); }
                     this.loadingCartIds = this.loadingCartIds.filter(id => id !== productId);
                 }
             }

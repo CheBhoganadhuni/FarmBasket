@@ -433,18 +433,31 @@
                 this.loadingSelection = true;
                 this.loadingSelectionIds.push(itemId);
 
-                try {
-                    const response = await fetch(`/api/cart/select/${itemId}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                if (token) {
+                    try {
+                        const response = await fetch(`/api/cart/select/${itemId}`, {
+                            method: 'PUT',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
 
-                    if (response.ok) {
-                        await this.fetchCart(); // Refetch to update totals
+                        if (response.ok) {
+                            await this.fetchCart(); // Refetch to update totals
+                        }
+                    } catch (err) {
+                        console.error('Toggle item failed', err);
+                    } finally {
+                        this.loadingSelection = false;
+                        this.loadingSelectionIds = this.loadingSelectionIds.filter(id => id !== itemId);
                     }
-                } catch (err) {
-                    console.error('Toggle item failed', err);
-                } finally {
+                } else {
+                    // Guest Logic
+                    let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                    const item = guestCart.find(i => i.product_id === itemId);
+                    if (item) {
+                        item.is_selected = !item.is_selected;
+                        localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                        await this.fetchCart();
+                    }
                     this.loadingSelection = false;
                     this.loadingSelectionIds = this.loadingSelectionIds.filter(id => id !== itemId);
                 }
@@ -469,12 +482,6 @@
             },
 
             async init() {
-                const token = localStorage.getItem('access_token');
-                if (!token) {
-                    window.location.href = '/auth/login/?next=/cart/';
-                    return;
-                }
-
                 // Animate entrance - Safe
                 if (typeof gsap !== 'undefined') {
                     gsap.from('.glass', {
@@ -492,27 +499,64 @@
             async fetchCart() {
                 const token = localStorage.getItem('access_token');
 
-                try {
-                    const response = await fetch('/api/cart/', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+                if (token) {
+                    try {
+                        const response = await fetch('/api/cart/', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
 
-                    if (response.ok) {
-                        this.cart = await response.json();
-                        // Initially Select All
-                        this.selectedItems = this.cart.items.map(item => item.id);
-                        this.updateNavbarCart();
-                    } else if (response.status === 401) {
-                        localStorage.removeItem('access_token');
-                        window.location.href = '/auth/login/?next=/cart/';
-                    } else {
-                        console.error('Cart fetch failed:', response.status);
+                        if (response.ok) {
+                            this.cart = await response.json();
+                            // Initially Select All
+                            this.selectedItems = this.cart.items.map(item => item.id);
+                            this.updateNavbarCart();
+                        } else if (response.status === 401) {
+                            localStorage.removeItem('access_token');
+                            this.cart = null; // trigger guest view or empty
+                        } else {
+                            console.error('Cart fetch failed:', response.status);
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch cart', err);
+                    } finally {
+                        this.loading = false;
                     }
-                } catch (err) {
-                    console.error('Failed to fetch cart', err);
-                } finally {
+                } else {
+                    // Guest Logic
+                    const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                    if (guestItems.length > 0) {
+                        let subtotal = 0;
+                        const items = guestItems.map(item => {
+                            const total = parseFloat(item.unit_price) * item.quantity;
+                            if (item.is_selected) subtotal += total;
+
+                            return {
+                                id: item.product_id, // Use product_id as ID
+                                product_id: item.product_id,
+                                product_name: item.product_name || 'Unknown',
+                                product_slug: item.product_slug || '',
+                                product_image: item.product_image || '',
+                                unit_price: item.unit_price || 0,
+                                quantity: item.quantity,
+                                total_price: total.toFixed(2),
+                                in_stock: true,
+                                available_quantity: 100, // unlimited for guest demo?
+                                is_selected: item.is_selected
+                            };
+                        });
+
+                        this.cart = {
+                            id: 'guest',
+                            items: items,
+                            items_count: items.length,
+                            subtotal: subtotal.toFixed(2),
+                            total: subtotal.toFixed(2)
+                        };
+                    } else {
+                        this.cart = { items: [], items_count: 0, total_price: 0 };
+                    }
                     this.loading = false;
                 }
             },
@@ -522,38 +566,50 @@
 
                 const token = localStorage.getItem('access_token');
 
-                if (this.loadingUpdateIds.includes(itemId)) return;
-                this.loadingUpdateIds.push(itemId);
+                if (token) {
+                    if (this.loadingUpdateIds.includes(itemId)) return;
+                    this.loadingUpdateIds.push(itemId);
 
-                try {
-                    const response = await fetch(`/api/cart/update/${itemId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ quantity: newQuantity })
-                    });
+                    try {
+                        const response = await fetch(`/api/cart/update/${itemId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ quantity: newQuantity })
+                        });
 
-                    if (response.ok) {
-                        await this.fetchCart();
-                    } else {
-                        const error = await response.json();
+                        if (response.ok) {
+                            await this.fetchCart();
+                        } else {
+                            const error = await response.json();
+                            window.showNotification({
+                                type: 'error',
+                                title: 'Cannot Update',
+                                message: error.message || 'Failed to update quantity'
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to update quantity', err);
                         window.showNotification({
                             type: 'error',
-                            title: 'Cannot Update',
-                            message: error.message || 'Failed to update quantity'
+                            title: 'Error',
+                            message: 'Failed to update quantity. Please try again.'
                         });
+                    } finally {
+                        this.loadingUpdateIds = this.loadingUpdateIds.filter(id => id !== itemId);
                     }
-                } catch (err) {
-                    console.error('Failed to update quantity', err);
-                    window.showNotification({
-                        type: 'error',
-                        title: 'Error',
-                        message: 'Failed to update quantity. Please try again.'
-                    });
-                } finally {
-                    this.loadingUpdateIds = this.loadingUpdateIds.filter(id => id !== itemId);
+                } else {
+                    // Guest Logic
+                    let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                    const item = guestCart.find(i => i.product_id === itemId);
+                    if (item) {
+                        item.quantity = newQuantity;
+                        localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                        await this.fetchCart();
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: guestCart.length } }));
+                    }
                 }
             },
 
@@ -582,50 +638,82 @@
                 this.loadingWishlistIds.push(itemId);
                 const token = localStorage.getItem('access_token');
 
-                try {
-                    const response = await fetch(`/api/catalog/wishlist/add/${productId}`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    const data = await response.json();
+                if (token) {
+                    try {
+                        const response = await fetch(`/api/catalog/wishlist/add/${productId}`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await response.json();
 
-                    window.showNotification({
-                        type: data.success ? 'success' : 'info',
-                        title: 'Wishlist',
-                        message: data.message
-                    });
-                } catch (err) {
-                    console.error('Wishlist add failed', err);
-                } finally {
+                        window.showNotification({
+                            type: data.success ? 'success' : 'info',
+                            title: 'Wishlist',
+                            message: data.message
+                        });
+                    } catch (err) {
+                        console.error('Wishlist add failed', err);
+                    } finally {
+                        this.loadingWishlistIds = this.loadingWishlistIds.filter(id => id !== itemId);
+                    }
+                } else {
+                    // Guest Logic (Move to Wishlist)
+                    try {
+                        let wishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                        // Check duplicates
+                        if (!wishlist.some(i => (typeof i === 'object' ? i.id : i) === productId)) {
+                            // Find details from cart item
+                            const itemToRemove = this.itemToRemove; // set in removeItem before confirm
+                            if (itemToRemove && itemToRemove.product_id === productId) {
+                                wishlist.push({
+                                    id: productId,
+                                    name: itemToRemove.product_name,
+                                    slug: itemToRemove.product_slug,
+                                    price: itemToRemove.unit_price,
+                                    featured_image: itemToRemove.product_image,
+                                    in_stock: true
+                                });
+                                localStorage.setItem('guest_wishlist', JSON.stringify(wishlist));
+                                window.showNotification({ type: 'success', title: 'Wishlist', message: 'Moved to wishlist' });
+                            }
+                        }
+                    } catch (e) { console.error(e); }
                     this.loadingWishlistIds = this.loadingWishlistIds.filter(id => id !== itemId);
                 }
             },
 
             async doRemoveItem(itemId) {
                 const token = localStorage.getItem('access_token');
-
                 if (this.loadingRemoveIds.includes(itemId)) return;
                 this.loadingRemoveIds.push(itemId);
 
-                try {
-                    const response = await fetch(`/api/cart/remove/${itemId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+                if (token) {
+                    try {
+                        const response = await fetch(`/api/cart/remove/${itemId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
 
-                    if (response.ok) {
-                        await this.fetchCart();
+                        if (response.ok) {
+                            await this.fetchCart();
+                        }
+                    } catch (err) {
+                        console.error('Failed to remove item', err);
+                    } finally {
+                        this.loadingRemoveIds = this.loadingRemoveIds.filter(id => id !== itemId);
                     }
-                } catch (err) {
-                    console.error('Failed to remove item', err);
-                    window.showNotification({
-                        type: 'error',
-                        title: 'Error',
-                        message: 'Failed to remove item. Please try again.'
-                    });
-                } finally {
+                } else {
+                    // Guest Logic
+                    let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                    const initialLen = guestCart.length;
+                    guestCart = guestCart.filter(i => i.product_id !== itemId);
+
+                    localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                    await this.fetchCart();
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: guestCart.length } }));
+                    window.showNotification({ type: 'success', message: 'Item removed' });
                     this.loadingRemoveIds = this.loadingRemoveIds.filter(id => id !== itemId);
                 }
             },
@@ -648,15 +736,22 @@
                 this.isClearing = true;
 
                 try {
-                    const response = await fetch('/api/cart/clear', {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+                    if (token) {
+                        const response = await fetch('/api/cart/clear', {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
 
-                    if (response.ok) {
+                        if (response.ok) {
+                            await this.fetchCart();
+                        }
+                    } else {
+                        // Guest Logic
+                        localStorage.removeItem('guest_cart');
                         await this.fetchCart();
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: 0 } }));
                     }
                 } catch (err) {
                     console.error('Failed to clear cart', err);

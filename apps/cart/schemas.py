@@ -18,6 +18,17 @@ class UpdateCartItemSchema(BaseModel):
     quantity: int = Field(..., ge=0)  # 0 means remove
 
 
+class SyncCartItemSchema(BaseModel):
+    """Schema for syncing guest cart item"""
+    product_id: str
+    quantity: int = Field(..., ge=1)
+    is_selected: bool = True
+
+class SyncCartSchema(BaseModel):
+    """Schema for syncing guest cart"""
+    items: list[SyncCartItemSchema]
+
+
 # ===== OUTPUT SCHEMAS =====
 
 class CartItemSchema(BaseModel):

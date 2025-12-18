@@ -279,7 +279,13 @@
 
             async loadWishlist() {
                 const token = localStorage.getItem('access_token');
-                if (!token) return;
+                if (!token) {
+                    // Load from Guest Wishlist
+                    const guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    // We store objects or IDs. Local state 'wishlist' is just list of IDs for checking.
+                    this.wishlist = guestWish.map(i => (typeof i === 'object' ? i.id : i));
+                    return;
+                }
 
                 try {
                     const response = await fetch('/api/catalog/wishlist', {
@@ -297,13 +303,47 @@
 
             async toggleWishlist(productId) {
                 const token = localStorage.getItem('access_token');
+
+                if (this.loadingWishlistIds.includes(productId)) return;
+                this.loadingWishlistIds.push(productId);
+
                 if (!token) {
-                    this.showLoginModal = true;
+                    // Guest Logic
+                    let guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    // Check if exists (handle objects/IDs)
+                    const index = guestWish.findIndex(i => (typeof i === 'object' ? i.id : i) === productId);
+
+                    if (index > -1) {
+                        // Remove
+                        guestWish.splice(index, 1);
+                        this.wishlist = this.wishlist.filter(id => id !== productId);
+                        window.showNotification({ type: 'success', message: 'Removed from wishlist' });
+                    } else {
+                        // Add
+                        const product = this.products.find(p => p.id === productId);
+                        if (product) {
+                            // Store minimal data needed for wishlist card
+                            guestWish.push({
+                                id: product.id,
+                                name: product.name,
+                                slug: product.slug,
+                                price: product.price, // or display_price
+                                featured_image: product.featured_image,
+                                average_rating: product.average_rating,
+                                review_count: product.review_count,
+                                category_name: product.category_name,
+                                category_icon: product.category_icon,
+                                in_stock: product.in_stock,
+                                is_organic_certified: product.is_organic_certified
+                            });
+                            this.wishlist.push(productId);
+                            window.showNotification({ type: 'success', message: 'Added to wishlist' });
+                        }
+                    }
+                    localStorage.setItem('guest_wishlist', JSON.stringify(guestWish));
+                    this.loadingWishlistIds = this.loadingWishlistIds.filter(id => id !== productId);
                     return;
                 }
-
-                if (this.loadingWishlistIds.includes(productId)) return; // Prevent double click
-                this.loadingWishlistIds.push(productId);
 
                 const isInWishlist = this.wishlist.includes(productId);
                 const url = isInWishlist
@@ -332,13 +372,51 @@
 
             async addToCart(productId) {
                 const token = localStorage.getItem('access_token');
-                if (!token) {
-                    this.showLoginModal = true;
-                    return;
-                }
 
                 if (this.loadingCartIds.includes(productId)) return;
                 this.loadingCartIds.push(productId);
+
+                if (!token) {
+                    // Guest Logic
+                    try {
+                        const product = this.products.find(p => p.id === productId);
+                        if (!product) throw new Error("Product not found");
+
+                        let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                        const existing = guestCart.find(i => i.product_id === productId);
+
+                        if (existing) {
+                            existing.quantity += 1;
+                            // Check stock? Assuming product has stock_quantity
+                            // If not available in list, we skip.
+                            window.showNotification({ type: 'success', message: 'Quantity updated in cart' });
+                        } else {
+                            guestCart.push({
+                                product_id: product.id,
+                                quantity: 1,
+                                is_selected: true,
+                                // Store details for Cart Page rendering
+                                product_name: product.name,
+                                product_slug: product.slug,
+                                product_image: product.featured_image,
+                                unit_price: product.price, // Use appropriate price
+                                stock_quantity: 100 // Fallback or real if available
+                            });
+                            window.showNotification({
+                                type: 'cart',
+                                title: 'Added to Cart! 🎉',
+                                message: `Added to your cart.`,
+                                confirmText: 'View Cart',
+                                showCancel: true,
+                                onConfirm: () => { window.location.href = '/cart/'; }
+                            });
+                        }
+                        localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: guestCart.length } }));
+                    } catch (e) { console.error(e); }
+                    this.loadingCartIds = this.loadingCartIds.filter(id => id !== productId);
+                    return;
+                }
 
                 try {
                     const response = await fetch('/api/cart/add', {

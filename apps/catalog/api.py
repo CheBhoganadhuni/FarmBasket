@@ -8,7 +8,7 @@ from ninja.pagination import paginate
 from .models import Category, Product, Review, Wishlist
 from .schemas import (
     CategorySchema, ProductListSchema, ProductDetailSchema,
-    ReviewSchema, ReviewCreateSchema, MessageSchema
+    ReviewSchema, ReviewCreateSchema, MessageSchema, SyncWishlistSchema
 )
 from apps.accounts.auth import AuthBearer
 
@@ -324,3 +324,18 @@ def check_wishlist(request, product_id: str):
     ).exists()
     
     return {"in_wishlist": exists}
+
+
+@router.post("/wishlist/sync", response=MessageSchema, auth=auth)
+def sync_wishlist(request, data: SyncWishlistSchema):
+    """Sync guest wishlist with user wishlist"""
+    user = request.auth
+    
+    for product_id in data.product_ids:
+        try:
+            product = Product.objects.get(id=product_id)
+            Wishlist.objects.get_or_create(user=user, product=product)
+        except Product.DoesNotExist:
+            continue
+            
+    return {"message": "Wishlist synced", "success": True}

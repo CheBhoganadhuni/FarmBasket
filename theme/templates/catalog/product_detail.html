@@ -367,9 +367,8 @@
                 await this.fetchReviews();
 
                 const token = localStorage.getItem('access_token');
-                if (token) {
-                    await this.checkWishlist();
-                }
+
+                await this.checkWishlist(); // Handle both auth and guest
             },
 
             async fetchProduct() {
@@ -407,8 +406,12 @@
 
             async checkWishlist() {
                 const token = localStorage.getItem('access_token');
-                if (!token || !this.product) {
-                    this.inWishlist = false;
+                if (!this.product) return;
+
+                if (!token) {
+                    // Guest Check
+                    const guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    this.inWishlist = guestWish.some(i => (typeof i === 'object' ? i.id : i) === this.product.id);
                     return;
                 }
 
@@ -430,12 +433,33 @@
 
             async toggleWishlist() {
                 const token = localStorage.getItem('access_token');
-                if (!token) {
-                    this.showLoginModal = true;
-                    return;
-                }
 
                 this.isLoadingWishlist = true;
+
+                if (!token) {
+                    // Guest Logic
+                    let guestWish = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+                    if (this.inWishlist) {
+                        // Remove
+                        guestWish = guestWish.filter(i => (typeof i === 'object' ? i.id : i) !== this.product.id);
+                        this.inWishlist = false;
+                    } else {
+                        // Add
+                        guestWish.push({
+                            id: this.product.id,
+                            name: this.product.name,
+                            slug: this.product.slug,
+                            price: this.product.price,
+                            featured_image: this.product.featured_image,
+                            // Add other fields if needed by Wishlist page
+                            in_stock: this.product.in_stock
+                        });
+                        this.inWishlist = true;
+                    }
+                    localStorage.setItem('guest_wishlist', JSON.stringify(guestWish));
+                    this.isLoadingWishlist = false;
+                    return;
+                }
 
                 const url = this.inWishlist
                     ? `/api/catalog/wishlist/remove/${this.product.id}`
@@ -470,12 +494,44 @@
 
             async addToCart() {
                 const token = localStorage.getItem('access_token');
-                if (!token) {
-                    this.showLoginModal = true;
-                    return;
-                }
 
                 this.isLoadingCart = true;
+
+                if (!token) {
+                    // Guest Logic
+                    try {
+                        let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+                        const existing = guestCart.find(i => i.product_id === this.product.id);
+
+                        if (existing) {
+                            existing.quantity += this.quantity; // Add to existing quantity
+                        } else {
+                            guestCart.push({
+                                product_id: this.product.id,
+                                quantity: this.quantity,
+                                is_selected: true,
+                                product_name: this.product.name,
+                                product_slug: this.product.slug,
+                                product_image: this.product.featured_image,
+                                unit_price: this.product.price
+                            });
+                        }
+                        localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: guestCart.length } }));
+
+                        window.showNotification({
+                            type: 'cart',
+                            title: 'Added to Cart! 🎉',
+                            message: `Added to your cart.`,
+                            confirmText: 'View Cart',
+                            showCancel: true,
+                            onConfirm: () => { window.location.href = '/cart/'; }
+                        });
+                    } catch (e) { console.error(e); } finally {
+                        this.isLoadingCart = false;
+                    }
+                    return;
+                }
 
                 try {
                     const response = await fetch('/api/cart/add', {
