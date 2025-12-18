@@ -50,7 +50,8 @@
                             <div class="mb-6">
                                 <label class="block text-sm font-semibold mb-2">Email</label>
                                 <!-- Using top-level 'email' model -->
-                                <input type="email" x-model="email"
+                                <input type="email" x-model="email" @input="validateEmail(false)"
+                                    @change="validateEmail(false)"
                                     class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
                                     :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
                                     placeholder="you@example.com">
@@ -94,7 +95,8 @@
                             <!-- Email (Reused Model: 'email') -->
                             <div class="mb-4">
                                 <label class="block text-sm font-semibold mb-2">Email Address</label>
-                                <input type="email" x-model="email"
+                                <input type="email" x-model="email" @input="validateEmail(false)"
+                                    @change="validateEmail(false)"
                                     class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
                                     :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
                                     placeholder="you@example.com">
@@ -220,11 +222,6 @@
                     this.error = params.get('error');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
-
-                // ✅ Fix: Watch email for changes to handle validation reliably
-                this.$watch('email', (value) => {
-                    this.validateEmail(value);
-                });
             },
 
             toggleMode() {
@@ -233,21 +230,21 @@
                 this.showPinless = !this.showPinless;
             },
 
-            validateEmail(value, strict = false) {
+            validateEmail(strict = false) {
+                // Modified regex to support academic and longer domains if needed, but keeping standard for now
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                const emailToCheck = value || this.email; // Use passed value or current model
 
-                if (strict && !emailToCheck) {
+                if (strict && !this.email) {
                     this.emailError = 'Please enter valid email';
                     return;
                 }
 
-                if (!emailToCheck) {
+                if (!this.email) {
                     this.emailError = '';
                     return;
                 }
 
-                if (!emailRegex.test(emailToCheck)) {
+                if (!emailRegex.test(this.email)) {
                     this.emailError = 'Please enter a valid email';
                 } else {
                     this.emailError = '';
