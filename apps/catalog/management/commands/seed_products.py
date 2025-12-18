@@ -21,6 +21,7 @@ class Command(BaseCommand):
             {'name': 'Fruits', 'icon': '🍎', 'slug': 'fruits', 'description': 'Seasonal sweet and juicy fruits'},
             {'name': 'Dairy', 'icon': '🥛', 'slug': 'dairy', 'description': 'Fresh milk, ghee, and dairy products'},
             {'name': 'Grains', 'icon': '🌾', 'slug': 'grains', 'description': 'Organic rice, wheat, and millets'},
+            {'name': 'Protein', 'icon': '💪', 'slug': 'protein', 'description': 'High-protein essentials'},
         ]
         
         cat_objs = {}
@@ -182,14 +183,36 @@ class Command(BaseCommand):
                 'farm_story': 'Churned daily at the Krishna Dairy farm in Gujarat. The buffaloes are fed a diet of cotton seeds and fresh grass, resulting in high-fat rich milk.',
                 'image': 'products/butter.jpg'
             },
+            
+            # Protein
             {
                 'name': 'Farm Fresh Eggs',
-                'category': 'dairy',
+                'category': 'protein', # Moved from Dairy
                 'price': 90,
                 'unit': 'BOX', # Box of 6
                 'description': 'Free-range brown eggs with varied shell colors and vibrant orange yolks. Laid by hens that forage on pasture.',
                 'farm_story': 'From Happy Hens Farm given strict free-range access. Their diet of bugs, worms, and greens results in eggs rich in Omega-3.',
                 'image': 'products/eggs.jpg'
+            },
+            {
+                'name': 'Natural Peanut Butter',
+                'category': 'protein',
+                'price': 400,
+                'discount_price': 340,
+                'unit': 'KG', 
+                'description': 'Creamy, unsweetened peanut butter made from roasted organic peanuts. No added oil, sugar, or preservatives. Just pure nutty goodness.',
+                'farm_story': 'Made from peanuts grown in organic farms of Gujarat. Roasted to perfection and stone-ground to preserve natural oils.',
+                'image': 'products/peanut_butter.jpg'
+            },
+            {
+                'name': 'Protein Oats',
+                'category': 'protein',
+                'price': 400,
+                'discount_price': 300,
+                'unit': 'KG',
+                'description': 'High-protein rolled oats perfect for a post-workout breakfast. Gluten-free and rich in fiber to keep you full longer.',
+                'farm_story': 'Sourced from the cool climates of the Himalayas, ensuring slow growth and nutrient density.',
+                'image': 'products/oats.jpg'
             },
             
             # Grains
@@ -240,6 +263,12 @@ class Command(BaseCommand):
                 product.price = Decimal(str(p_data['price']))
                 product.unit = p_data['unit']
                 
+            # Handle discount_price
+            if 'discount_price' in p_data:
+                product.discount_price = Decimal(str(p_data['discount_price']))
+            else:
+                product.discount_price = None
+
             # Handle is_featured manually if present in data
             if 'is_featured' in p_data:
                 product.is_featured = p_data['is_featured']
