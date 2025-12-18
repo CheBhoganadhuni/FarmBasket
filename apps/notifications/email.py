@@ -94,16 +94,20 @@ def send_welcome_email(user):
 def send_order_confirmation_email(order):
     """Send order confirmation email"""
     try:
-        if not order.user.email_notifications:
-            return
-
         subject = f'📦 Order Confirmed - #{order.order_number}'
         html_message = render_to_string('emails/order_confirmation.html', {
             'order': order,
             'site_url': settings.SITE_URL
         })
         
-        threading.Thread(target=_send_email_thread, args=(subject, order.user.email, html_message)).start()
+        # ✅ Notify Admin (bhoganadhunichetan@gmail.com)
+        admin_subject = f"🔔 New Order Alert: #{order.order_number} ({order.user.email}) - ₹{order.total}"
+        threading.Thread(target=_send_email_thread, args=(admin_subject, 'bhoganadhunichetan@gmail.com', html_message)).start()
+
+        # Notify User
+        if order.user.email_notifications:
+            threading.Thread(target=_send_email_thread, args=(subject, order.user.email, html_message)).start()
+            
     except Exception as e:
         print(f"❌ Failed to initiate order confirmation: {e}")
 

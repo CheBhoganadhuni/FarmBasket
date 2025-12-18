@@ -191,7 +191,7 @@
                                 <!-- Razorpay -->
                                 <label
                                     class="flex items-center p-4 border-2 rounded-lg cursor-pointer transition select-none"
-                                    :class="paymentMethod === 'RAZORPAY' ? 'border-neon bg-green-50' : 'border-gray-300 hover:bg-gray-50'">
+                                    :class="paymentMethod === 'RAZORPAY' ? 'border-neon' : 'border-gray-300 hover:bg-gray-50'">
                                     <input type="radio" x-model="paymentMethod" value="RAZORPAY" class="mr-3">
                                     <div>
                                         <div class="font-semibold">💳 Pay Online (Razorpay)</div>
@@ -206,7 +206,7 @@
                                 <!-- COD -->
                                 <label
                                     class="flex items-center p-4 border-2 rounded-lg cursor-pointer transition select-none"
-                                    :class="paymentMethod === 'COD' ? 'border-neon bg-green-50' : 'border-gray-300 hover:bg-gray-50'">
+                                    :class="paymentMethod === 'COD' ? 'border-neon' : 'border-gray-300 hover:bg-gray-50'">
                                     <input type="radio" x-model="paymentMethod" value="COD" class="mr-3">
                                     <div>
                                         <div class="font-semibold">💵 Cash on Delivery</div>
@@ -322,12 +322,27 @@
                             </button>
                         </div>
                         <div x-show="!isAuthenticated" class="mt-6 space-y-3">
-                            <button type="button" @click="
+                            <button type="button" :disabled="!isFormValid" @click="
                                 localStorage.setItem('need_checkout', 'true');
+                                // ✅ Save Guest Address with Empty String Defaults for Optional Fields
+                                const guestAddress = {
+                                    label: 'Guest',
+                                    address_type: 'HOME',
+                                    street_address: address.address,
+                                    city: address.city,
+                                    state: address.state,
+                                    postal_code: address.postal_code,
+                                    phone: address.phone,
+                                    apartment: address.apartment || '',  // ✅ Force empty string if undefined/null
+                                    landmark: address.landmark || '',    // ✅ Force empty string if undefined/null
+                                    is_default: true
+                                };
+                                localStorage.setItem('guest_address', JSON.stringify(guestAddress));
                                 window.location.href = '/auth/login/?next=/checkout/';
                              "
-                                class="w-full px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg">
-                                Login to Place Order
+                                class="w-full px-6 py-4 bg-neon text-white rounded-lg hover:bg-green-600 transition font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="isFormValid">Login to Place Order</span>
+                                <span x-show="!isFormValid">Fill Address to Login & Order</span>
                             </button>
                             <p class="text-xs text-center text-gray-500">
                                 You need to login or sign up to complete your purchase. Your cart will be saved!

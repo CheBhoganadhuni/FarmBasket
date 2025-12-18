@@ -37,7 +37,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
     email = models.EmailField(_('email address'), unique=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     
     # Profile fields - USE ImageField instead of CloudinaryField
     avatar = models.ImageField(
@@ -142,7 +142,7 @@ class Address(models.Model):
     landmark = models.CharField(max_length=255, blank=True)
     
     # Contact
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=20)
     
     # Flags
     is_default = models.BooleanField(default=False)

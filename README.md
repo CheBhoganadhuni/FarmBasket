@@ -74,7 +74,7 @@ and view order history — while admins manage inventory, products, and orders.
 | Database | PostgreSQL |
 | Auth     | JWT (SimpleJWT) + Django Sessions |
 | Payment  | Razorpay |
-| Email Service | mail SMTP |
+| Email Service | SendGrid |
 
 ---
 # 🧺 FarmBasket - The Journey
@@ -114,6 +114,7 @@ We stopped building "features" and started building an "experience".
 
 ## 🤝 Contributing
 PRs welcome — fork the repo, create a feature branch, and submit a PR.
+
 ---
 
 ## 📄 License

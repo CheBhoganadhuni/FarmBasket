@@ -397,3 +397,30 @@ def cancel_order(request, order_id: str):
         "success": True,
         "message": "Order cancelled successfully. If paid, refund will be processed to source/wallet."
     }
+
+@router.post("/orders/{order_id}/switch-cod", auth=auth)
+def switch_order_to_cod(request, order_id: str):
+    """Switch a pending/processing order to Cash on Delivery and Confirm it."""
+    order = get_object_or_404(Order, id=order_id, user=request.auth)
+    
+    # Allowed statuses for switching
+    if order.status not in ['PENDING', 'PROCESSING']:
+         return {"success": False, "message": "Order cannot be switched to COD at this stage"}
+    
+    if order.payment_status == 'PAID':
+        return {"success": False, "message": "Order is already paid"}
+
+    # Update Order
+    order.payment_method = 'COD'
+    order.status = 'CONFIRMED' # Auto-confirm since it's COD
+    order.payment_status = 'PENDING'
+    order.save()
+    
+    # Send Order Confirmation Email (Admin Alert Included)
+    from apps.notifications.email import send_order_confirmation_email
+    try:
+        send_order_confirmation_email(order)
+    except:
+        pass
+    
+    return {"success": True, "message": "Order switched to Cash on Delivery and Confirmed"}

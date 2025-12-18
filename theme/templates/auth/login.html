@@ -50,8 +50,7 @@
                             <div class="mb-6">
                                 <label class="block text-sm font-semibold mb-2">Email</label>
                                 <!-- Using top-level 'email' model -->
-                                <input type="email" x-model="email" @input="validateEmail(false)"
-                                    @change="validateEmail(false)"
+                                <input type="email" x-model="email"
                                     class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
                                     :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
                                     placeholder="you@example.com">
@@ -80,8 +79,8 @@
                             </div>
 
                             <!-- Submit Button -->
-                            <button type="submit" :disabled="loading"
-                                class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="submit" :disabled="isPasswordDisabled"
+                                class="w-full py-3 bg-neon text-white rounded-lg font-semibold hover:bg-green-600 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                                 <span x-show="!loading">Login 🚀</span>
                                 <span x-show="loading"
                                     class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
@@ -95,8 +94,7 @@
                             <!-- Email (Reused Model: 'email') -->
                             <div class="mb-4">
                                 <label class="block text-sm font-semibold mb-2">Email Address</label>
-                                <input type="email" x-model="email" @input="validateEmail(false)"
-                                    @change="validateEmail(false)"
+                                <input type="email" x-model="email"
                                     class="w-full px-4 py-3 border-2 rounded-lg focus:border-neon focus:outline-none transition"
                                     :class="{ 'border-red-500': emailError, 'border-gray-300': !emailError }"
                                     placeholder="you@example.com">
@@ -206,6 +204,15 @@
                 return false;
             },
 
+            // ✅ Added for standard login
+            get isPasswordDisabled() {
+                if (this.loading) return true;
+                if (!this.email) return true;
+                if (this.emailError) return true;
+                if (!this.password) return true;
+                return false;
+            },
+
             init() {
                 // Check errors from URL
                 const params = new URLSearchParams(window.location.search);
@@ -213,6 +220,11 @@
                     this.error = params.get('error');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
+
+                // ✅ Fix: Watch email for changes to handle validation reliably
+                this.$watch('email', (value) => {
+                    this.validateEmail(value);
+                });
             },
 
             toggleMode() {
@@ -221,20 +233,21 @@
                 this.showPinless = !this.showPinless;
             },
 
-            validateEmail(strict = false) {
+            validateEmail(value, strict = false) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const emailToCheck = value || this.email; // Use passed value or current model
 
-                if (strict && !this.email) {
+                if (strict && !emailToCheck) {
                     this.emailError = 'Please enter valid email';
                     return;
                 }
 
-                if (!this.email) {
+                if (!emailToCheck) {
                     this.emailError = '';
                     return;
                 }
 
-                if (!emailRegex.test(this.email)) {
+                if (!emailRegex.test(emailToCheck)) {
                     this.emailError = 'Please enter a valid email';
                 } else {
                     this.emailError = '';

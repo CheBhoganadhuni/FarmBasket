@@ -443,8 +443,6 @@
                     <a href="/products/" class="font-medium hover:text-neon transition relative group text-2xl"
                         title="Shop">
                         🏪
-                        <span
-                            class="absolute bottom-0 left-0 w-0 h-0.5 bg-neon transition-all duration-300 group-hover:w-full"></span>
                     </a>
                 </nav>
 
@@ -517,18 +515,18 @@
                             <!-- Guest Wishlist -->
                             <a href="/wishlist/" class="relative text-2xl hover:text-neon transition group"
                                 title="Wishlist">
-                                ❤️
+                                ❤️&nbsp;&nbsp;
                             </a>
 
                             <!-- Guest Cart -->
                             <a href="/cart/" class="relative text-2xl hover:text-neon transition group" title="Cart">
-                                🛒
+                                🛒&nbsp;&nbsp;
                             </a>
 
                             <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
 
                             <a href="{% url 'accounts:login' %}"
-                                class="hover:text-neon transition font-medium">Login</a>
+                                class="hover:text-neon transition font-medium">Login&nbsp;&nbsp;</a>
                             <a href="{% url 'accounts:register' %}"
                                 class="px-4 py-2 bg-neon text-white rounded-lg hover:bg-green-600 transition font-medium shadow-lg shadow-neon/30">Sign
                                 Up</a>
@@ -888,6 +886,7 @@
                     // "Magic Sync"
                     const guestCart = localStorage.getItem('guest_cart');
                     const guestWishlist = localStorage.getItem('guest_wishlist');
+                    const guestAddress = localStorage.getItem('guest_address'); // ✅ Get saved address
                     const needCheckout = localStorage.getItem('need_checkout');
 
                     const token = localStorage.getItem('access_token');
@@ -939,6 +938,25 @@
                             // Maybe show toast? "Synced your guest items!"
                         } catch (e) {
                             console.error("Sync failed", e);
+                        }
+                    }
+
+                    // ✅ Sync Guest Address
+                    if (guestAddress) {
+                        try {
+                            const addrData = JSON.parse(guestAddress);
+                            await fetch('/api/auth/addresses', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(addrData)
+                            });
+                            localStorage.removeItem('guest_address');
+
+                        } catch (e) {
+                            console.error("Address sync failed", e);
                         }
                     }
 

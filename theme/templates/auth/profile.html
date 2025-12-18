@@ -19,6 +19,19 @@
                     <p class="text-gray-600 mt-2">Please wait while we securely remove your data.</p>
                 </div>
             </div>
+
+            <!-- Sync/Redirect Overlay -->
+            <div x-show="isSyncing"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/90 backdrop-blur-sm transition-opacity"
+                style="display: none;">
+                <div class="text-center p-8 rounded-2xl max-w-sm mx-4">
+                    <div class="relative mb-6 inline-block">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-neon mx-auto">
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center text-2xl">🧺</div>
+                    </div>
+                </div>
+            </div>
             <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
 
                 <!-- Avatar Section -->
@@ -341,8 +354,8 @@
                                     <input type="checkbox" x-model="user.email_notifications"
                                         @change="updatePreferences('email')" class="toggle">
                                 </label>
-                                <p class="text-xs text-gray-500">Opt in or out for emails. Please check your spam folder
-                                    too!</p>
+                                <p class="text-xs text-gray-500">Opt in or out for emails. Note that some emails are
+                                    mandatory for communication. Please check your spam folder too!</p>
                             </div>
 
                         </div>
@@ -523,6 +536,7 @@
 
             walletBalance: 0,
             deletingAccount: false,
+            isSyncing: false,
 
             validateNames() {
                 if (!this.user.social_avatar_url) {
@@ -565,6 +579,13 @@
             },
 
             async init() {
+                // Check if we need to redirect to checkout (Magic Sync or Manual)
+                // Only block if we are actually redirecting. Syncing alone is fast enough or shouldn't block profile.
+                if (localStorage.getItem('need_checkout') === 'true') {
+                    this.isSyncing = true;
+                    // base.html syncUserData will handle the rest
+                }
+
                 try {
                     await this.fetchProfile();
 
